@@ -44,7 +44,7 @@ jr = "jobradar.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-jobradar = ["defaults/*.yaml", "defaults/*.csv.gz", "defaults/packs/*.yaml", "normalize/data/*",
+jobradar = ["defaults/*.yaml", "defaults/*.md", "defaults/*.csv.gz", "defaults/packs/*.yaml", "normalize/data/*",
             "app/templates/*.html", "app/templates/setup/*.html", "app/static/*", "apply/templates/*",
             "extension/*"]
 
