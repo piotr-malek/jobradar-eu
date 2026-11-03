@@ -73,6 +73,8 @@ A pack is one YAML file in `src/jobradar/defaults/packs/`:
 - `families`: title rules (regular expressions over the normalised, accent-free title), with `tier`, `priority` and
   `label`. `manager_ok` lets a family keep manager titles.
 - `family_exclude` / `family_exclude_ok`: words that drop a title, and the exceptions.
+- `allow_disciplines`: entries of `title.exclude.discipline_hard` in `matching.yaml` (roles skipped as "not IT",
+  e.g. customer success) that this pack takes back while it is selected. See `sales-cs.yaml`.
 - `search_terms`: words the boards are searched with, per language; English first.
 - `stack`: technology words and weights used to rank jobs; `prefer`: URL slug patterns tried first.
 - `boards`: category ids on boards that have them (`$board:<board>.<key>` in sources.yaml).

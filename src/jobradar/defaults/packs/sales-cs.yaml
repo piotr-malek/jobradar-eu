@@ -1,0 +1,107 @@
+# Role pack: sales and customer success at software / tech companies (not retail or field sales).
+label: Sales & customer success
+description: Account executive, SDR / BDR, business development, account manager, customer success manager, customer support, onboarding and implementation.
+
+# the base config skips these as "not IT"; this pack wants them
+allow_disciplines: ['customer success', 'customer support', 'sales (?:executive|representative)', 'account executive',
+                    'business development (?:representative|manager)', 'sdr', 'bdr']
+
+families:
+  sales:
+    tier: core
+    priority: 30
+    label: Sales
+    manager_ok: true            # "Account Manager" / "Business Development Manager" are individual roles
+    any:
+      - account executive
+      - (?:sales|business) development (?:representative|rep|executive|manager|associate|specialist|lead)
+      - \b(?:sdr|bdr)\b
+      - business developer
+      - (?:inside|outbound|inbound|b2b|saas|enterprise|technical|software|it|channel|partner) sales\b
+      - sales (?:representative|executive|specialist|consultant|associate|manager|lead|engineer|rep)\b
+      - (?:enterprise|mid-?market|smb|commercial|strategic|named|major|global|regional) account (?:executive|manager|director)
+      - key account (?:manager|executive)
+      - (?:partner|partnership|channel|alliances?) (?:manager|executive|lead)
+      - (?:solutions?|pre-?sales) (?:engineer|consultant)
+      - przedstawiciel\w* handlow\w*|handlowiec|specjalist\w* (?:ds\.? )?sprzedazy|doradc\w* (?:ds\.? )?klienta biznesowego
+      - vertriebs?\w*|account manager \(m/w/d\)|kundenberater\w* (?:im )?(?:aussendienst|innendienst|b2b)
+      - ejecutiv\w* (?:de )?(?:cuentas|ventas|comercial)|representante (?:de )?ventas|gerente (?:de )?cuentas
+      - executiv\w* (?:de )?(?:contas|vendas|comercial)|gestor\w* (?:de )?contas|representante comercial
+      - ingenieur\w* commercial\w*|business developer|charge\w* d.affaires|commercial\w* (?:b2b|saas|grands comptes|sedentaire)
+  customer_success:
+    tier: core
+    priority: 28
+    label: Customer success
+    manager_ok: true            # "Customer Success Manager" / "Account Manager" are individual roles
+    any:
+      - customer success
+      - client success|client partner|client services? (?:manager|specialist|executive)
+      - (?<!product )account manager
+      - technical account manager
+      - customer (?:experience|onboarding|support|service|care|operations) (?:specialist|manager|representative|agent|associate|lead|engineer|analyst|advocate|consultant)
+      - (?:technical )?support (?:engineer|specialist|agent|representative|analyst)
+      - (?:customer )?onboarding (?:specialist|manager|consultant|lead)
+      - implementation (?:specialist|consultant|manager|lead|engineer)
+      - renewals? (?:manager|specialist|executive)
+      - opiekun\w* klienta|specjalist\w* (?:ds\.? )?obslugi klienta|customer success menedzer
+      - kundenbetreuer\w*|kundenservice\w*|kundenerfolg\w*
+      - atencion al cliente|exito del cliente|gestor\w* (?:de )?clientes
+      - sucesso do cliente|atendimento ao cliente|gestor\w* de clientes
+      - charge\w* de clientele|service client|succes client\w*|responsable (?:de )?comptes?
+
+family_exclude: ['retail', 'store', 'shop', 'boutique', 'car', 'automotive', 'dealership', 'real estate', 'estate agent',
+                 'insurance', 'pharma\w*', 'medical', 'clinical', 'hospital', 'hotel', 'restaurant', 'food', 'beverage',
+                 'telemarketing', 'door[- ]to[- ]door', 'field', 'aussendienst', 'merchandis\w*', 'cashier', 'call cent\w*',
+                 'construction', 'fmcg', 'furniture', 'solar']
+family_exclude_ok: ['field sales engineer']
+
+stack:
+  weights: {salesforce: 3, hubspot: 3, saas: 2, b2b: 1, crm: 1, gainsight: 2, zendesk: 2, intercom: 2, "sales navigator": 1,
+            outreach: 1, salesloft: 1, gong: 1, pipedrive: 2, jira: 1, api: 1}
+  patterns:
+    salesforce: 'salesforce'
+    hubspot: 'hubspot'
+    saas: '\bsaas\b'
+    b2b: '\bb2b\b'
+    crm: '\bcrm\b'
+    gainsight: 'gainsight'
+    zendesk: 'zendesk'
+    intercom: '\bintercom\b'
+    sales navigator: 'sales navigator'
+    outreach: '\boutreach(?:\.io)?\b'
+    salesloft: 'salesloft'
+    gong: '\bgong(?:\.io)?\b'
+    pipedrive: 'pipedrive'
+    jira: '\bjira\b'
+    api: '\bapis?\b'
+
+search_terms:
+  en: [account executive, sales development representative, business development, account manager, customer success manager, customer support, implementation consultant]
+  pl: [handlowiec, specjalista ds. sprzedaży, customer success, opiekun klienta, key account manager]
+  de: [vertrieb, account manager, customer success manager, kundenbetreuer]
+  es: [ejecutivo de cuentas, ejecutivo de ventas, customer success, atención al cliente]
+  pt: [executivo de vendas, gestor de contas, sucesso do cliente, customer success]
+  fr: [commercial, business developer, chargé de clientèle, customer success manager]
+
+prefer: ['account-executive|sales|business-development|sdr|bdr|account-manager|customer-success|customer-support|onboarding|implementation|vertrieb|handlowiec|sprzedaz|ventas|vendas|commercial',
+         'support|customer|client|partner']
+
+boards:
+  remotive: {categories: [sales, customer-support]}
+  themuse: {categories: [Sales, Customer Service, Account Management]}
+
+golden:
+  keep: [Account Executive, Senior Account Executive, Enterprise Account Executive, Mid-Market Account Executive,
+         Sales Development Representative, SDR, Business Development Representative, BDR - DACH, Business Development Manager,
+         Business Developer, Inside Sales Representative, SaaS Sales Executive, Key Account Manager, Account Manager,
+         Partner Manager, Channel Sales Manager, Sales Engineer, Solutions Engineer, Pre-Sales Consultant,
+         Customer Success Manager, Senior Customer Success Manager, Customer Success Specialist, Technical Account Manager,
+         Customer Support Specialist, Technical Support Engineer, Customer Onboarding Specialist, Implementation Consultant,
+         Renewals Manager, Client Success Manager, Customer Success Manager (m/w/d), Account Manager (m/w/d),
+         Vertriebsmitarbeiter (m/w/d), Kundenbetreuer (m/w/d), Handlowiec, Specjalista ds. Sprzedaży, Opiekun Klienta,
+         Ejecutivo de Cuentas, Ejecutivo de Ventas B2B, Executivo de Vendas, Gestor de Contas, Sucesso do Cliente,
+         Chargé de Clientèle, Ingénieur Commercial, Business Developer SaaS (H/F)]
+  drop: [Backend Developer, Data Engineer, Product Manager, Marketing Manager, Retail Sales Associate, Store Manager,
+         Car Sales Executive, Real Estate Agent, Insurance Sales Agent, Pharmaceutical Sales Representative,
+         Field Sales Representative, Telemarketing Agent, Call Center Agent, Nurse, Truck Driver, Product Designer,
+         Software Engineer, Sales Director, Head of Sales, VP Sales, Sales Intern]

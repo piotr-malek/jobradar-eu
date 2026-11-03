@@ -140,6 +140,7 @@ def merge_packs(packs: list[dict[str, Any]]) -> dict[str, Any]:
     priority: dict[str, int] = {}
     labels: dict[str, str] = {}
     discipline_ok: list[str] = []
+    allow: list[str] = []
     title_bonus: dict[str, int] = {}
     for pack in packs:
         title_bonus.update(pack.get("title_bonus") or {})
@@ -169,9 +170,10 @@ def merge_packs(packs: list[dict[str, Any]]) -> dict[str, Any]:
                 else:
                     cur.setdefault(k, v)
         discipline_ok += pack.get("discipline_ok_if") or []
+        allow += [a for a in pack.get("allow_disciplines") or [] if a not in allow]
     return {"families": families, "weights": weights, "patterns": patterns, "search_terms": terms,
             "boards": boards, "priority": priority, "labels": labels, "discipline_ok": discipline_ok,
-            "title_bonus": title_bonus}
+            "title_bonus": title_bonus, "allow_disciplines": allow}
 
 
 @lru_cache(maxsize=1)
@@ -255,6 +257,9 @@ def matching_config(*, p: dict[str, Any] | None = None, r: dict[str, Any] | None
     bundle = merge_packs(load_packs(packs or r.get("packs") or None)) if (packs or r.get("packs")) else pack_bundle()
     cfg = copy.deepcopy(base)
     cfg["title"]["families"] = bundle["families"]
+    # a pack can take back roles the base config calls "never IT" (e.g. sales, customer success)
+    cfg["title"]["exclude"]["discipline_hard"] = [d for d in cfg["title"]["exclude"].get("discipline_hard", [])
+                                                  if d not in bundle["allow_disciplines"]]
     cfg["title"]["exclude"]["discipline_ok_if"] = list(dict.fromkeys(
         cfg["title"]["exclude"].get("discipline_ok_if", []) + bundle["discipline_ok"]))
     cfg["stack"] = {"weights": bundle["weights"], "patterns": bundle["patterns"]}

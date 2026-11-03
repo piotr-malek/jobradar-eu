@@ -52,3 +52,19 @@ def test_pack_shape(name):
         assert fam.get("tier") in ("core", "adjacent")
         for pat in fam.get("any", []) + fam.get("context_any", []):
             assert config.safe_regex(pat), pat
+
+
+def test_sales_titles_only_with_the_sales_pack():
+    """The base config skips sales / customer-success titles; only a pack that lists them in allow_disciplines
+    takes them back, and only while it is selected."""
+    def verdict(packs, title):
+        cfg = config.matching_config(r={"packs": packs}, packs=packs)
+        cfg["user_titles"] = {"never": [], "never_unless": [], "keep": [], "must_have": []}
+        cfg["seniority_range"] = {"min": "junior", "max": "senior"}
+        return MatchEngine.from_config(cfg).title_verdict(title)
+
+    for title in ("Customer Success Manager", "Account Executive", "SDR", "Customer Support Specialist"):
+        assert verdict(["sales-cs"], title).tier != "excluded", title
+        v = verdict(["backend", "gtm-revops"], title)
+        assert v.tier == "excluded", (title, v)
+    assert verdict(["sales-cs", "backend"], "Backend Engineer").tier != "excluded"

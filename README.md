@@ -1,6 +1,6 @@
 # Job Radar
 
-Your IT job shortlist, ready every morning. Job Radar searches European job boards and company career pages
+Your tech job shortlist, ready every morning. Job Radar searches European job boards and company career pages
 overnight, keeps the jobs that match your roles, location and seniority, and lines them up best first. In the
 morning you open the app, pick the ones worth applying to, and apply.
 
@@ -10,7 +10,7 @@ morning you open the app, pick the ones worth applying to, and apply.
   about 5,700 company career pages (Greenhouse, Lever, Ashby, Workable, Personio, Teamtailor, Workday and more).
   See [docs/sources.md](docs/sources.md).
 - **Role packs** for data, backend, frontend, full-stack, mobile, DevOps/SRE/platform, QA, security, ML/AI,
-  product/PM and GTM/RevOps, with a seniority range and your own "never" words.
+  product/PM, GTM/RevOps, and sales & customer success, with a seniority range and your own "never" words.
 - **Free to run.** The only possible cost is an LLM, which is optional in Lite.
 
 ## Install
