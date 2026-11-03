@@ -64,6 +64,9 @@ def wiz(tmp_path, monkeypatch):
     gh.parent.mkdir()
     gh.write_text(FAKE_GH.replace("#!/usr/bin/env python3", f"#!{sys.executable}"), encoding="utf-8")
     gh.chmod(0o755)
+    if sys.platform == "win32":                     # Windows can't run a #! script: call it through a .cmd wrapper
+        (gh.parent / "gh.cmd").write_text(f'@"{sys.executable}" "{gh}" %*\r\n', encoding="utf-8")
+        gh = gh.parent / "gh.cmd"
     wf = tmp_path / "wf.yml"
     wf.write_text(TEMPLATE_WF, encoding="utf-8")
     monkeypatch.setenv("JR_GH", str(gh))

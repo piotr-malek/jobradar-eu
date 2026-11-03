@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import json
 import re
 from pathlib import Path
@@ -345,6 +347,7 @@ def test_job_specific_question_is_drafted_not_banked(tmp_path, monkeypatch):
         p for p in fake.payloads if p["response_format"]["json_schema"]["name"] == "drafts")["messages"][-1]["content"]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the fake claude CLI is a #! script")
 def test_claude_cli_provider_and_draft_purpose(tmp_path, monkeypatch):
     from jobradar.llm.client import optional_client, resolve_provider
 

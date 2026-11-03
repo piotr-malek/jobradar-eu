@@ -26,6 +26,7 @@ dependencies = [
     "flask>=3",
     "pypdf>=4",
     "python-docx>=1.1",
+    "tzdata; sys_platform == 'win32'",      # Windows has no time-zone database for zoneinfo
 ]
 
 [project.optional-dependencies]
