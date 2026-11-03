@@ -1,0 +1,21 @@
+name: Broken source
+description: A job board returns nothing, errors, or gives wrong jobs.
+labels: [source]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Source id
+      description: As shown by `jr sources`.
+    validations:
+      required: true
+  - type: textarea
+    id: probe
+    attributes:
+      label: Output of `jr probe <id>`
+      description: Remove anything personal before pasting.
+      render: json
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else (since when, example job links)

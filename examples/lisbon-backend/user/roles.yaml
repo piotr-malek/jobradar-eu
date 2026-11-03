@@ -1,0 +1,5 @@
+packs: [backend, devops-sre-platform]
+seniority: {min: junior, max: senior}
+never: ['php', '\.net', 'c#', 'sap', 'salesforce']
+must_have: []
+extra_titles: []

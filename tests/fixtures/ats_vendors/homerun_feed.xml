@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title type="text">2manydots</title>
+  <subtitle type="html"><![CDATA[Voor middelgrote tot grote bedrijven zijn wij de full-service partner op het gebied van websites en online marketing. 2manydots ontwerpt websites, ontwikkelt maatwerkoplossingen, stippelt je online strategie uit en zorgt ervoor dat jouw doelgroep jou feilloos vindt.
+
+Wij bouwen, onderhouden en optimaliseren jouw digitale vastgoed. Samen laten we jouw bedrijf groeien door jouw website en online marketing leuker en succesvol te maken.
+
+Together towards growth.]]></subtitle>
+  <link href="https://feed.homerun.co/2manydots_atom_47bdd37b1b5109cfe6f4c248c532094bc10fc27ed7ae931e8271bd9f8cb4dbd0.xml"></link>
+  <id>https://2manydots.homerun.co/</id>
+  <link rel="alternate" type="text/html" href="https://feed.homerun.co/2manydots_atom_47bdd37b1b5109cfe6f4c248c532094bc10fc27ed7ae931e8271bd9f8cb4dbd0.xml" ></link>
+  <link rel="self" type="application/atom+xml" href="https://2manydots.homerun.co/" ></link>
+      <logo>https://cdn.homerun.co/69171/8a68298e-6d31-4658-9882-dcd9d3a06dcc.png</logo>
+      <updated>2026-07-03T08:15:58+00:00</updated>
+      <entry>
+      <author>
+        <name>2manydots</name>
+      </author>
+      <title type="text">Web Analyst</title>
+      <link rel="alternate" type="text/html" href="https://2manydots.homerun.co/tracking-specialist"></link>
+      <id>job_vR2CGBVX1lJxp71qx9gq</id>
+      <summary type="html"><![CDATA[Hi, data expert! 👋]]></summary>
+      
+      <description type="html"><![CDATA[<p>Hi, data expert! 👋</p><br/><p>We work a lot with data, and we steer by it too. You're the specialist in collecting, analyzing and improving tracking data for our clients. Some clients book monthly hours specifically to optimize their tracking and dashboards. But most of your work supports our Resultsmatter clients: companies on a monthly marketing optimization program, where our consultants in Tilburg need a specialist to make sure the tracking and dashboarding is set up correctly so they can act on reliable data. You make sure the right tags are configured in GTM, that our dashboards add u]]></description>
+      <department>
+        <name>Data</name>
+      </department>
+      <location>
+        <name>Warsaw, Poland</name>
+      </location>
+      <type>
+        <name>Part-time</name>
+      </type>
+      <salary_indication>€3250.00 to €4500.00 per month</salary_indication>
+      <updated>2025-04-23 09:45:27</updated>
+    </entry>
+  </feed>

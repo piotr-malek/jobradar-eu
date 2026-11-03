@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://berlinstartupjobs.com/engineering/feed/",
+ "status": 200,
+ "content_type": "application/rss+xml; charset=UTF-8"
+}

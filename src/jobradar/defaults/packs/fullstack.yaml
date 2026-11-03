@@ -1,0 +1,63 @@
+# Role pack: full-stack engineering. Backend and frontend packs deliberately leave full-stack titles to this one.
+label: Full-stack engineering
+description: Full-stack developer / engineer (full stack, full-stack or fullstack), MEAN / MERN stack developer.
+
+families:
+  fullstack:
+    tier: core
+    priority: 35
+    label: Full-stack
+    any:
+      - 'full[- ]?stack'
+      - '(?:mean|mern|lamp|jamstack) stack'
+
+family_exclude: ['sales', 'marketing', 'marketer', 'recruit\w*', 'account', 'data scien\w*', 'designer', 'growth', 'seo', 'content',
+                 'data analyst', 'analyst', 'support', 'wordpress', 'game', 'embedded', 'hardware']
+family_exclude_ok: []
+
+stack:
+  weights: {typescript: 2, javascript: 1, react: 2, angular: 2, vue: 2, "node.js": 2, python: 1, java: 1, ".net": 1, php: 1,
+            ruby: 1, postgresql: 1, mongodb: 1, graphql: 1, docker: 1, aws: 0, "next.js": 1}
+  patterns:
+    typescript: 'typescript'
+    javascript: 'javascript|\bjs\b'
+    react: '\breact(?:\.?js)?\b(?! native)'
+    angular: 'angular'
+    vue: '\bvue(?:\.?js)?\b|nuxt'
+    next.js: 'next\.?js'
+    node.js: 'node\.?js|nestjs|express'
+    python: '\bpython\b|django|fastapi'
+    java: '\bjava\b(?!script)|spring'
+    .net: '\.net\b|dotnet|\bc#'
+    php: '\bphp\b|laravel|symfony'
+    ruby: '\bruby\b|rails'
+    postgresql: 'postgres\w*|\bmysql\b'
+    mongodb: 'mongo\w*'
+    graphql: 'graphql'
+    docker: 'docker'
+    aws: '\baws\b|\bazure\b|\bgcp\b'
+
+search_terms:
+  en: [full stack developer, full stack engineer, fullstack developer, full-stack engineer, mern stack, typescript fullstack]
+  pl: [programista full stack, fullstack developer]
+  de: [fullstack entwickler, full stack entwickler]
+  es: [desarrollador full stack]
+  pt: [desenvolvedor full stack]
+  fr: [développeur full stack]
+
+prefer: ['full-stack|fullstack|full-stack-developer|mern|mean-stack', 'typescript|react|node|javascript']
+
+boards:
+  nofluffjobs: {categories: [fullstack]}
+
+golden:
+  keep: [Full Stack Developer, Full-Stack Developer, Fullstack Developer, Full Stack Engineer, Senior Full-Stack Engineer,
+         Fullstack Engineer, Software Engineer - Full Stack, Software Engineer (Fullstack), Full Stack Software Engineer,
+         Full Stack JavaScript Developer, Full Stack Java Developer, Full Stack Python Developer, Full Stack .NET Developer,
+         Full Stack PHP Developer, MERN Stack Developer, MEAN Stack Developer, React / Node.js Full Stack Developer,
+         Programista Full Stack, Programista Fullstack, Full-Stack-Entwickler (m/w/d), Fullstack Entwickler (m/w/d),
+         Desarrollador/a Full Stack, Desarrollador Fullstack, Engenheiro(a) de Software Full Stack, Desenvolvedor Fullstack,
+         Développeur Full Stack (H/F), Développeur Fullstack, Full Stack Developer (TypeScript), Full Stack Ruby on Rails Developer,
+         Full Stack Engineer (React and Node)]
+  drop: [Backend Developer, Frontend Developer, Software Engineer, Full Stack Sales Manager, Full Stack Marketer,
+         Data Engineer, Full Stack Designer, QA Engineer, Mobile Developer]

@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://getdataengineeringjobs.com/?country=pl&country=de&country=fr&country=nl&country=es&country=pt&country=ro&country=be&country=bg&country=se&country=hu&country=it&country=cz&country=gr&country=lt&country=ie&country=no&country=at&country=dk&country=fi&country=sk&country=si&country=hr&country=ee&country=lv&country=lu&country=ch&posted=7&nsform=1&nosalary=1&page=1",
+ "status": 200,
+ "content_type": "text/html; charset=utf-8"
+}

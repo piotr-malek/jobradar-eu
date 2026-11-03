@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local state and secrets: never commit these
+.env
+*.db
+*.db-journal
+*.db.gz
+!tests/fixtures/**/*.db.gz
+.job-radar/
+.cache/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store

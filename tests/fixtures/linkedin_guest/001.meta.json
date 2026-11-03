@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=data%20engineer&location=European%20Union&f_WT=2&f_TPR=r86400&start=0",
+ "status": 200,
+ "content_type": "text/html; charset=utf-8"
+}

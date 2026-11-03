@@ -1,0 +1,91 @@
+# Base matching rules shared by every role pack. config.py builds the matcher's config from this file, the active
+# role packs (defaults/packs/*.yaml), the user's profile (location, languages) and user/roles.yaml, then deep-merges
+# user/matching.yaml over it. rule_version = label + a hash of the merged config.
+# Patterns are regexes on the accent-folded, lower-cased title (word boundaries are added automatically).
+label: v1
+
+title:
+  families: {}          # filled from the active role packs (first match wins, packs in the order listed)
+  review:               # a generic title with an IT qualifier and head ("Data Specialist") → "worth a look"
+    enabled: false        # purpose postings (UN/EU) still fall back to it
+    qualifiers: ['data', 'analytics', 'analytic', 'bi', 'etl', 'dwh', 'danych', 'reporting', 'raport\w*', 'insights',
+                 'warehouse', 'sql']
+    heads: ['engineer', 'developer', 'specialist', 'consultant', 'architect', 'programista', 'inzynier', 'specjalista',
+            'expert', 'ekspert', 'entwickler', 'ingenieur', 'desarrollador', 'programador', 'developpeur']
+    stack_rescue: {}
+  exclude:
+    # never IT roles, whatever the pack (a pack's own family patterns still decide what is in)
+    discipline_hard: ['data entry', 'data center technician', 'datacenter technician', 'data centre technician',
+                      'customer success', 'customer support', 'teacher', 'nurse', 'driver', 'warehouse (?:worker|operative)',
+                      'cashier', 'recruiter', 'talent acquisition', 'sales (?:executive|representative)',
+                      'account executive', 'business development (?:representative|manager)', 'sdr', 'bdr', 'mechanic',
+                      'electrician', 'welder', 'chef(?! de (?:produit|projet|projets))', 'cook']
+    discipline_ok_if: []
+    # people management: dropped unless the family allows it (manager_ok) or the user's seniority range reaches "lead"
+    manager: ['manager', 'kierownik', 'menedzer', 'menadzer', 'team lead(?:er)?', 'engineering lead', 'gerente',
+              'responsable d.equipe', 'teamleiter\w*', 'abteilungsleiter\w*']
+
+# Seniority words. The user's range (roles.yaml: seniority.min/max) drops titles above or below it; a title with no
+# seniority word always passes. Checked from the top: "Senior Staff" is principal.
+seniority:
+  principal: ['principal', 'staff', 'distinguished', 'head of', 'director', 'dyrektor\w*', 'vp', 'vice president',
+              'chief', 'cto', 'cdo', 'cio', 'ciso', 'cpo']
+  lead: ['lead', 'leader', 'tech lead', 'team lead', 'lider\w*', 'leiter\w*']
+  senior: ['senior', 'sr', 'starszy', 'starsza', 'experienced', 'expert', 'ekspert', 'senior[- ]level']
+  mid: ['mid', 'medior', 'regular', 'intermediate', 'mid[- ]level', 'mid[- ]senior']
+  junior: ['junior', 'jr', 'mlodszy', 'mlodsza', 'entry[- ]level', 'graduate', 'associate', 'trainee']
+  intern: ['intern', 'internship', 'praktyk\w*', 'staz\w*', 'stazysta', 'werkstudent\w*', 'working student',
+           'apprentice\w*', 'alternance', 'ausbildung', 'stagiaire', '^stage', 'apprentissage', 'graduate program',
+           'becari[oa]', 'estagi\w*', 'pasante', 'tirocini\w*', 'praktikant\w*']
+  # "Mid/Senior", "Regular / Senior": the range's lower level counts
+  range_patterns: ['(?:mid|medior|regular|junior)\s*[/-]\s*(?:senior|sr)', '(?:senior|sr)\s*[/-]\s*(?:mid|medior|regular)',
+                   '\(senior\)']
+
+purpose:               # postings tagged "purpose" (sources/boards with track: purpose): UN, EU institutions, intergovernmental
+  any:
+    - information management (?:officer|associate|assistant|specialist|consultant|analyst)
+    - data management (?:officer|associate|assistant|specialist|consultant)
+    - (?:data|information) (?:systems?|platform|governance|quality|analytics) (?:officer|associate|assistant|specialist|consultant)
+    - information systems? (?:officer|associate|assistant|specialist)
+    - (?:it|ict|information technology) (?:officer|associate|specialist)
+    - statistic(?:ian|al (?:assistant|officer|associate|clerk))
+    - business intelligence
+    - dashboard
+    - knowledge management (?:officer|associate|specialist)
+    - database (?:officer|associate|assistant|specialist)
+    - (?:gis|geospatial|remote sensing) (?:officer|associate|assistant|specialist|analyst|engineer)
+    - (?:data|information) (?:officer|specialist|consultant)
+    - (?:software|web|cloud|network|security|systems?) (?:engineer|developer|officer|specialist)
+  noise: ['public information', 'consumer information', 'security information', 'intelligence', 'investigat\w*', 'political affairs', 'policy analyst', 'communication\w*', 'structural', 'electrical', 'civil engineer', 'human resources']
+  drop_grades: ['(?:p|ip)-?[4-7]', 'd-?[12]', 'no-?[a-d]', 'gs?-?[1-5]', 'npsa-?\d+', 'ad ?(?:9|1[0-6])', 'asg', 'usg']
+  drop_categories: ['int', 'npo', 'rlg']
+  drop_text: ['internal candidates only', 'staff members only', 'unpaid', 'volunteer\w*', 'unv']
+
+location:
+  max_age_days: 30           # postings older than this (by posted date) are dropped
+  # the rest comes from profile.yaml: location (config.location_rules)
+
+language: {}                 # from profile.yaml: languages (config.language_rules)
+
+contract:
+  b2b: ['b2b', 'contractor', 'contract role', 'freelance', 'umowa b2b', 'kontrakt', 'freiberuf\w*', 'autonomo',
+        'independant', 'zzp']
+  employment: ['umowa o prace', '\buop\b', 'permanent', 'full[- ]time employment', 'festanstellung', 'cdi',
+               'contrato indefinido', 'vaste aanstelling']
+
+priority:
+  family: {review: 5, purpose: 25}
+  section: {remote: 20, home: 15, elsewhere: 8}
+  stack_point: 3
+  fresh_days: {1: 10, 3: 6, 7: 3}
+  flags: {"scope?": -3, "mode?": -2, "location?": -4, "remote option?": -2, agency: -6}
+  title_bonus: {}
+  top_pick: {min_stack_score: 5, max_age_days: 3, tiers: [core]}
+
+companies:
+  mute: []                     # company names never shown
+  agency_sources: ['jobgether']
+  agency_markers: ['hays', 'michael page', 'antal', 'randstad', 'experis', 'link group', 'emagine', 'devire', 'sii',
+                   'adecco', 'manpower', 'harvey nash', 'talent alpha', 'enigma', 'crossbridge', 'crosstalent',
+                   'jobgether', 'robert half', 'computer futures', 'nigel frank', 'jefferson frank', 'gi group',
+                   'akkodis', 'modis', 'hays it']

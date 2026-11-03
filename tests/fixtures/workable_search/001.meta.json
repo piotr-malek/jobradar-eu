@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://jobs.workable.com/api/v1/jobs?query=data+engineer&location=Europe",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

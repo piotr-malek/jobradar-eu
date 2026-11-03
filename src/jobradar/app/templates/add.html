@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Add a job{% endblock %}
+{% block body %}
+<h1>Add a job</h1>
+<p class="muted">Found a job yourself? Paste its URL. The app reads the posting (no AI) and adds it to your list,
+  marked “added by hand”. Role and company are read from the page; fill them in only if it can't (LinkedIn, for example).</p>
+<form class="add" onsubmit="addJob(event)">
+  <label>URL <input name="url" type="url" required placeholder="https://jobs.lever.co/…"></label>
+  <label>Company <input name="company" placeholder="read from the posting"></label>
+  <label>Role <input name="title" placeholder="read from the posting"></label>
+  <fieldset class="choice"><legend>Put it in</legend>
+    <label><input type="radio" name="queue" value="review" checked> New: decide later in the list</label>
+    <label><input type="radio" name="queue" value="apply"> Picked: open the job page now{% if module_on('bank') %} and prep it{% endif %}</label>
+  </fieldset>
+  <button class="primary" type="submit">Add</button>
+</form>
+<div id="added" class="added" hidden></div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Answer bank{% endblock %}
+{% block body %}
+<div class="bar">
+  <div><h1>Answer bank <span class="muted">{{ rows|length }}</span></h1>
+  <p class="muted">Only Approved answers are used in forms, word for word. New questions met during prep land here as Draft.
+    Contact details and these answers stay on this computer.</p></div>
+  <div class="actions filters">
+    <a class="{{ 'on' if not flt }}" href="{{ url_for('bank_page') }}">All</a>
+    <a class="{{ 'on' if flt == 'draft' }}" href="{{ url_for('bank_page', filter='draft') }}">Draft</a>
+    <a class="{{ 'on' if flt == 'empty' }}" href="{{ url_for('bank_page', filter='empty') }}">Empty</a>
+  </div>
+</div>
+{% for a in rows %}
+<div class="q bankrow" data-id="{{ a.answer_id }}">
+  <div class="label">{{ a.question }} <span class="muted">{{ a.answer_id }} · {{ a.kind }} · used {{ a.uses }}×{% if a.kind in ('fact', 'eeo') and a.answer_id in ('first_name','last_name','full_name','email','phone') %} · stays on this computer, never sent to an AI{% endif %}</span>
+    <span class="pill {{ a.status|lower }}">{{ a.status }}</span></div>
+  <textarea class="answer-text" rows="{{ 5 if a.kind in ('story', 'company') else 2 }}">{{ a.answer }}</textarea>
+  <input class="short-text" placeholder="Short answer (used when a field has a length limit)" value="{{ a.short }}">
+  <details><summary class="muted">{{ a.aliases|length }} other wording(s) of this question</summary>
+    <textarea class="alias-text" rows="3" placeholder="One wording per line">{{ a.aliases|join('\n') }}</textarea></details>
+  <div class="row">
+    <button onclick="saveBank(this, null)">Save</button>
+    {% if a.status != 'Approved' %}<button class="primary" onclick="saveBank(this, 'Approved')">Save & approve</button>
+    {% else %}<button onclick="saveBank(this, 'Draft')">Back to draft</button>{% endif %}
+    <button class="small" onclick="deleteBank(this)">Delete</button>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

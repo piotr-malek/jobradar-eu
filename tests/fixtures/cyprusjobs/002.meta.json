@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.cyprusjobs.com/sitemap-jobs.xml",
+ "status": 200,
+ "content_type": "application/xml; charset=utf-8"
+}

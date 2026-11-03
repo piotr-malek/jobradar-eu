@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://pam-stilling-feed.nav.no/api/publicToken",
+ "status": 200,
+ "content_type": "text/plain;charset=utf-8"
+}

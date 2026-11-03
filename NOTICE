@@ -1,0 +1,32 @@
+Job Radar (jobradar-eu)
+Copyright (c) 2026 Piotr Malek. Licensed under the MIT License (see LICENSE).
+
+This package bundles data from third parties, under their own licences:
+
+1. GeoNames
+   Files: src/jobradar/normalize/data/cities.tsv.gz (derived from cities15000 and countryInfo)
+   Source: https://www.geonames.org/
+   Licence: Creative Commons Attribution 4.0 (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/
+   Changes: one row per city name or alternate name, with country, population, latitude and longitude.
+
+2. LastRound AI ATS directory
+   Files: rows with origin "lastround" in src/jobradar/defaults/ats_registry.csv.gz
+   Source: https://ndownloader.figshare.com/files/67239956 (figshare)
+   Licence: Creative Commons Attribution 4.0 (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/
+   Changes: only company board slugs that answered and listed at least one job open to Europe are kept;
+   the vendor, slug and company name are re-checked against the live board.
+
+3. open-jobs-data by ConorsCode
+   Files: rows with origin "open_jobs_data" in src/jobradar/defaults/ats_registry.csv.gz
+   Source: https://github.com/ConorsCode/open-jobs-data
+   Licence: MIT License, Copyright (c) ConorsCode
+   Changes: company board slugs only, filtered as above. The `open_jobs_data` source reads the
+   project's published daily snapshot at run time; it is not bundled.
+
+4. Common Crawl
+   Files: rows with origin "commoncrawl" in src/jobradar/defaults/ats_registry.csv.gz
+   Source: https://commoncrawl.org/ (URL index), used under the Common Crawl Terms of Use
+   Changes: only public job-board URLs (vendor + company slug) were extracted from the index.
+
+Recorded HTTP responses under tests/fixtures/ are copies of public job listings, kept only to test the
+parsers offline. Job postings belong to the employers and boards that published them.

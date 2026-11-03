@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Jobs{% endblock %}
+{% block body %}
+<div class="bar">
+  <div class="tabs">
+    {% for key, label in tabs %}<a class="{{ 'on' if tab == key }}" href="{{ url_for('morning', tab=key) }}">{{ label }} <span class="muted">{{ counts[key] }}</span></a>{% endfor %}
+  </div>
+  <div class="actions">
+    {% if tab == 'picked' and module_on('bank') %}
+    <button class="primary" onclick="prepAll(this, false)" title="Read each picked job's form and answer it from the bank">Prep all</button>
+    {% endif %}
+  </div>
+</div>
+
+<form class="filters" method="get">
+  <input type="hidden" name="tab" value="{{ tab }}">
+  <select name="family" onchange="this.form.submit()"><option value="">All roles</option>
+    {% for f in families %}<option {{ 'selected' if flt.family == f }}>{{ f }}</option>{% endfor %}</select>
+  <select name="setup" onchange="this.form.submit()"><option value="">Any setup</option>
+    {% for k, v in section_label.items() %}<option value="{{ k }}" {{ 'selected' if flt.setup == k }}>{{ v }}</option>{% endfor %}</select>
+  <select name="country" onchange="this.form.submit()"><option value="">Any country</option>
+    {% for c in countries %}<option {{ 'selected' if flt.country == c }}>{{ c }}</option>{% endfor %}</select>
+  {% if full() %}<select name="fit" onchange="this.form.submit()"><option value="">Any fit</option>
+    {% for n in [5, 4, 3] %}<option value="{{ n }}" {{ 'selected' if flt.fit == n|string }}>fit {{ n }}+</option>{% endfor %}</select>{% endif %}
+  {% if tab == 'new' and hidden %}<label class="inline"><input type="checkbox" name="hidden" value="1" {{ 'checked' if flt.hidden }} onchange="this.form.submit()"> show {{ hidden }} low-fit</label>{% endif %}
+</form>
+
+{% if tab == 'new' %}<p class="muted keys">Keys: <b>j</b>/<b>k</b> move · <b>p</b> pick (opens the posting) · <b>s</b> skip · <b>l</b> later · <b>o</b> open · <b>Enter</b> details</p>{% endif %}
+
+{% if not rows %}
+<p class="empty">{% if tab == 'new' %}Nothing new. The next overnight run brings more{% if not last_night %}; the first one starts from the setup's last step{% endif %}.{% else %}Nothing here yet.{% endif %}</p>
+{% else %}
+<div class="jobs" id="jobs">
+{% for r in rows %}
+  <article class="job {{ 'hidden-fit' if r.hidden }}" data-id="{{ r.job_id }}" data-url="{{ r.posting_url or r.url }}" tabindex="0">
+    <div class="head">
+      <div>
+        <a class="title" href="{{ url_for('job_page', job_id=r.job_id) }}">{{ r.title }}</a>
+        <div class="sub">{{ r.company }} · {{ r.location_display }}{% if r.salary or r.screen_salary %} · {{ r.screen_salary or r.salary }}{% endif %}</div>
+      </div>
+      <div class="side">
+        {% if r.fit %}<span class="fit fit{{ r.fit }}" title="LLM fit 1-5">{{ r.fit }}</span>{% endif %}
+        <span class="pill">{{ section_label.get(r.section, r.section or '') }}</span>
+        {% if r.family_label %}<span class="pill">{{ r.family_label }}</span>{% endif %}
+      </div>
+    </div>
+    {% if r.summary %}<p class="summary">{{ r.summary }}</p>{% endif %}
+    {% if r.watch_out %}<p class="watch">⚠ {{ r.watch_out|join(' · ') }}</p>{% endif %}
+    <p class="why muted">
+      {% if r.why %}Matched: {{ r.why.family or r.family }}{% if r.why.stack %} · stack {{ r.why.stack|join(', ') }}{% endif %}{% endif %}
+      {% if r.flags %} · {{ r.flags|reject('equalto', 'top_pick')|join(', ') }}{% endif %}
+      {% if r.sources %} · via {{ r.sources|join(', ') }}{% endif %}
+      {% if r.same_company %}<br>Same company: {{ r.same_company }}{% endif %}
+    </p>
+    <div class="row-actions">
+      {% if tab in ('new', 'later', 'skipped') %}
+      <button class="primary small" onclick="decide(this, 'picked', true)">Pick</button>
+      {% if tab != 'skipped' %}<button class="small" onclick="decide(this, 'skipped')">Skip</button>{% endif %}
+      {% if tab == 'new' %}<button class="small" onclick="decide(this, 'later')">Later</button>{% endif %}
+      {% elif tab == 'picked' %}
+      <a class="button small primary" href="{{ url_for('job_page', job_id=r.job_id) }}">Apply</a>
+      <button class="small" onclick="decide(this, 'skipped')">Not applying</button>
+      {% else %}
+      <select class="stage" onchange="decide(this, this.value)">{% for s in stages %}<option {{ 'selected' if r.status == s }}>{{ s }}</option>{% endfor %}</select>
+      <span class="muted">{{ (r.status_at or '')[:10] }}</span>
+      {% endif %}
+      <a class="small" href="{{ r.posting_url or r.url }}" target="_blank" rel="noopener">posting ↗</a>
+    </div>
+  </article>
+{% endfor %}
+</div>
+{% endif %}
+<script>const RUNNING = false, TAB = "{{ tab }}";</script>
+{% endblock %}

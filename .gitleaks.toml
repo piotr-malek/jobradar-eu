@@ -1,0 +1,12 @@
+# gitleaks config: the default rules plus reviewed false positives.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public search-only Algolia keys that the boards ship in their own frontends (sources/generic/algolia.py)"
+paths = ['''src/jobradar/sources/generic/algolia\.py''']
+regexes = ['''d1d7f2c8696e7b36837d5ed337c4a319''', '''d4ceccfb371537bb6eab4cebd7f33f98''']
+
+[[allowlists]]
+description = "Not secrets: LLM model names and application-form question ids"
+regexes = ['''^llama-[\w.-]+$''', '''^question_\d+$''']

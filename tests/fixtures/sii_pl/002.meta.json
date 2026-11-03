@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://sii.pl/job-offer-sitemap.xml",
+ "status": 200,
+ "content_type": "text/xml"
+}

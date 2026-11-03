@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://rocketjobs.pl/robots.txt",
+ "status": 200,
+ "content_type": "text/plain;charset=UTF-8"
+}

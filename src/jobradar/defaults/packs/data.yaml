@@ -1,0 +1,124 @@
+# Role pack: data & analytics engineering (analytics engineer, data engineer, BI/ETL/DWH developer, data architect).
+# Families are tried in order across all active packs; the first pattern that matches the title wins.
+label: Data & analytics engineering
+description: Analytics engineer, data engineer, BI / ETL / data-warehouse developer, data architect, database developer.
+
+families:
+  data:
+    tier: core
+    priority: 40
+    label: ""
+    any:
+      - analytics?[- ]?engineer(?:s|ing)?
+      - analytical engineer
+      - analytics developer
+      - (?:big |cloud |senior |junior |lead |mid |principal )?data[- ]?engineer(?:s|ing)?
+      - data (?:platform|integration|infrastructure|pipelines?|product|warehouse|warehousing|ops|reliability|quality|modeling|modelling) (?:engineer|developer|specialist)
+      - data (?:and|&) (?:ml|machine learning) engineer
+      - dataops
+      - data modell?er
+      - data architect
+      - dbt (?:developer|engineer)
+      - (?:bi|business intelligence) (?:engineer|developer|architect|specialist|consultant)
+      - '(?:power ?bi|microsoft fabric|fabric|looker|tableau|qlik)(?: \w+)? (?:developer|engineer|specialist|consultant|administrator|expert)'
+      - (?:developer|programista|konsultant|specjalista) (?:power ?bi|looker|tableau|qlik)
+      - (?:pl/|t-)?sql (?:developer|engineer)
+      - data (?:developer|specialist|consultant)
+      - '(?:informatica|ssis|talend)(?: power ?center)? (?:developer|engineer|programmer)'
+      - inzynieri\w* analityczn\w*
+      - architekt\w* (?:ds\.? )?(?:modelowania danych|hd|bi|hurtowni danych)
+      - etl|elt
+      - (?:dwh|data ?warehouse|lakehouse) (?:engineer|developer|specialist|architect|entwickler)
+      - database[- ]?(?:engineer|developer)
+      - (?:bigquery|gcp|snowflake|databricks|spark|pyspark) (?:engineer|developer)
+      - inzynier\w* danych
+      - specjali\w* (?:ds\.? )?(?:\w+ )?(?:hurtowni danych|baz danych|bi|etl|danych)
+      - (?:programista|specjalista|inzynier|developer|konsultant) (?:\w+ )?(?:bi|etl|sql|hurtowni danych|baz danych)
+      - daten[- ]?engineer|dateningenieur\w*
+      - '(?:pessoa )?engenheir[oa](?: ?\([ao]\)| ?/[ao])? (?:de dados|analitic[oa])'
+      - 'ingenier[oa](?: ?\([ao]\)| ?/as?)? (?:de )?(?:\w+ de )?datos'
+      - '(?:architecte|ingenieur|developpeur)\S* (?:de |des )?(?:data|donnees)|data architecte'
+      - dataingenj\w*|dataingeni\w*
+      - ingegner[ei] (?:dei )?dati
+
+# A title matching one of these is not this pack's role ("Frontend Data Engineer" is still kept: the rest of the title
+# names data work), unless the remainder of the title has a `family_exclude_ok` word.
+family_exclude: ['software engineer', 'software developer', 'frontend', 'front end', 'front-end', 'backend', 'back end',
+                 'back-end', 'full ?stack', 'fullstack', 'devops', 'sre', 'site reliability', 'mobile', 'ios', 'android',
+                 'qa', 'quality assurance', 'test(?:ing)? engineer', 'tester', 'security', 'cyber', 'network', 'embedded',
+                 'hardware', 'firmware', 'mechanical', 'electrical', 'civil', 'chemical', 'process engineer', 'designer',
+                 'product manager', 'project manager', 'program manager', 'product owner', 'scrum master', 'java developer',
+                 '\.net developer', 'php developer', 'game', 'unity', 'data entry', 'data center', 'datacenter',
+                 'data centre', 'data protection', 'master data', 'analyst', 'analityk', 'analist\w*', 'analyste',
+                 'data scien\w*', 'scientist']
+family_exclude_ok: ['data', 'analytics', 'analytic', 'bi', 'etl', 'elt', 'warehouse', 'dwh', 'pipeline', 'danych', 'dbt',
+                    'bigquery', 'lakehouse', 'analytics engineer', 'bi developer']
+
+stack:
+  weights: {dbt: 3, bigquery: 3, snowflake: 2, databricks: 2, airflow: 2, dagster: 1, prefect: 1, looker: 2,
+            "looker studio": 1, terraform: 1, python: 1, sql: 1, dataform: 2, spark: 1, kafka: 1, fivetran: 1,
+            airbyte: 1, dlt: 1, redshift: 1, "power bi": 1, tableau: 1, gcp: 1, aws: 0, azure: 0}
+  patterns:
+    dbt: '\bdbt\b'
+    bigquery: 'big ?query'
+    gcp: '\bgcp\b|google cloud'
+    airflow: 'airflow|cloud composer'
+    looker: '\blooker\b(?! studio)'
+    looker studio: 'looker studio|data studio'
+    terraform: 'terraform'
+    python: '\bpython\b'
+    sql: '\bsql\b'
+    dataform: 'dataform'
+    snowflake: 'snowflake'
+    databricks: 'databricks'
+    fivetran: 'fivetran'
+    airbyte: 'airbyte'
+    dlt: '\bdlt\b|dlthub'
+    spark: '\bspark\b|pyspark'
+    kafka: 'kafka'
+    dagster: 'dagster'
+    prefect: '\bprefect\b'
+    power bi: 'power ?bi'
+    tableau: 'tableau'
+    redshift: 'redshift'
+    aws: '\baws\b|amazon web services'
+    azure: '\bazure\b'
+
+# Board search terms, English first. Boards with a per-language search use the language lists too.
+search_terms:
+  en: [data engineer, analytics engineer, bi developer, bi engineer, etl, dbt, data architect, sql developer, power bi,
+       data warehouse]
+  pl: [inżynier danych]
+  de: [data engineer, dateningenieur]
+  sv: [dataingenjör]
+  es: [ingeniero de datos]
+  pt: [engenheiro de dados]
+  fr: [ingénieur data]
+
+# Slug words for sitemap boards (fetched first), strongest first.
+prefer: ['analytics-engineer|data-engineer|data-platform|dwh|etl|dbt|bigquery|snowflake|databricks|power-bi',
+         'data|analytics|-bi-|business-intelligence']
+
+# Board categories that list these roles.
+boards:
+  nofluffjobs:
+    categories: [data, business-intelligence]
+    # the server caps every listing at 100 offers (by last bump): city slices see every offer daily
+    slices: ['category%3Ddata%20city%3Dremote', 'category%3Ddata%20city%3D{city}']
+  justjoin: {categories: [data, analytics]}
+  remoterocketship: {roles: [data-engineer, analytics-engineer, bi-developer, data-architect]}
+  michaelpage_pl: {paths: [data, data-engineer, data-analyst, analytics-engineer, bi, power-bi, snowflake]}
+  remotive: {categories: [data]}
+  themuse: {categories: [Data and Analytics, Data Science]}
+  getdataengineeringjobs: {enabled: true}
+
+golden:
+  keep: [Analytics Engineer, Senior Analytics Engineer, Data Engineer (m/w/d), Inżynier Danych, Big Data Engineer,
+         Data Platform Engineer, BI Developer, Power BI Developer, Looker Developer, ETL Developer, DWH Engineer,
+         Data Architect, Database Developer, Snowflake Engineer, Engenheiro de Dados, Ingeniero de Datos,
+         Ingénieur Data, Dataingenjör, Ingegnere dei dati, SQL Developer, Data Warehouse Developer,
+         Analytics Engineer (dbt), Lakehouse Engineer, Programista BI, Specjalista ds. hurtowni danych,
+         Data Integration Engineer, DataOps Engineer, Data Modeler, Datenengineer, Data Engineering Specialist]
+  drop: [Data Analyst, Data Scientist, Software Engineer, Frontend Developer, Data Center Technician, Master Data Specialist,
+         Product Manager, Data Entry Clerk, Backend Engineer, Java Developer, DevOps Engineer, QA Engineer,
+         Data Protection Officer]

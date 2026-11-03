@@ -1,0 +1,82 @@
+# Role pack: software quality assurance and test automation.
+label: QA & test automation
+description: QA engineer, test automation engineer, SDET, software tester, QA analyst.
+
+families:
+  qa:
+    tier: core
+    priority: 30
+    label: QA
+    any:
+      - '(?:qa|qe|qc) (?:engineer|analyst|specialist|tester|automation|consultant)'
+      - 'qa\b'
+      - 'quality assurance'
+      - 'sdet|software development engineer in test|(?:software )?engineer in test'
+      - 'test (?:engineer|automation|analyst|specialist|consultant|developer|architect|manager)\w*'
+      - '(?:automation|automated|manual|performance|software|mobile|api) (?:test|testing) (?:engineer|analyst|specialist|developer)\w*'
+      - '(?:automation|automated|manual|performance|load|software|mobile|api|functional) tester\w*'
+      - '(?:software[- ]?)?tester\w*'
+      - 'testautomatisierung\w*|test[- ]?(?:ingenieur|entwickler|automatisierer)\w*|softwaretester\w*'
+      - 'inzynier\w* (?:ds\.? )?(?:testow\w*|testowania|jakosci oprogramowania)'
+      - 'specjalist\w* (?:ds\.? )?(?:testow\w*|testowania)|analityk\w* testow\w*|automatyzacj\w* testow\w*'
+      - '(?:ingenier|analista|tester|especialista|automatizador)\w* (?:de )?(?:pruebas|testing|calidad de software|qa)'
+      - '(?:engenheir|analista|tester|especialista)\w*(?:\(a\)|/a)? (?:de )?(?:testes|teste|qualidade de software|qa)'
+      - '(?:ingenieur|analyste|testeur|consultant)\w* (?:de )?(?:test|tests|qualite logicielle|recette|qa)'
+      - 'testeur\w*'
+
+family_exclude: ['hardware', 'electronic\w*', 'electrical', 'mechanical', 'chemical', 'laborator\w*', 'lab', 'pharma\w*', 'clinical',
+                 'food', 'automotive', 'battery', 'pcb', 'rf', 'manufacturing', 'production', 'civil', 'medical', 'sales',
+                 'marketing', 'recruit\w*', 'drug', 'material\w*', 'welding', 'inspector', 'data quality', 'backend',
+                 'frontend', 'devops', 'security', 'penetration', 'pen', 'pentest\w*', 'red team', 'ethical']
+family_exclude_ok: ['sdet', 'software test\w*', 'software engineer in test']
+
+stack:
+  weights: {selenium: 3, playwright: 3, cypress: 3, python: 1, java: 1, typescript: 1, javascript: 1, postman: 1, jira: 1,
+            "api testing": 2, appium: 2, jmeter: 2, "ci/cd": 1, cucumber: 1, testng: 1, pytest: 1, k6: 1, sql: 1, robot framework: 1,
+            istqb: 1}
+  patterns:
+    selenium: 'selenium|webdriver'
+    playwright: 'playwright'
+    cypress: 'cypress'
+    python: '\bpython\b|pytest'
+    java: '\bjava\b(?!script)|testng|junit'
+    typescript: 'typescript'
+    javascript: 'javascript|\bjest\b'
+    postman: 'postman|rest ?assured|soapui'
+    jira: '\bjira\b|testrail|xray|zephyr'
+    api testing: 'api test\w*'
+    appium: 'appium|espresso|xcuitest|detox'
+    jmeter: 'jmeter|gatling|locust|performance test\w*'
+    ci/cd: 'ci/?cd|jenkins|github actions|gitlab'
+    cucumber: 'cucumber|gherkin|\bbdd\b'
+    testng: 'testng'
+    pytest: 'pytest'
+    k6: '\bk6\b'
+    sql: '\bsql\b'
+    robot framework: 'robot framework'
+    istqb: 'istqb'
+
+search_terms:
+  en: [qa engineer, test automation engineer, sdet, software tester, qa automation engineer, quality assurance engineer, manual tester]
+  pl: [tester oprogramowania, inżynier jakości testów]
+  de: [qa engineer, testautomatisierer]
+  es: [ingeniero qa]
+  pt: [engenheiro de qa]
+  fr: [ingénieur test]
+
+prefer: ['qa|sdet|test-automation|tester|quality-assurance|test-engineer', 'testing|automation-engineer|quality']
+
+boards:
+  nofluffjobs: {categories: [testing]}
+  justjoin: {categories: [testing]}
+
+golden:
+  keep: [QA Engineer, Senior QA Engineer, QA Automation Engineer, QA Analyst, QA Tester, Quality Assurance Engineer,
+         Test Automation Engineer, Software Test Engineer, Test Engineer, SDET, Software Development Engineer in Test,
+         Software Engineer in Test, Automation Tester, Manual Tester, Software Tester, Performance Test Engineer,
+         Mobile QA Engineer, API Test Engineer, QA Specialist, Test Analyst, Tester Oprogramowania, Inżynier Testów,
+         Tester Manualny, Specjalista ds. Testowania, Automatyzacja Testów Engineer, QA Engineer (m/w/d),
+         Testautomatisierer (m/w/d), Softwaretester (m/w/d), Ingeniero QA, Analista de QA, Ingeniero de Pruebas,
+         Engenheiro(a) de QA, Analista de Testes, Ingénieur QA (H/F), Ingénieur Test Logiciel, Testeur Logiciel (H/F)]
+  drop: [Backend Developer, DevOps Engineer, Frontend Developer, Hardware Test Engineer, Mechanical Test Engineer,
+         Pharma QA Specialist, Sales Engineer, Data Quality Analyst, Quality Manager, Laboratory Tester, Product Manager]

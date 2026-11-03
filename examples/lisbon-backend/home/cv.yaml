@@ -1,0 +1,42 @@
+# CV source (local only: it has contact details). `jr cv` renders one PDF per variant into ~/.job-radar/out/cv.
+name: Ana Ferreira
+file_name: Ana_Ferreira_CV.pdf
+contact: ["Lisbon, Portugal", "ana.ferreira@example.com", "linkedin.com/in/ana-ferreira-example"]
+skills:
+  backend: {label: Backend, items: "Python (FastAPI, Django), Go, PostgreSQL, Redis, Kafka"}
+  cloud: {label: Cloud, items: "AWS (ECS, RDS, SQS), Docker, Kubernetes, Terraform"}
+experience:
+  - company: Bilhete (made up)
+    place: Lisbon
+    roles:
+      - id: bilhete
+        title: Backend Engineer
+        dates: 2023 – 2026
+        bullets:
+          pay: Built the payment service for about 40,000 orders a day (FastAPI, PostgreSQL, Stripe).
+          kafka: Moved order events from cron jobs to Kafka; refunds went from next-day to minutes.
+          oncall: {default: "On call for payments; wrote the runbooks the team still uses.", platform: "Ran on-call for payments; wrote the runbooks and Grafana alerts."}
+  - company: GymBook (made up)
+    place: Porto
+    roles:
+      - id: gymbook
+        title: Python Developer
+        dates: 2021 – 2023
+        bullets:
+          api: Django REST API for class bookings in 120 gyms.
+projects:
+  ratelimit: {name: "go-ratelimit", text: "Open-source Go rate limiter, 300 GitHub stars."}
+education:
+  - {school: "Universidade de Lisboa (made up entry)", degree: "BSc Computer Science", dates: "2017 – 2021"}
+variants:
+  default:
+    headline: Backend Engineer · Python, Go, PostgreSQL, Kafka
+    summary: Backend engineer who builds payment and booking APIs that run all day without fuss.
+    skills: [backend, cloud]
+    projects: [ratelimit]
+  platform:
+    headline: Backend / Platform Engineer · AWS, Kubernetes, Kafka
+    summary: Backend engineer who also runs what she builds: deploys, alerts, on-call.
+    skills: [cloud, backend]
+    projects: [ratelimit]
+    bullets: {bilhete: [kafka, oncall, pay]}

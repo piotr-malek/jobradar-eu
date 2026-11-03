@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.impactpool.org/search?jf%5B%5D=104&jf%5B%5D=838&jf%5B%5D=65&jf%5B%5D=32381&jf%5B%5D=32382&s%5B%5D=1&s%5B%5D=2&s%5B%5D=12&s%5B%5D=14&s%5B%5D=9&page=3&per_page=100",
+ "status": 200,
+ "content_type": "text/html; charset=utf-8"
+}

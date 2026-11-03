@@ -1,0 +1,21 @@
+name: New job board
+description: Suggest a board or API to add, or ask for your board to be removed.
+labels: [source]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Request
+      options: [Add this board, Remove this board (I run it)]
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Board URL
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Countries and roles it covers, and whether it has an API, RSS feed or sitemap

@@ -1,0 +1,15 @@
+packs: [data, gtm-revops, ml-ai]
+seniority: {min: junior, max: mid}
+# titles skipped without reading: stacks not known, presales/devrel/QA/science roles, non-GCP architects
+never: ['azure', 'snowflake', 'databricks', 'power ?bi', 'fabric', 'data factory', 'synapse', 'sap', 'oracle', 'db2',
+        'informatica', 'ipc', 'ssis', 'talend', 'dataiku', 'druid', 'salesforce', 'power platform', 'copilot studio',
+        'java', 'scala', 'hadoop', 'big data', 'spark', 'pyspark', 'kafka',
+        'solutions? (?:engineer|architect|consultant)', '(?:pre-?sales|sales|customer|field) (?:engineer|architect|consultant)',
+        'presales', 'pre-sales', 'developer (?:advocate|advocacy|relations|evangelist|experience)', 'devrel', 'evangelist',
+        'technical (?:writer|content)', 'community engineer', 'forward[- ]deployed',
+        '(?<!data )(?<!data & )(?<!data and )(?<!data/)(?<!data/ )(?:ai|a\.i\.|applied ai|genai|gen ai|generative ai|agentic ai|llm|ai/ml|ml/ai|machine learning/ai) (?:engineer|developer)',
+        'llm applications? (?:engineer|developer)', '(?:bi|business intelligence) developer', 'qa', 'test(?:ing)?', 'sdet',
+        'data scien\w*', 'scientist', 'architect\w*', 'architekt\w*', 'arquitect\w*']
+never_unless: ['gcp', 'big ?query', 'google cloud']
+keep_titles: ['(?:senior|sr\.?) (?:\w+ ?[/&]? ?){0,2}analytic\w*(?: (?:&|and|/) data)?[- ]?engineer\w*',
+              'analytic\w*[- ]?engineer\w*,? (?:[-–] )?(?:senior|sr\b)']

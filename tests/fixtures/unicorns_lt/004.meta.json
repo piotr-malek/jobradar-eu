@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://unicorns.lt/api/more-job",
+ "status": 200,
+ "content_type": "application/json"
+}

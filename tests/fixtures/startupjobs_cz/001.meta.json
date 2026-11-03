@@ -1,0 +1,6 @@
+{
+ "method": "POST",
+ "url": "https://back.startupjobs.cz/api/search-offers?page=1",
+ "status": 200,
+ "content_type": "application/ld+json"
+}

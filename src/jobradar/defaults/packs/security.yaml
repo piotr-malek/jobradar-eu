@@ -1,0 +1,89 @@
+# Role pack: information / application / cloud security engineering.
+label: Security engineering
+description: Security engineer, application security (AppSec), penetration tester, SOC analyst, cloud security, IAM, threat and incident response.
+
+families:
+  security:
+    tier: core
+    priority: 30
+    label: Security
+    any:
+      - '(?:\w+ )?security[- ](?:engineer|architect|analyst|specialist|consultant|researcher|developer|administrator|expert|operations)\w*'
+      - 'cyber[- ]?security'
+      - 'cyber (?:engineer|analyst|specialist|architect|defen[sc]e|threat|consultant)\w*'
+      - 'appsec|devsecops|prodsec|secops|infosec|cloudsec|product security|application security'
+      - 'pentest\w*|penetration test\w*|red team\w*|blue team\w*|ethical hacker\w*|offensive security'
+      - 'soc (?:analyst|engineer|specialist|operator)\w*|security operations'
+      - '(?:threat|vulnerability|malware|incident response|detection|forensics?|dfir|siem|grc) (?:engineer|analyst|researcher|hunter|specialist|consultant|developer)\w*'
+      - 'threat hunt\w*|vulnerability management|analityk\w* soc|soc analityk\w*'
+      - '(?:iam|identity (?:and|&) access(?: management)?|identity) (?:engineer|specialist|architect|analyst|consultant|administrator)\w*'
+      - '(?:it|informations?|cyber)[- ]?(?:sicherheit|security)\w*'
+      - 'sicherheitsexperte\w*|sicherheitsarchitekt\w*'
+      - '(?:specjalist|inzynier|analityk|architekt|konsultant)\w* (?:ds\.? )?(?:cyberbezpieczenstw\w*|bezpieczenstwa (?:it|informacji|systemow|sieci|aplikacji|teleinformatycznego))'
+      - 'cyberbezpieczenstw\w*'
+      - '(?:ingenier|analista|especialista|consultor|arquitect|experto)\w* (?:de )?(?:ciberseguridad|seguridad (?:informatica|de la informacion|ofensiva|cloud|it|ti|de aplicaciones))'
+      - 'ciberseguridad|ciberseguranca'
+      - '(?:engenheir|analista|especialista|consultor|arquitet)\w*(?:\(a\)|/a)? (?:de )?(?:ciberseguranca|seguranca (?:da informacao|cibernetica|ofensiva|ti|cloud|de aplicacoes))'
+      - '(?:ingenieur|analyste|consultant|expert|architecte)\w* (?:en |de )?(?:cybersecurite|securite (?:informatique|applicative|offensive|des systemes d.information|si|cloud))'
+      - 'cybersecurite|securite informatique|pentester\w*'
+
+family_exclude: ['sales', 'physical', 'guard', 'fire', 'safety', 'health', 'building', 'facility', 'facilities', 'food', 'occupational',
+                 'hse', 'hsse', 'account', 'recruit\w*', 'lawyer', 'counsel', 'marketing', 'airport', 'aviation', 'nuclear',
+                 'construction', 'social', 'border', 'police', 'military', 'armed', 'door', 'cctv', 'alarm', 'event',
+                 'backend', 'frontend', 'full[- ]?stack', 'data scien\w*', 'machine learning', 'qa', 'sdet']
+family_exclude_ok: ['cyber\w*', 'appsec', 'devsecops', 'infosec', 'it', 'information', 'cloud', 'application', 'pentest\w*']
+
+stack:
+  weights: {siem: 2, splunk: 2, sentinel: 1, crowdstrike: 1, "burp suite": 2, owasp: 2, nessus: 1, "penetration testing": 2,
+            iam: 1, "zero trust": 1, soc2: 1, "iso 27001": 1, nist: 1, "cloud security": 2, "threat modeling": 2, python: 1,
+            kubernetes: 1, terraform: 1, edr: 1, mitre: 1}
+  patterns:
+    siem: '\bsiem\b|elastic security|qradar'
+    splunk: 'splunk'
+    sentinel: 'sentinel|defender'
+    crowdstrike: 'crowdstrike|sentinelone|\bedr\b|\bxdr\b'
+    burp suite: 'burp ?suite|metasploit|kali|nmap'
+    owasp: 'owasp|sast|dast|\bsca\b'
+    nessus: 'nessus|qualys|tenable|vulnerability (?:scan|manage)\w*'
+    penetration testing: 'pentest\w*|penetration test\w*|red team\w*'
+    iam: '\biam\b|okta|entra|active directory|\bsso\b'
+    zero trust: 'zero[- ]trust'
+    soc2: 'soc ?2'
+    iso 27001: 'iso ?27001'
+    nist: '\bnist\b|\bcis\b'
+    cloud security: 'cloud security|aws security|azure security|\bcspm\b|wiz\b|prisma cloud'
+    threat modeling: 'threat model\w*|stride'
+    python: '\bpython\b'
+    kubernetes: 'kubernetes|\bk8s\b'
+    terraform: 'terraform'
+    edr: 'incident response|forensics?|\bdfir\b'
+    mitre: 'mitre|att&ck'
+
+search_terms:
+  en: [security engineer, application security engineer, penetration tester, soc analyst, cloud security engineer, cybersecurity engineer, appsec, devsecops]
+  pl: [specjalista ds. cyberbezpieczeństwa, pentester]
+  de: [it security engineer, it-sicherheit]
+  es: [ingeniero de ciberseguridad]
+  pt: [engenheiro de segurança da informação]
+  fr: [ingénieur cybersécurité]
+
+prefer: ['security-engineer|appsec|application-security|pentest|penetration|soc-analyst|cybersecurity|cyber-security|devsecops',
+         'security|cyber|infosec|-iam-|threat|vulnerability']
+
+boards:
+  nofluffjobs: {categories: [security]}
+  justjoin: {categories: [security]}
+
+golden:
+  keep: [Security Engineer, Senior Security Engineer, Application Security Engineer, AppSec Engineer, Product Security Engineer,
+         Cloud Security Engineer, Cloud Security Architect, Information Security Analyst, Security Analyst, SOC Analyst,
+         Security Operations Engineer, Penetration Tester, Pentester, Red Team Operator, Offensive Security Engineer,
+         Threat Detection Engineer, Vulnerability Management Analyst, Incident Response Analyst, Malware Analyst,
+         IAM Engineer, Identity and Access Management Specialist, DevSecOps Engineer, Cybersecurity Engineer,
+         Cyber Security Specialist, Security Consultant, Specjalista ds. Cyberbezpieczeństwa, Inżynier Bezpieczeństwa IT,
+         Analityk SOC, IT-Security-Engineer (m/w/d), IT-Sicherheitsexperte (m/w/d), Ingeniero de Ciberseguridad,
+         Analista de Seguridad Informática, Engenheiro(a) de Segurança da Informação, Analista de Cibersegurança,
+         Ingénieur Cybersécurité (H/F), Consultant Sécurité Informatique]
+  drop: [Security Guard, Physical Security Specialist, Cybersecurity Sales Executive, Backend Developer, Data Protection Officer,
+         Occupational Health and Safety Specialist, Network Engineer, DevOps Engineer, Site Reliability Engineer,
+         Security Sales Engineer, Fire Safety Engineer, QA Engineer]

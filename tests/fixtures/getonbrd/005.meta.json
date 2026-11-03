@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.getonbrd.com/api/v0/search/jobs?query=dbt&per_page=50&page=1&expand=%5B%22company%22%2C%22location_tenants%22%2C%22location_cities%22%2C%22tags%22%2C%22seniority%22%5D",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

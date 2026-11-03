@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.karriere.at/jobs",
+ "status": 200,
+ "content_type": "application/json"
+}

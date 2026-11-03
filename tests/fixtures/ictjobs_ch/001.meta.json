@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://ictjobs.ch/robots.txt",
+ "status": 200,
+ "content_type": "text/plain; charset=utf-8"
+}

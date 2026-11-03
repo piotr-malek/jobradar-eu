@@ -1,0 +1,82 @@
+# Role pack: machine learning, AI and LLM engineering.
+label: ML & AI engineering
+description: Machine learning engineer, MLOps, AI / LLM engineer, AI automation, data scientist, computer vision / NLP.
+
+families:
+  ai:
+    tier: core
+    priority: 30
+    label: AI/LLM
+    any:
+      - (?:ai|a\.i\.|genai|gen ai|llm|applied ai|generative ai) (?:engineer|developer|automation|integration|solutions|specialist)
+      - ai automation
+      - automation engineer \(?ai
+      - (?:ai|llm) (?:agent|agents) (?:engineer|developer)
+      - forward[- ]deployed engineer
+      - prompt engineer
+      - llm (?:application|applications|app|platform)s? (?:engineer|developer)
+      - agentic\b.{0,30}\b(?:engineer|developer|specialist)
+      - mcp (?:engineer|developer)
+      - ai (?:implementation|enablement|adoption|deployment)\b.{0,25}\b(?:engineer|specialist|consultant|strategist|lead)
+      - ai product engineer
+      - inzynier\w* ai
+      - (?:ingeniero|ingenieur|engenheiro|ingegnere)\S* (?:de |en )?(?:ia|ki|ai)\b
+      - ki[- ](?:engineer|entwickler\w*)
+  ml:
+    tier: core
+    priority: 30
+    label: ML
+    any:
+      - (?:machine learning|ml) (?:engineer|developer|scientist|researcher|ops engineer|platform engineer)
+      - 'mlops(?: engineer)?'
+      - deep learning (?:engineer|scientist|researcher)
+      - '(?:computer vision|cv|nlp|natural language processing|speech(?: recognition)?|recommend\w*(?: systems?)?|search relevance) (?:engineer|scientist|researcher|developer)'
+      - data scien\w*
+      - (?:research|applied) scientist
+      - ai (?:researcher|scientist|research engineer)
+      - research engineer
+      - (?:inzynier|specjalista) (?:ds\.? )?(?:uczenia maszynowego|ml)
+      - (?:cientific[oa]|ingenier[oa]) de datos? (?:e ia|ml)
+
+family_exclude: ['qa', 'test(?:ing)? engineer', 'sales', 'account executive', 'recruit\w*']
+
+stack:
+  weights: {pytorch: 3, tensorflow: 2, "scikit-learn": 1, llm: 2, mlflow: 2, kubeflow: 2, "hugging face": 2, langchain: 1,
+            rag: 2, python: 1, sql: 1, spark: 1, mcp: 1}
+  patterns:
+    pytorch: 'pytorch|\btorch\b'
+    tensorflow: 'tensorflow|keras'
+    scikit-learn: 'scikit|sklearn'
+    llm: '\bllms?\b|openai|anthropic|\bclaude\b|gemini|genai|generative ai'
+    mlflow: 'mlflow'
+    kubeflow: 'kubeflow|vertex ai|sagemaker'
+    hugging face: 'hugging ?face|transformers'
+    langchain: 'langchain|llamaindex|langgraph'
+    rag: '\brag\b|retrieval[- ]augmented'
+    python: '\bpython\b'
+    sql: '\bsql\b'
+    spark: '\bspark\b|pyspark'
+    mcp: 'model context protocol|\bmcp\b'
+
+search_terms:
+  en: [machine learning engineer, ml engineer, ai engineer, llm engineer, mlops, data scientist]
+  de: [ki engineer]
+  pl: [inżynier ai]
+  es: [ingeniero ia]
+
+prefer: ['machine-learning|ml-engineer|mlops|ai-engineer|llm|data-scien', '-ai-|-ml-|artificial-intelligence']
+
+boards:
+  nofluffjobs: {categories: [artificial-intelligence]}
+  justjoin: {categories: [ai]}
+  remoterocketship: {roles: [machine-learning-engineer, data-scientist]}
+
+golden:
+  keep: [Machine Learning Engineer, ML Engineer, MLOps Engineer, AI Engineer, LLM Engineer, Applied AI Engineer,
+         Generative AI Developer, AI Automation Engineer, Agentic Integration & MCP Engineer, Forward Deployed Engineer,
+         Prompt Engineer, Data Scientist, Research Scientist, Computer Vision Engineer, NLP Engineer,
+         Deep Learning Engineer, Inżynier AI, KI-Engineer (m/w/d), Ingeniero de IA, Research Engineer,
+         AI Product Engineer, Machine Learning Scientist, Recommendation Systems Engineer, ML Platform Engineer,
+         AI Researcher, LLM Platform Engineer, AI Integration Specialist, AI Agents Developer,
+         Speech Recognition Engineer, Applied Scientist]
+  drop: [QA Automation Engineer, AI Sales Executive, Recruiter (AI), Frontend Developer, Data Analyst]

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+{% block body %}
+<ol class="steps">{% for s in steps %}<li class="{{ 'on' if s.id == step }} {{ 'done' if s.id in st.done }} {{ 'skipped' if s.id in st.skipped }}"><a href="{{ url_for('setup.step', step_id=s.id) }}">{{ s.title }}</a></li>{% endfor %}</ol>
+<form id="wiz" class="wiz" data-step="{{ step }}" onsubmit="saveStep(event)">
+
+{% if step == 'welcome' %}
+<h1>Job Radar</h1>
+<p>Every night GitHub fetches jobs from the boards you choose and matches them to your roles, in a private repo of
+  your own. In the morning you open this app, pick the jobs worth applying to and apply. Nothing runs on your computer
+  overnight.</p>
+<div class="cards">
+  <label class="card"><input type="radio" name="mode" value="lite" {{ 'checked' if st.mode != 'full' }}>
+    <h3>Lite</h3><p>Job boards for your countries, matched to your roles. You pick and apply by hand.</p>
+    <p class="muted">Needs: a GitHub account. Optional: an AI key (adds a fit score and summary), free board keys.</p>
+    <p class="muted">≈ 10-15 GitHub Actions minutes a night (of 2,000 free a month). Free.</p></label>
+  <label class="card"><input type="radio" name="mode" value="full" {{ 'checked' if st.mode == 'full' }}>
+    <h3>Full</h3><p>Lite plus thousands of company career pages, an AI screen of every job, an answer bank, per-job
+    drafts, CV and cover-letter PDFs and auto-fill in Chrome (you always click submit).</p>
+    <p class="muted">Needs: GitHub and an AI API key (free tiers work). ≈ 1,400 Actions minutes a month.</p></label>
+</div>
+<p class="muted">You can switch from Lite to Full later (<code>jr setup --upgrade</code>); jobs and decisions are kept.</p>
+
+{% elif step == 'github' %}
+<h1>GitHub</h1>
+<p>Your overnight runs live in a private GitHub repo that this wizard creates. It talks to GitHub through the GitHub CLI (<code>gh</code>).</p>
+<div id="gh-status" class="check {{ 'good' if gh.ok else 'warn' }}">
+{% if not gh.installed %}
+  <p><b>gh is not installed.</b> Install it ({{ gh.help.os }}): <code>{{ gh.help.command }}</code> · <a href="{{ gh.help.url }}" target="_blank" rel="noopener">cli.github.com</a></p>
+{% elif not gh.logged_in %}
+  <p><b>gh is installed but not logged in.</b> In a terminal run <code>{{ gh.fix }}</code> and follow its steps (choose GitHub.com, HTTPS, log in with a browser).</p>
+{% elif gh.missing_scopes %}
+  <p><b>Logged in as {{ gh.login }}</b>, but gh needs the {{ gh.missing_scopes|join(' and ') }} permission{{ 's' if gh.missing_scopes|length > 1 }} to set the run time in your repo's workflow. Run <code>{{ gh.fix }}</code>.</p>
+{% else %}
+  <p><b>Ready:</b> logged in as {{ gh.login }}.</p>
+{% endif %}
+</div>
+<button type="button" onclick="location.reload()">Check again</button>
+
+{% elif step == 'basics' %}
+{% set loc = profile.location or {} %}
+<h1>Where and how you work</h1>
+<div class="grid">
+  <label>Home city <input name="city" list="city-list" value="{{ loc.city or '' }}" oninput="cityLookup(this)" required autocomplete="off"></label>
+  <datalist id="city-list"></datalist>
+  <label>Country (ISO code) <input name="country" value="{{ loc.country or '' }}" maxlength="2" required></label>
+  <input type="hidden" name="lat" value="{{ loc.lat if loc.lat is not none else '' }}"><input type="hidden" name="lon" value="{{ loc.lon if loc.lon is not none else '' }}">
+</div>
+<fieldset><legend>Work setups you take</legend>
+  {% set ws = loc.work_setups or ['remote_eu', 'remote_country', 'hybrid'] %}
+  <label><input type="checkbox" name="work_setups[]" value="remote_eu" {{ 'checked' if 'remote_eu' in ws }}> Remote, anywhere in the EU (including jobs limited to another EU country's residents, flagged)</label>
+  <label><input type="checkbox" name="work_setups[]" value="remote_country" {{ 'checked' if 'remote_country' in ws }}> Remote, hiring in my country</label>
+  <label><input type="checkbox" name="work_setups[]" value="hybrid" {{ 'checked' if 'hybrid' in ws }}> Hybrid within <input class="num" name="hybrid_radius_km" type="number" min="0" value="{{ loc.hybrid_radius_km or 30 }}"> km of home</label>
+  <label><input type="checkbox" name="work_setups[]" value="onsite" {{ 'checked' if 'onsite' in ws }}> On-site (same distance)</label>
+</fieldset>
+<div class="grid">
+  <label>Countries you may work in <span class="muted">(blank = EU/EEA/Switzerland + your country)</span>
+    <input name="work_countries" value="{{ (loc.work_countries or [])|join(', ') }}" placeholder="e.g. PT, ES"></label>
+  <label>Would relocate to <span class="muted">(country codes, blank = no)</span>
+    <input name="relocate_to" value="{{ (loc.relocate_to or [])|join(', ') }}"></label>
+</div>
+<fieldset><legend>Languages and levels</legend>
+  <div id="langs">{% for code, level in (profile.languages or {'en': 'C1'}).items() %}
+    <div class="row lang"><input name="lang_code" value="{{ code }}" maxlength="12" placeholder="en"><select name="lang_level">{% for l in levels %}<option {{ 'selected' if l|lower == level|string|lower }}>{{ l }}</option>{% endfor %}</select></div>{% endfor %}</div>
+  <button type="button" class="small" onclick="addLang()">Add a language</button>
+  <p class="muted">B2 and above count as working languages: jobs requiring another language are dropped; A2-B1 shows as "a plus".</p>
+</fieldset>
+<div class="grid">
+  <label>Contract types <input name="contracts" value="{{ (profile.contracts or ['employment'])|join(', ') }}" placeholder="employment, b2b"></label>
+  <label>Salary expectation <span class="muted">(optional; stays in your local answer bank)</span><input name="salary"></label>
+  <label>Time zone <input name="timezone" value="{{ settings.timezone or '' }}" placeholder="Europe/Lisbon" id="tz"></label>
+  <label>Overnight run at (local time) <input name="run_at" value="{{ settings.run_at or '02:00' }}" pattern="\d\d:\d\d"></label>
+</div>
+
+{% elif step == 'roles' %}
+<h1>Roles</h1>
+<p>Pick the role packs that describe the jobs you want. Several can be combined.</p>
+<div class="cards packs">{% for name, p in packs.items() %}
+  <label class="card"><input type="checkbox" name="packs[]" value="{{ name }}" {{ 'checked' if name in (roles.packs or []) }} onchange="rolesPreview()">
+    <h3>{{ p.label or name }}</h3><p class="muted">{{ p.description or '' }}</p></label>{% endfor %}</div>
+<div class="grid">
+  {% set sen = roles.seniority or {} %}
+  <label>Lowest level <select name="min" onchange="rolesPreview()">{% for l in seniority %}<option {{ 'selected' if l == (sen.min or 'junior') }}>{{ l }}</option>{% endfor %}</select></label>
+  <label>Highest level <select name="max" onchange="rolesPreview()">{% for l in seniority %}<option {{ 'selected' if l == (sen.max or 'senior') }}>{{ l }}</option>{% endfor %}</select></label>
+</div>
+<label>Never words <span class="muted">(one per line: titles with these are dropped, e.g. java, sap)</span>
+  <textarea name="never" rows="3" onchange="rolesPreview()">{{ (roles.never or [])|join('\n') }}</textarea></label>
+<label>Must-have words <span class="muted">(optional; a job needs one of these in its title or text)</span>
+  <textarea name="must_have" rows="2">{{ (roles.must_have or [])|join('\n') }}</textarea></label>
+<label>Extra titles <span class="muted">(optional patterns kept as your own family, e.g. "data steward")</span>
+  <textarea name="extra_titles" rows="2" onchange="rolesPreview()">{{ (roles.extra_titles or [])|join('\n') }}</textarea></label>
+<details><summary>Describe roles no pack covers (needs an AI model)</summary>
+  <textarea id="pack-desc" rows="2" placeholder="e.g. Salesforce administrators and CRM consultants"></textarea>
+  <button type="button" onclick="packDraft(this)">Draft a custom pack</button><div id="pack-out"></div></details>
+<section><h3>Preview <span class="muted">sample titles, kept or dropped</span></h3><div id="preview" class="preview"></div></section>
+
+{% elif step == 'countries_sources' %}
+<h1>Countries and job boards</h1>
+<label>Target countries <span class="muted">(ISO codes)</span>
+  <input name="countries" value="{{ countries|join(', ') }}" onchange="sourcesFor(this)"></label>
+<fieldset><legend>Optional tracks</legend>
+  <label><input type="checkbox" name="opt_in[]" value="polish_only" {{ 'checked' if 'polish_only' in (us.opt_in or []) }}> Polish-only boards and agencies</label>
+  <label><input type="checkbox" name="opt_in[]" value="purpose" {{ 'checked' if 'purpose' in (us.opt_in or []) }}> UN, EU institutions and NGOs (purpose track)</label>
+</fieldset>
+<table class="queue" id="sources"><thead><tr><th>On</th><th>Board</th><th>Covers</th><th>Notes</th></tr></thead><tbody>
+{% for s in sources %}<tr><td><input type="checkbox" class="src" value="{{ s.id }}" {{ 'checked' if s.id not in (us.disable or []) }}></td>
+  <td>{{ s.label }}</td><td>{{ s.countries|join(', ') }}</td>
+  <td class="muted">{% if s.keys %}{{ 'key set' if s.has_keys else 'free key: add it in Free extras' }}{% endif %}{% if s.local_only %} · blocks GitHub, runs from your computer only{% endif %}{% if s.opt_in %} · {{ s.opt_in }}{% endif %}{% if s.packs %} · only for {{ s.packs|join(', ') }}{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+
+{% elif step == 'llm' %}
+<h1>AI model</h1>
+<p>{% if st.mode == 'full' %}Full mode screens every new match overnight (fit 1-5, a summary, watch-outs). That runs on GitHub, so it needs an API provider.{% else %}Optional in Lite: with a model each job gets a fit score, a summary and watch-outs.{% endif %}
+  Free tiers are listed first.</p>
+{% set cur = (llm.default or {}) %}
+<div class="cards">{% for p in presets %}
+  <label class="card small"><input type="radio" name="provider" value="{{ p.id }}" {{ 'checked' if cur.provider == p.id }}>
+    <b>{{ p.label }}</b> <a href="{{ p.signup }}" target="_blank" rel="noopener">get a key ↗</a>
+    {% if not p.actions %}<span class="muted">not overnight</span>{% endif %}</label>{% endfor %}
+  {% if st.mode != 'full' %}<label class="card small"><input type="radio" name="provider" value="off" {{ 'checked' if cur.provider in (None, 'off') }}> <b>No AI</b></label>{% endif %}
+</div>
+<div class="grid">
+  <label>API key <input name="key" type="password" autocomplete="off" placeholder="saved to {{ local_dir }}/.env and as a GitHub secret"></label>
+  <label>Model <span class="muted">(blank = the provider's default)</span><input name="model" value="{{ cur.model or '' }}"></label>
+</div>
+<button type="button" onclick="llmTest(this)">Test the key</button> <span id="llm-out" class="muted"></span>
+{% if estimate and estimate.usd_per_month is defined %}<p class="muted">Estimate at {{ estimate.jobs or 150 }} jobs a night: up to ${{ estimate.usd_per_month }} a month at paid prices ({{ estimate.note or '' }}).</p>{% endif %}
+
+{% elif step == 'experience' %}
+<h1>Your experience</h1>
+<p>Upload your CV (PDF or DOCX) or paste it. {% if settings %}With an AI model the profile below is drafted from it, each fact shown next to the CV line it came from. Edit anything.{% endif %}
+  Contact details are never put in the profile: they stay in your local answer bank.</p>
+<div class="row"><input type="file" id="cv-file" accept=".pdf,.docx,.txt"><button type="button" onclick="cvUpload(this)">Read the CV</button></div>
+<textarea id="cv-paste" rows="4" placeholder="…or paste your CV or LinkedIn profile text"></textarea>
+<div id="cv-sources" class="sources"></div>
+<label>Summary <textarea name="summary" rows="2">{{ profile.summary or '' }}</textarea></label>
+<label>Level <input name="level" value="{{ profile.level or '' }}" placeholder="e.g. Mid-level backend engineer, 4 years"></label>
+<div class="grid">
+  <label>Priority roles <span class="muted">(one per line)</span><textarea name="priority_roles" rows="3">{{ (profile.priority_roles or [])|join('\n') }}</textarea></label>
+  <label>Other target roles<textarea name="target_roles" rows="3">{{ (profile.target_roles or [])|join('\n') }}</textarea></label>
+  <label>Strong stack<textarea name="strong_stack" rows="3">{{ (profile.strong_stack or [])|join('\n') }}</textarea></label>
+  <label>Nice to have<textarea name="nice_stack" rows="3">{{ (profile.nice_stack or [])|join('\n') }}</textarea></label>
+</div>
+<label>Highlights <span class="muted">(one per line; used for drafts)</span><textarea name="highlights" rows="4">{{ (profile.highlights or [])|join('\n') }}</textarea></label>
+<details {{ 'open' if st.mode == 'full' }}><summary>Projects for drafts (experience.md, local only)</summary>
+  <textarea name="experience_md" rows="8" placeholder="## Main projects&#10;- …"></textarea></details>
+{% if st.mode == 'full' %}
+<section><h3>PDF renderer</h3>
+  <p>CV and cover-letter PDFs are made with Chromium (a one-time download of about 150 MB).
+    Saving this step also creates <code>cv.yaml</code> and <code>draft_style.md</code> in {{ local_dir }} if they don't exist yet.</p>
+  <div class="row"><span id="chromium-status" class="check">Checking…</span>
+    <button type="button" id="chromium-btn" onclick="chromiumInstall(this)" hidden>Download Chromium</button></div>
+  <pre id="chromium-fix" hidden></pre>
+</section>
+{% endif %}
+
+{% elif step == 'answer_bank' %}
+<h1>Answer bank</h1>
+<p>Answers to the questions application forms ask again and again. They stay on this computer; contact details and
+  salary are never sent to an AI. Only <b>Approved</b> answers are used, word for word. Tick the ones you're happy with.</p>
+<table class="queue bankwiz">{% for a in bank if a.kind in ('fact', 'eeo', 'consent') %}
+  <tr><td><label>{{ a.question }}</label></td><td><input class="bank-answer" data-id="{{ a.answer_id }}" value="{{ a.answer }}"></td>
+      <td><label class="inline"><input type="checkbox" class="bank-ok" data-id="{{ a.answer_id }}" {{ 'checked' if a.status == 'Approved' }}> approve</label></td></tr>{% endfor %}
+</table>
+<p class="muted">Story answers (why this company, a project you're proud of) are drafted per job in prep, or edit them later on the Answer bank page.</p>
+
+{% elif step == 'optional_keys' %}
+<h1>Free extras</h1>
+<p>Each is optional and free. Keys are saved locally and become secrets in your private repo.</p>
+{% for c in cards %}<section class="keycard" data-card="{{ c.id }}">
+  <h3>{{ c.label }} <a href="{{ c.signup }}" target="_blank" rel="noopener">sign up ↗</a></h3>
+  {% if c.per_country %}{% for cc in c.countries %}<label>{{ cc }} key <input class="key" name="{{ c.env|replace('{CC}', cc) }}" placeholder="{{ 'set' if env.get(c.env|replace('{CC}', cc)) else '' }}"></label>{% endfor %}
+  {% elif c.env is string %}<label>Key <input class="key" name="{{ c.env }}" placeholder="{{ 'set' if env.get(c.env) else '' }}"></label>
+  {% else %}{% for e in c.env %}<label>{{ e }} <input class="key" name="{{ e }}" {{ 'type=password' if 'PASSWORD' in e }} placeholder="{{ 'set' if env.get(e) else '' }}"></label>{% endfor %}{% endif %}
+  {% if c.id == 'imap' %}<p class="muted">LinkedIn: create job alerts on linkedin.com (Jobs → Set alert), daily, sent to this mailbox. Gmail needs 2-step verification and an app password.</p>{% endif %}
+  {% if c.id == 'smtp' %}<label class="inline"><input type="checkbox" name="notify_email" {{ 'checked' if settings.notify_email }}> send me a short "N new jobs ready" e-mail each morning</label>{% endif %}
+  <button type="button" class="small" onclick="keyTest(this)">Test</button> <span class="out muted"></span>
+</section>{% endfor %}
+
+{% elif step == 'config_repo' %}
+<h1>Your private repo</h1>
+<p>This creates a private GitHub repo from the Job Radar template, pushes your <code>user/</code> settings, saves your
+  keys as Actions secrets and sets the overnight run time.</p>
+<label>Repo name <input name="name" value="{{ (settings.config_repo or 'job-radar-config').split('/')[-1] }}"></label>
+<div class="grid">
+  <section><h3>Pushed to the repo</h3><ul>{% for f in ['settings.yaml', 'profile.yaml (no contact details)', 'roles.yaml', 'sources.yaml', 'llm.yaml'] %}<li>user/{{ f }}</li>{% endfor %}</ul></section>
+  <section><h3>Stays on this computer</h3><ul><li>keys (.env; GitHub gets them as encrypted secrets)</li><li>answer bank and decisions (local.db)</li><li>CV, experience.md, PDFs</li></ul></section>
+</div>
+<div id="repo-out"></div>
+
+{% elif step == 'extension' %}
+<h1>Chrome extension</h1>
+<ol><li>Open <code>chrome://extensions</code> in Chrome and switch on <b>Developer mode</b> (top right).</li>
+  <li>Click <b>Load unpacked</b> and choose the folder <code>{{ extension_dir }}</code>.</li>
+  <li>Open this page in that Chrome. The check below turns green by itself.</li></ol>
+<p id="ext-status" class="check warn">Waiting for the extension…</p>
+<p class="muted">Auto-fill opens the application form in a new tab and fills it. It never submits: you check and click submit yourself.</p>
+
+{% elif step == 'first_run' %}
+<h1>First run</h1>
+<p>First a quick test on this computer: a few fast boards, matched with your settings. If the list looks wrong, go back to Roles or Where you work.</p>
+<button type="button" onclick="dryRun(this)">Run a quick test</button>
+<div id="dry-out"></div>
+<p>Then start the first real run on GitHub. It takes {{ '20-30' if st.mode == 'full' else '10-15' }} minutes; this page follows it.</p>
+<button type="button" class="primary" onclick="firstRun(this)">Start the first overnight run now</button>
+<div id="run-out"></div>
+
+{% elif step == 'summary' %}
+<h1>{{ 'All set' if green else 'Almost there' }}</h1>
+<table class="queue">{% for c in checks %}<tr><td>{{ '✓' if c.ok else ('–' if c.optional else '✗') }}</td><td>{{ c.label }}</td><td class="muted">{{ c.detail }}</td>
+  <td>{% if not c.ok and c.step %}<a href="{{ url_for('setup.step', step_id=c.step) }}">fix</a>{% endif %}</td></tr>{% endfor %}</table>
+<p>Next run: every day at {{ settings.run_at or '02:00' }} {{ settings.timezone or 'UTC' }} (cron <code>{{ cron }}</code> UTC).</p>
+<p>Each morning: run <code>jr app</code> (or use the shortcut). <button type="button" onclick="makeShortcut(this)">Add a desktop shortcut</button></p>
+<p><a class="button primary" href="{{ url_for('morning') }}">Open the jobs</a></p>
+{% endif %}
+
+<div class="wiz-actions">
+  {% set cur_step = (steps|selectattr('id', 'equalto', step)|list)[0] if steps|selectattr('id', 'equalto', step)|list else none %}
+  {% if cur_step and st.mode in cur_step.optional_in %}<button type="button" onclick="skipStep(this)">Skip for now</button>{% endif %}
+  {% if step != 'summary' %}<button class="primary" type="submit">{{ 'Create the repo' if step == 'config_repo' else ('Done' if step == 'first_run' else 'Save and continue') }}</button>{% endif %}
+</div>
+</form>
+<script src="{{ url_for('static', filename='setup.js') }}"></script>
+{% endblock %}

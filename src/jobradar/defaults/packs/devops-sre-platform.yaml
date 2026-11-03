@@ -1,0 +1,103 @@
+# Role pack: DevOps, SRE, platform and cloud / infrastructure engineering.
+label: DevOps, SRE & platform engineering
+description: DevOps engineer, SRE, platform engineer, cloud engineer / architect, infrastructure engineer, Kubernetes, sysadmin.
+
+families:
+  sre:
+    tier: core
+    priority: 32
+    label: SRE
+    any:
+      - 'sre'
+      - 'site reliability(?: engineer\w*| engineering)?'
+      - '(?:software|systems?|production|cloud|infrastructure|platform) reliability (?:engineer|developer)'
+      - 'reliability engineering'
+  devops:
+    tier: core
+    priority: 30
+    label: DevOps
+    any:
+      - 'dev ?ops|devsecops|gitops'
+      - '(?:ci/?cd|build|release|deployment) (?:and|&) (?:release|deployment|build) engineer'
+      - '(?:ci/?cd|build|release|deployment) (?:engineer|specialist)'
+      - 'inzynier\w* devops'
+  platform:
+    tier: core
+    priority: 28
+    label: Platform/Cloud
+    any:
+      - 'platform (?:engineer\w*|developer|architect|engineering)'
+      - 'cloud (?:engineer\w*|architect\w*|infrastructure|developer|platform|operations|ops|administrator|specialist|consultant|native)'
+      - 'infrastructure (?:engineer\w*|developer|architect\w*|specialist|automation|as code|operations)'
+      - 'kubernetes (?:engineer|administrator|specialist|developer|architect)'
+      - '(?:aws|azure|gcp|google cloud) (?:engineer|architect|administrator|infrastructure|cloud engineer)'
+      - 'sysadmin|systemadministrator\w*|(?:linux|unix|system|systems) administrator'
+      - '(?:linux|unix) (?:engineer|specialist)'
+      - 'infrastruktur\w*[- ](?:engineer|ingenieur|architekt|spezialist)\w*'
+      - 'cloud[- ](?:architekt|entwickler|ingenieur)\w*'
+      - 'administrator\w* (?:systemow|linux\w*|chmur\w*|infrastruktur\w*)'
+      - 'inzynier\w* (?:chmur\w*|infrastruktur\w*|platform\w*)'
+      - 'ingenier\w* (?:de )?(?:plataforma|infraestructura|cloud|nube|sistemas cloud)'
+      - 'administrador\w*(?:/a)? de sistemas'
+      - 'engenheir\w*(?:\(a\)|/a)? (?:de )?(?:plataforma|infraestrutura|cloud|nuvem)'
+      - 'administrador\w*(?:/a)? de sistemas'
+      - 'ingenieur\w* (?:cloud|infrastructure|plateforme|systemes et reseaux|systeme)'
+      - 'architecte (?:cloud|infrastructure)|administrateur\w* (?:systemes|cloud)'
+
+family_exclude: ['data', 'machine learning', 'ml', 'ai', 'llm', 'qa', 'sdet', 'test\w*', 'sales', 'marketing', 'recruit\w*',
+                 'front[- ]?end', 'full[- ]?stack', 'mobile', 'security', 'network', 'electrical', 'mechanical', 'civil',
+                 'hvac', 'construction', 'building', 'plant', 'manufacturing', 'automotive', 'telecom\w*', 'it support',
+                 'helpdesk', 'help desk', 'service desk', 'desktop support', 'solutions? architect', 'sales engineer']
+family_exclude_ok: ['dev ?ops', 'sre', 'devsecops', 'kubernetes']
+
+stack:
+  weights: {kubernetes: 3, terraform: 3, aws: 2, gcp: 2, azure: 2, docker: 1, helm: 1, ansible: 1, prometheus: 2, grafana: 1,
+            "ci/cd": 1, argocd: 2, linux: 1, python: 1, go: 1, bash: 1, "github actions": 1, jenkins: 1, observability: 1,
+            istio: 1}
+  patterns:
+    kubernetes: 'kubernetes|\bk8s\b|\beks\b|\bgke\b|\baks\b|openshift'
+    terraform: 'terraform|opentofu|pulumi'
+    aws: '\baws\b|amazon web services'
+    gcp: '\bgcp\b|google cloud'
+    azure: '\bazure\b'
+    docker: 'docker|containers?'
+    helm: '\bhelm\b|kustomize'
+    ansible: 'ansible|puppet|chef\b'
+    prometheus: 'prometheus|\bslo\b|\bsli\b'
+    grafana: 'grafana|datadog|new relic|opentelemetry|\bloki\b|\belk\b'
+    ci/cd: 'ci/?cd|gitlab ci|circleci'
+    argocd: 'argo ?cd|\bflux\b|gitops'
+    linux: '\blinux\b'
+    python: '\bpython\b'
+    go: '\bgolang\b|\bgo\b(?= (?:developer|programming|lang))'
+    bash: '\bbash\b|shell script\w*'
+    github actions: 'github actions'
+    jenkins: 'jenkins|teamcity'
+    observability: 'observability|monitoring'
+    istio: 'istio|service mesh|envoy'
+
+search_terms:
+  en: [devops engineer, site reliability engineer, sre, platform engineer, cloud engineer, infrastructure engineer, kubernetes engineer, devsecops]
+  pl: [inżynier devops, administrator systemów]
+  de: [devops engineer, cloud engineer]
+  es: [ingeniero devops]
+  pt: [engenheiro devops]
+  fr: [ingénieur devops]
+
+prefer: ['devops|sre|site-reliability|platform-engineer|cloud-engineer|infrastructure-engineer|kubernetes|devsecops',
+         'cloud|infrastructure|platform|sysadmin|system-administrator|terraform']
+
+boards:
+  nofluffjobs: {categories: [devops]}
+  justjoin: {categories: [devops]}
+
+golden:
+  keep: [DevOps Engineer, Senior DevOps Engineer, DevOps Specialist, DevSecOps Engineer, Site Reliability Engineer, SRE,
+         Senior SRE, Software Reliability Engineer, Platform Engineer, Platform Developer, Cloud Engineer, Cloud Architect,
+         Cloud Infrastructure Engineer, AWS Cloud Engineer, Azure Cloud Engineer, GCP Engineer, Infrastructure Engineer,
+         Infrastructure Automation Engineer, Kubernetes Engineer, Release Engineer, CI/CD Engineer, Linux Administrator,
+         System Administrator, Inżynier DevOps, Administrator Systemów Linux, DevOps Engineer (m/w/d), Cloud-Architekt (m/w/d),
+         Ingeniero DevOps, Ingeniero de Plataforma, Engenheiro(a) DevOps, Engenheiro de Infraestrutura, Ingénieur DevOps (H/F),
+         Ingénieur Cloud, Administrateur Systèmes et Réseaux, Site Reliability Engineering Specialist]
+  drop: [Backend Developer, Data Engineer, QA Engineer, Network Engineer, Security Engineer, IT Support Specialist,
+         Sales Engineer, Electrical Infrastructure Engineer, Frontend Developer, Data Platform Engineer, Solutions Architect]

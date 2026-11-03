@@ -1,0 +1,79 @@
+# Role pack: frontend and web UI engineering.
+label: Frontend engineering
+description: Frontend developer / engineer, React / Angular / Vue / JavaScript / TypeScript developer, UI engineer, web developer.
+
+families:
+  frontend:
+    tier: core
+    priority: 30
+    label: Frontend
+    any:
+      - 'front[- ]?end\b.{0,25}\b(?:engineer|developer|programmer|entwickler\w*|ingenieur\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*|programista|programisci|inzynier\w*|ingenier\w*|architect\w*|architekt\w*|dev|software)'
+      - '(?:engineer|developer|programmer|entwickler\w*|ingenieur\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*|programista|programisci|inzynier\w*|ingenier\w*|software)\b.{0,30}\bfront[- ]?end'
+      - '(?:react|angular|angularjs|vue|vuejs|svelte|next|nuxt|typescript|javascript|js|ember|html)(?:\.js)?\b[\w/ +#.,&-]{0,12}?\b(?:developer|engineer|programmer|programista|entwickler\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*)'
+      - '(?:programista|programistka|entwickler\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*)\b[\w/ (+#.,&-]{0,12}?\b(?:react|angular|vue|javascript|typescript|js)'
+      - 'ui (?:engineer|developer|programmer)'
+      - 'user interface (?:engineer|developer)'
+  web:
+    tier: adjacent
+    priority: 20
+    label: Web
+    any:
+      - 'web (?:developer|engineer|programmer|entwickler\w*)'
+      - 'webentwickler\w*'
+      - 'developpeur\w* web'
+      - 'desarrollador\w*(?:/a)? web'
+      - 'desenvolvedor\w*(?:/a)? web'
+      - 'programista web|web programista'
+
+family_exclude: ['back[- ]?end', 'full[- ]?stack', 'data', 'machine learning', 'ml', 'ai', 'devops', 'sre', 'qa', 'sdet',
+                 'test\w*', 'mobile', 'ios', 'android', 'flutter', 'react native', 'security', 'embedded', 'sales', 'marketing',
+                 'recruit\w*', 'support', 'game', 'unity', 'designer', 'wordpress', 'shopify', 'salesforce', 'sap',
+                 'java', 'python', 'php', '\.net', 'golang', 'ruby', 'scala', 'rust', 'c#', 'c\+\+']
+family_exclude_ok: ['front[- ]?end']
+
+stack:
+  weights: {react: 3, typescript: 3, javascript: 2, angular: 3, vue: 3, "next.js": 2, svelte: 1, html: 1, css: 1, redux: 1,
+            graphql: 1, webpack: 1, vite: 1, jest: 1, tailwind: 1, storybook: 1, "node.js": 1}
+  patterns:
+    react: '\breact(?:\.?js)?\b(?! native)'
+    typescript: 'typescript'
+    javascript: 'javascript|\bes6\b|\bjs\b'
+    angular: 'angular'
+    vue: '\bvue(?:\.?js)?\b|nuxt'
+    next.js: 'next\.?js'
+    svelte: 'svelte'
+    html: '\bhtml5?\b'
+    css: '\bcss3?\b|\bscss\b|\bsass\b'
+    redux: 'redux|zustand|\bngrx\b'
+    graphql: 'graphql|apollo'
+    webpack: 'webpack'
+    vite: '\bvite\b'
+    jest: '\bjest\b|cypress|playwright|testing library'
+    tailwind: 'tailwind'
+    storybook: 'storybook'
+    node.js: 'node\.?js'
+
+search_terms:
+  en: [frontend developer, frontend engineer, react developer, angular developer, vue developer, typescript developer, javascript developer]
+  pl: [programista frontend, programista react]
+  de: [frontend entwickler]
+  es: [desarrollador frontend]
+  pt: [desenvolvedor frontend]
+  fr: [développeur front-end]
+
+prefer: ['frontend|front-end|react|angular|vue|typescript|javascript', 'web-developer|ui-engineer|-ui-|-js-']
+
+boards:
+  nofluffjobs: {categories: [frontend]}
+
+golden:
+  keep: [Frontend Developer, Front-End Engineer, Senior Frontend Engineer, Frontend-Entwickler (m/w/d), Front End Developer,
+         Software Engineer - Frontend, Software Engineer (Front-end), React Developer, React.js Developer, Angular Developer,
+         Vue.js Developer, TypeScript Developer, JavaScript Developer, UI Engineer, UI Developer, Web Developer,
+         Frontend React Engineer, Programista Frontend, Programista React, Programista JavaScript, Starszy Programista Frontend,
+         Desarrollador/a Frontend, Desarrollador Front-end, Engenheiro(a) de Software Front-end, Desenvolvedor Frontend,
+         Développeur Front-End (H/F), Développeur Web (H/F), Webentwickler (m/w/d), React-Entwickler (m/w/d),
+         Frontend Developer (Angular), Next.js Developer, Svelte Developer, Frontend Engineer, Programador Frontend]
+  drop: [Backend Developer, Full Stack Developer, Fullstack Engineer, Data Engineer, QA Engineer, React Native Developer,
+         Mobile Developer, iOS Developer, Java Developer, Frontend Sales Manager, UX Designer]

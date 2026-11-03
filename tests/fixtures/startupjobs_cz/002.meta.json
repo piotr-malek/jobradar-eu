@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://back.startupjobs.cz/api/offers/108613",
+ "status": 200,
+ "content_type": "application/ld+json"
+}

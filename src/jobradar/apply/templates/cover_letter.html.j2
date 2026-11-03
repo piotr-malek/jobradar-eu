@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ head.name }} cover letter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Lato, "Helvetica Neue", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5;
+         color: #1a1a1a; background: #fff; }
+  header { text-align: center; padding-bottom: 8pt; margin-bottom: 18pt; border-bottom: 0.8pt solid #999; }
+  h1 { margin: 0; font-size: 19pt; font-weight: 900; letter-spacing: 2.5pt; text-transform: uppercase; }
+  .contact { margin-top: 2pt; font-size: 8.8pt; color: #555; }
+  .sep { color: #888; padding: 0 3pt; }
+  .date { text-align: right; color: #555; margin-bottom: 14pt; }
+  p { margin: 0 0 9pt; }
+  .closing { margin-top: 16pt; }
+</style>
+</head>
+<body>
+{% if head.name %}
+<header>
+  <h1>{{ head.name }}</h1>
+  {% for line in head.contact %}
+  <div class="contact">{% for part in line %}{% if not loop.first %}<span class="sep">·</span>{% endif %}{{ part }}{% endfor %}</div>
+  {% endfor %}
+</header>
+{% endif %}
+<div class="date">{{ today }}</div>
+{% for lines in paras %}
+<p>{% for line in lines %}{% if not loop.first %}<br>{% endif %}{{ line }}{% endfor %}</p>
+{% endfor %}
+{% if closing %}
+<p class="closing">{{ closing }}<br>{{ head.name }}</p>
+{% endif %}
+</body>
+</html>

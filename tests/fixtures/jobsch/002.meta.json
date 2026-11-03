@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.jobs.ch/en/vacancies/?term=data%20engineer",
+ "status": 200,
+ "content_type": "text/html; charset=utf-8"
+}

@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://careers.speedinvest.com/robots.txt",
+ "status": 200,
+ "content_type": "text/plain"
+}

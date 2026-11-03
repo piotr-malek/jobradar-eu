@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Stats{% endblock %}
+{% block body %}
+<h1>Your applications</h1>
+{% if not stats %}<p class="empty">No overnight results yet.</p>{% else %}
+<section class="counts">
+  <span><b>{{ stats.applied_total }}</b> applied</span>
+  <span><b>{{ stats.replied_total }}</b> replies</span>
+  <span><b>{{ stats.interviews_total }}</b> interviews</span>
+  <span><b>{{ stats.offers_total }}</b> offers</span>
+  <span class="muted">{{ stats.picked_total }} picked · {{ stats.skipped_total }} skipped</span>
+</section>
+<section>
+  <h2>Applications per week</h2>
+  {% if stats.weeks %}{% set top = stats.weeks.values()|max %}
+  <table class="queue">{% for w, n in stats.weeks.items() %}<tr><td>{{ w }}</td><td><div class="barfill" style="width: {{ (100 * n / top)|round }}%">{{ n }}</div></td></tr>{% endfor %}</table>
+  {% else %}<p class="muted">None yet.</p>{% endif %}
+</section>
+{% for dim in ['source', 'family', 'route'] %}{% if stats.by[dim] %}
+<section>
+  <h2>Reply rate by {{ dim }}</h2>
+  <table class="queue"><thead><tr><th>{{ dim }}</th><th>applied</th><th>replies</th><th>interviews</th><th>rate</th></tr></thead>
+  {% for r in stats.by[dim] %}<tr><td>{{ r.name }}</td><td>{{ r.applied }}</td><td>{{ r.replied }}</td><td>{{ r.interview }}</td><td>{{ (r.reply_rate * 100)|round|int }}%</td></tr>{% endfor %}</table>
+</section>
+{% endif %}{% endfor %}
+{% endif %}
+{% endblock %}

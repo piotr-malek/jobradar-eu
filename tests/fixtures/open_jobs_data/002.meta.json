@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://raw.githubusercontent.com/ConorsCode/open-jobs-data/main/companies.json",
+ "status": 200,
+ "content_type": "text/plain; charset=utf-8"
+}

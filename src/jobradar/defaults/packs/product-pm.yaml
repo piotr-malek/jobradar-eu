@@ -1,0 +1,96 @@
+# Role pack: product and project / delivery management in IT.
+# Every family sets manager_ok: "Product Manager" / "Project Manager" are individual roles here, not people management
+# (the base rules would otherwise drop any title containing "manager").
+label: Product & project management (IT)
+description: Product manager, product owner, technical product manager, IT project / program manager, delivery manager, scrum master.
+
+families:
+  product:
+    tier: core
+    priority: 30
+    label: Product
+    manager_ok: true
+    any:
+      - 'product (?:manager|owner|management)s?'
+      - 'product\w* (?:manager|owner)'
+      - 'tpm'
+      - 'responsable (?:de )?produits?|proprietaire produit|product manager'
+      - 'produktmanager\w*|produktverantwortlich\w*|produkt[- ]?owner\w*'
+      - '(?:menedzer|manager|kierownik|wlasciciel)\w* produkt\w*'
+      - '(?:gerente|jefe|responsable|propietari\w*|gestor\w*|gerente) de producto?s?'
+      - 'gerente de produto|gestor\w* de produto|dono\w* de produto|analista de produto'
+      - 'technical (?:product|program|programme) (?:manager|owner)'
+  project:
+    tier: core
+    priority: 28
+    label: Project/Delivery
+    manager_ok: true
+    any:
+      - '(?:it|ict|software|technical|digital|web|technology|tech|saas|erp|sap|cloud|data|ai|mobile|engineering|implementation|agile|delivery) (?:project|program|programme) (?:manager|coordinator|owner|management)'
+      - '(?:project|program|programme) manager\W{1,3}(?:it|ict|software|technical|digital|technology|saas|erp|sap|cloud|agile)\b'
+      - '(?:technical|it) (?:project|program|programme) manager'
+      - 'delivery (?:manager|lead|owner)'
+      - 'scrum ?master|agile coach|agile delivery'
+      - '(?:it|software)[- ]?projektmanager\w*|it[- ]?projektleiter\w*|projektmanager\w* it|(?:it|software)[- ]?projektleit\w*'
+      - '(?:kierownik|menedzer|manager|koordynator)\w* projekt\w*\W{1,3}(?:it|informatyczn\w*|wdrozeniow\w*|software\w*)'
+      - 'project manager it'
+      - '(?:jefe|gerente|director|responsable|coordinador)\w* de proyectos? (?:it|ti|tecnolog\w*|software|informatic\w*)'
+      - 'gerente de projetos? (?:de )?(?:ti|software|tecnologia)|gestor\w* de projet[oa]s? (?:de )?(?:ti|software|tecnologia)'
+      - 'responsable (?:de )?projets? (?:it|informatique|digital|web|technique|si|erp|data|numerique)'
+
+family_exclude: ['sales', 'marketing', 'brand', 'merchandis\w*', 'procurement', 'supply chain', 'category', 'construction', 'civil',
+                 'building', 'real estate', 'pharma\w*', 'clinical', 'food', 'fashion', 'chemical', 'mechanical', 'electrical',
+                 'packaging', 'event\w*', 'recruit\w*', 'hr', 'account', 'logistics', 'courier', 'driver', 'last mile', 'facility',
+                 'facilities', 'communications', 'content', 'seo', 'designer', 'developer', 'engineer', 'qa', 'analyst']
+family_exclude_ok: ['product manager', 'product owner', 'scrum master', 'technical product', 'project manager it']
+
+stack:
+  weights: {jira: 2, confluence: 1, agile: 2, scrum: 2, kanban: 1, roadmap: 2, okrs: 1, "user stories": 2, sql: 1,
+            analytics: 1, figma: 1, "a/b testing": 2, saas: 1, api: 1, b2b: 1, discovery: 1, stakeholders: 1, prince2: 1}
+  patterns:
+    jira: '\bjira\b|azure devops|\bado\b|linear|asana|trello|clickup'
+    confluence: 'confluence|notion'
+    agile: '\bagile\b|safe\b'
+    scrum: '\bscrum\b'
+    kanban: 'kanban'
+    roadmap: 'roadmap\w*'
+    okrs: '\bokrs?\b|\bkpis?\b'
+    user stories: 'user stor(?:y|ies)|backlog'
+    sql: '\bsql\b'
+    analytics: 'amplitude|mixpanel|google analytics|product analytics|data-driven'
+    figma: 'figma'
+    a/b testing: 'a/b test\w*|experiment\w*'
+    saas: '\bsaas\b|\bpaas\b'
+    api: '\bapis?\b'
+    b2b: '\bb2b\b'
+    discovery: 'product discovery|customer discovery|user research'
+    stakeholders: 'stakeholders?'
+    prince2: 'prince2|\bpmp\b|\bpmi\b'
+
+search_terms:
+  en: [product manager, product owner, technical product manager, it project manager, technical program manager, delivery manager, scrum master]
+  pl: [product manager, kierownik projektu it]
+  de: [produktmanager, it projektmanager]
+  es: [product manager, jefe de producto]
+  pt: [gerente de produto]
+  fr: [responsable produit, responsable projet it]
+
+prefer: ['product-manager|product-owner|technical-product|project-manager|program-manager|delivery-manager|scrum-master',
+         'product|project-manager|delivery|scrum|agile']
+
+boards:
+  nofluffjobs: {categories: [product-management, project-manager]}
+  justjoin: {categories: [pm]}
+
+golden:
+  keep: [Product Manager, Senior Product Manager, Associate Product Manager, Technical Product Manager, Product Owner,
+         Senior Product Owner, AI Product Manager, Platform Product Manager, Product Manager - Payments, Product Manager (B2B SaaS),
+         Technical Program Manager, IT Project Manager, Software Project Manager, Technical Project Manager,
+         Digital Project Manager, Project Manager (IT), Project Manager - Software, Delivery Manager, Agile Delivery Manager,
+         Scrum Master, Agile Coach, Product Manager (m/w/d), Produktmanager (m/w/d), IT-Projektmanager (m/w/d),
+         Product Owner (m/w/d), Menedżer Produktu, Właściciel Produktu, Kierownik Projektu IT, Gerente de Producto,
+         Jefe de Producto Digital, Jefe de Proyectos TI, Gerente de Produto, Gerente de Projetos de TI, Responsable Produit (H/F),
+         Responsable de Projet IT (H/F), Responsable Projet Digital, Responsable Produit Digital]
+  drop: [Product Marketing Manager, Sales Manager, Construction Project Manager, Backend Developer, Account Manager,
+         Digital Marketing Manager, Product Designer, Marketing Project Manager, Data Analyst, Engineering Manager,
+         Food Delivery Driver, Category Manager, Supply Chain Project Manager]

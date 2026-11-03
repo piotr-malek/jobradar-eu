@@ -1,0 +1,92 @@
+{
+  "_about": "Rules for scripts/check_personal_data.py. words: SHA-256 of folded personal words (`--hash WORD` prints one); allow_words: file globs where a kind of word may appear (public listings in recorded fixtures, the copyright line).",
+  "words": [
+    {
+      "kind": "name",
+      "sha256": "51e00b415c7a12ab6e7ab591b37a5cd1b7435dfd05f24e025fcb2872a418c90d"
+    },
+    {
+      "kind": "name",
+      "sha256": "4c0fa120902a9707d2d3419b5d097236a363695d41340a1e37ae681a0520fc13"
+    },
+    {
+      "kind": "employer",
+      "sha256": "b20646d00ad7df65949513b00bb46ae10705496fa8df69aa28bfc8258c86199b"
+    },
+    {
+      "kind": "employer",
+      "sha256": "8a826524cc5f096c4f581658b079acccd75ebfe820a318f5630a33dbdba37705"
+    },
+    {
+      "kind": "place",
+      "sha256": "39e391ebc60ff24f750344771824a142a65c3728fd732f3bd4ac57c561f1fcae"
+    },
+    {
+      "kind": "place",
+      "sha256": "d88cedfbd5c84ed7e2908281b74f4eb6c44a9a14778a7c8262cc9f4aae9a1b1b"
+    },
+    {
+      "kind": "place",
+      "sha256": "a33bbe6f8b2444df893ddac350effbbd3b43d10e319692c4d5367c0e16c66c94"
+    },
+    {
+      "kind": "place",
+      "sha256": "d54a7062a45ad9062463cc9ef8be638356c5101d3adf5a06c9e81a1c31079535"
+    },
+    {
+      "kind": "place",
+      "sha256": "fc691e161d175d854ae7c5b677b3bdef31857f49c54b92d0c9a80b206bc634ba"
+    },
+    {
+      "kind": "place",
+      "sha256": "13dc3f7219d4e466832e8a553f5cd0e36b09ba04d7c8a3ace2537b50d66d8172"
+    },
+    {
+      "kind": "place",
+      "sha256": "c4bf3f19e0c3264843f203d5d544448fc50d4fdc6b347ede984f8c99c2ca08ec"
+    },
+    {
+      "kind": "place",
+      "sha256": "7ffe34b3e83a07ddc886e3b3e4b113fffa889da2d38afd0fc8fee17684a3058c"
+    },
+    {
+      "kind": "place",
+      "sha256": "33cfcde83f5468566f15cefab04af39a852594a75b1b17223506c0fd3ee72986"
+    },
+    {
+      "kind": "cloud project",
+      "sha256": "651ac987a4640df8c1c4a1be83e5bd3118c16e1afe04f3b9a356caf7b0aaf691"
+    }
+  ],
+  "allow_words": {
+    "name": [
+      "LICENSE",
+      "NOTICE",
+      "src/jobradar/normalize/data/cities.tsv.gz"
+    ],
+    "place": [
+      "tests/fixtures/*",
+      "tests/unit/test_src_justjoin.py",
+      "src/jobradar/normalize/data/cities.tsv.gz"
+    ]
+  },
+  "allow_strings": [
+    "piotr-malek/jobradar-eu"
+  ],
+  "allow_emails": [
+    "jobradar@users.noreply.github.com",
+    "jobalerts-noreply@linkedin.com",
+    "jobs@x.com"
+  ],
+  "allow_email_domains": [
+    "example.com",
+    "example.org",
+    "example.net",
+    "example.test"
+  ],
+  "allow_emails_in": [],
+  "allow_key_files": [
+    "examples/*/.env.example"
+  ],
+  "skip_files": []
+}

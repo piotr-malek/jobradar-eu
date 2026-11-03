@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://api.thehub.io/v2/jobs",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

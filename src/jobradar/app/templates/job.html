@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title or job.job_id }}{% endblock %}
+{% block body %}
+{% set posting_link = job.posting_url or job.apply_url or (p.apply_url if p else '') %}
+<div class="bar">
+  <div>
+    <h1>{{ job.title or job.job_id }}</h1>
+    <p class="muted">{{ job.company }} · {{ job.location_display }} · {{ job.job_id }} · <b>{{ status }}</b>
+      {% if p %} · {{ p.route.vendor }} · ~{{ p.effort_min }} min · <span class="pill {{ p.prep|replace(' ', '-') }}">{{ prep_label(p.prep) }}</span>{% elif guess %} · {{ guess.vendor }}{% endif %}
+      {% if job.posting_url %} · <a href="{{ job.posting_url }}" target="_blank" rel="noopener">posting</a>{% endif %}
+      {% if p and p.apply_url and p.prep != 'manual form' %} · <a href="{{ p.apply_url }}" target="_blank" rel="noopener">application form</a>{% endif %}
+    </p>
+  </div>
+  <div class="actions">
+    {% if posting_link %}<button data-url="{{ posting_link }}" onclick="copyLink(this)" title="{{ posting_link }}">Copy posting link</button>{% endif %}
+    {% if can_prep %}
+    {% if p and fillable %}<button id="autofill" class="primary" onclick="fill(this)" title="Opens the form in a new Chrome tab and fills it there (Job Radar extension). From another browser it opens this page in Chrome first. It never submits.">Auto-fill in browser</button>{% endif %}
+    {% if p %}<button onclick="prepOne(this)" title="Read the form again and redo the drafts">Re-prep</button>
+    {% elif guess.readable %}<button onclick="prepOne(this)" title="Read the form's questions and answer them">Prep</button>
+    {% elif guess.vendor == 'unknown' %}<button onclick="prepOne(this)" title="Looks at the posting once for a link to a form the app can read (Greenhouse, Lever, Ashby, …)">Look for a readable form</button>{% endif %}
+    {% endif %}
+    {% if status in ('new', 'later', 'skipped') %}<button class="primary" onclick="decide(this, 'picked')">Pick</button>{% endif %}
+    {% if status not in ('skipped',) and status not in stages %}<button onclick="decide(this, 'skipped')">Skip</button>{% endif %}
+    {% if status in stages %}
+    <select class="stage" onchange="decide(this, this.value)">{% for s in stages %}<option {{ 'selected' if status == s }}>{{ s }}</option>{% endfor %}</select>
+    {% else %}<button class="good" onclick="markApplied('{{ job.job_id }}')">Mark applied</button>{% endif %}
+  </div>
+</div>
+
+<section class="about">
+  {% if job.fit %}<p><span class="fit fit{{ job.fit }}">{{ job.fit }}</span> {{ job.summary or '' }}</p>{% endif %}
+  {% if job.watch_out %}<p class="watch">⚠ {{ job.watch_out|join(' · ') }}</p>{% endif %}
+  <p class="muted">{% if job.screen_salary or job.salary %}Salary: {{ job.screen_salary or job.salary }} · {% endif %}
+    {% if job.why %}Matched as {{ job.why.family or job.family }}{% if job.why.rule %} (“{{ job.why.rule }}”){% endif %}{% if job.why.stack %} · stack: {{ job.why.stack|join(', ') }}{% endif %}{% endif %}
+    {% if job.sources %} · via {{ job.sources|join(', ') }}{% endif %}</p>
+  {% if job.same_company %}<p class="muted">Same company: {{ job.same_company }}</p>{% endif %}
+  {% if job.copies %}<details><summary>{{ job.copies|length }} other listing(s) of this job</summary><ul>{% for c in job.copies %}<li><a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a> <span class="muted">{{ c.location }} · {{ c.source }}</span></li>{% endfor %}</ul></details>{% endif %}
+  <label class="muted">Notes <textarea id="notes" rows="2" onchange="saveNotes(this)">{{ local.notes or '' }}</textarea></label>
+  {% if history|length > 1 %}<p class="muted">History: {% for h in history %}{{ h.status }} {{ h.at[:10] }}{{ ' → ' if not loop.last }}{% endfor %}</p>{% endif %}
+  {% if job.description %}<details><summary>Posting text</summary><div class="answer">{{ job.description[:6000] }}</div></details>{% endif %}
+</section>
+{% if not can_prep %}
+<p class="muted">Lite mode: open the posting, apply there, then mark it applied here. Full mode (<a href="{{ url_for('setup.index') }}">Setup → upgrade</a>) adds form prep from your answer bank, drafts and auto-fill.</p>
+{% else %}
+
+{% set vendor = p.route.vendor if p else guess.vendor %}
+{% set manual = p.prep == 'manual form' if p else not guess.readable %}
+{% if not p and not manual %}
+<p class="empty">Not prepped yet. The application form is on {{ vendor }}, which the app can read. <b>Prep</b>
+  reads its questions and answers them.</p>
+{% else %}
+  {% if p %}
+  {% set instructions = p.warnings|select('startswith', 'Posting instruction: ')|list %}
+  {% set warnings = p.warnings|reject('startswith', 'Posting instruction: ')|list %}
+  {% if instructions %}
+  <section class="instructions">
+    <h3>Instructions in the posting</h3>
+    <ul>{% for w in instructions %}<li>{{ w[21:] }}</li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+  {% if warnings %}
+  <section class="warnings">
+    {% for w in warnings %}<p>{{ w }}</p>{% endfor %}
+  </section>
+  {% endif %}
+  {% endif %}
+
+  {% if manual %}
+  <section class="paste getform">
+    {% if not p and vendor == 'unknown' %}
+    <h2>The app doesn't know where this application form is</h2>
+    <p class="muted"><b>Look for a readable form</b> (top right) checks the posting once for a link to a form the app
+      can read. If you already know the form, skip that and use A or B below.</p>
+    {% else %}
+    <h2>The app can't read this application form <span class="muted">({{ vendor }})</span></h2>
+    {% endif %}
+    <p>No answers yet, because the app hasn't seen the questions. Open the posting in your browser
+      {%- if posting_link %} (<button class="linkish" data-url="{{ posting_link }}" onclick="copyLink(this)">copy its link</button>){% endif %}
+      and go to the application form. Then do one of these:</p>
+    <h3>A. Paste the form's URL</h3>
+    <p class="muted">Works for Greenhouse, Lever, Ashby, Workable, Recruitee and eRecruiter forms, e.g. behind LinkedIn
+      or a careers page. The app reads the questions and answers them.</p>
+    <div class="row"><input id="apply-url" type="url" placeholder="https://jobs.ashbyhq.com/…/application">
+      <button class="primary" onclick="useApplyUrl(this)">Read this form</button></div>
+    <h3>B. Paste its questions</h3>
+    <p class="muted">Copy the questions from every step of the form (it's fine to include options and extra text). Bank
+      answers are filled in, and anything the bank doesn't cover gets a draft for this job.</p>
+    <textarea id="pasted" rows="7" placeholder="Paste the form's questions here"></textarea>
+    <div class="row"><button class="primary" onclick="pasteQuestions(this)">Get answers</button></div>
+  </section>
+  {% else %}
+  <section class="summary">
+    <div class="counts">
+      <span><b>{{ items|length }}</b> questions</span>
+      {% if summary.needs %}<span class="warn"><b>{{ summary.needs }}</b> need your answer</span>{% endif %}
+      {% if summary.check %}<span class="accent"><b>{{ summary.check }}</b> to check</span>{% endif %}
+      <span class="good"><b>{{ summary.ready }}</b> ready to copy</span>
+    </div>
+    <p class="muted">Questions are in form order. Go down the form and use <b>Copy</b> on each answer{% if fillable %}, or let <b>Auto-fill in browser</b> fill the form in a new tab (it never submits){% endif %}.</p>
+    <p class="cv"><b>CV:</b>
+      {% if cvs %}
+      <select id="cv-variant">{% for name in cvs %}<option {% if name == p.cv_variant %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+      <button onclick="chooseCv(this)">Use this CV</button>
+      {% endif %}
+      <span class="muted">{{ p.cv_why or '' }} · {{ p.cv or 'not set: render your CVs with `jr cv`' }}</span></p>
+    {% if p.facts %}<details><summary>About the company / role</summary><ul>{% for f in p.facts %}<li>{{ f }}</li>{% endfor %}</ul></details>{% endif %}
+  </section>
+
+  {% if fillable and report %}
+  <section class="autofill">
+    <h3>Fill report: {{ report|selectattr('ok')|list|length }}/{{ report|length }} filled</h3>
+    {% set unfilled = report|rejectattr('ok')|list %}
+    {% if unfilled %}<p>Fill these by hand:</p><ul>{% for r in unfilled %}<li>{{ r.label }} <span class="muted">{{ r.how }}</span></li>{% endfor %}</ul>{% endif %}
+    <p class="muted">Check everything in the form's tab, then click Submit there yourself. The extension's toolbar button fills the open tab again (for a form behind an extra click).</p>
+  </section>
+  {% elif p.pasted %}
+  <section class="paste">
+    <details><summary>{{ p.pasted|length }} question(s) pasted by hand. Paste again or clear them</summary>
+      <textarea id="pasted" rows="6" placeholder="Paste the form's questions here"></textarea>
+      <div class="row"><button class="primary" onclick="pasteQuestions(this)">Replace and get answers</button>
+        <button onclick="pasteQuestions(this, true)">Clear</button></div>
+    </details>
+  </section>
+  {% endif %}
+
+  <section class="questions">
+    {% for it in items %}
+    {% set st = it.status %}
+    {% set label, tone = badge[st] %}
+    {% set is_letter = it.answer_id == 'cover_letter' or 'cover letter' in it.label|lower %}
+    <div class="q {{ st }}" data-key="{{ it.key }}">
+      <div class="label">
+        {% if st in ('choose', 'adjust', 'bank', 'once', 'auto') %}<button class="copy" onclick="copyAnswer(this)" title="Copy the answer">Copy</button>{% endif %}
+        {% if st != 'file' %}<input type="checkbox" class="pick" title="Edit with your AI assistant">{% endif %}
+        <span class="num">{{ loop.index }}.</span> {{ it.label }}{% if it.required %} <span class="req">required</span>{% endif %}
+        <span class="badge {{ tone }}">{{ 'AI draft, check it' if it.drafted and st == 'adjust' else label }}</span>
+        <div class="muted meta">{{ it.type }}{% if it.answer_id %} · {{ it.answer_id }}{% endif %}{% if it.mapped_by_ai %} · <span class="ai">matched by AI, check it</span>{% endif %}{% if it.edited in ('claude', 'editor') %} · <span class="ai">edited in your editor</span>{% endif %}{% if it.max_length %} · max {{ it.max_length }}{% endif %}</div>
+      </div>
+      {% if st == 'missing' %}
+        <textarea rows="{{ 5 if it.type in ('textarea', 'file') else 2 }}" placeholder="Your answer (saved to the bank as Approved)"></textarea>
+        {% if it.options %}<p class="muted">Options: {{ it.options[:12]|join(' · ') }}</p>{% endif %}
+        <div class="row"><button class="primary" onclick="saveAnswer(this, 'bank')">Save to bank</button>
+          <button onclick="saveAnswer(this, 'once')">This application only</button></div>
+      {% elif st == 'choose' %}
+        {% if it.answer %}<p class="muted">Stored answer: {{ it.answer }}</p>{% endif %}
+        <select>{% for o in it.options or ['Yes', 'No'] %}<option {% if o == it.option %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+        <button class="primary" onclick="chooseOption(this)">Use this option</button>
+      {% elif (it.drafted and st == 'adjust') or (is_letter and st in ('adjust', 'once')) %}
+        {% if it.drafted and st == 'adjust' %}<p class="muted"><span class="ai">AI draft for this job</span>. Edit it here, then copy it. Not saved to the bank.</p>{% endif %}
+        <textarea rows="{{ 14 if is_letter else 8 }}">{{ it.answer }}</textarea>
+        <div class="row"><button onclick="saveAnswer(this, 'once')">Save my edits</button>
+          {% if is_letter %}<button class="primary" onclick="coverLetterPdf(this)">Download as PDF</button>{% endif %}</div>
+      {% elif st in ('adjust', 'bank', 'once', 'auto') %}
+        <div class="answer">{{ it.option or it.answer }}</div>
+        <details><summary>Change it for this application only</summary>
+          <textarea rows="4">{{ it.answer }}</textarea>
+          <button onclick="saveAnswer(this, 'once')">Use for this application</button></details>
+      {% elif st == 'file' %}
+        <div class="answer">{{ p.cv or 'CV not set' }}</div>
+      {% elif st == 'skip' %}
+        <details><summary>Answer it anyway</summary>
+          <textarea rows="3"></textarea>
+          <button onclick="saveAnswer(this, 'once')">Use for this application</button></details>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% if items %}<div class="row tail"><button onclick="editWithClaude(this)" title="Tick questions above first">Edit ticked with an AI assistant</button></div>{% endif %}
+  </section>
+  {% endif %}
+{% endif %}
+{% endif %}
+<script>const JOB_ID = "{{ job.job_id }}", STAMP = "{{ stamp }}", RUNNING = {{ 'true' if running else 'false' }};</script>
+{% endblock %}

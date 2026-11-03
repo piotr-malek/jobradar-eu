@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://bulldogjob.pl/sitemap.xml.gz",
+ "status": 200,
+ "content_type": "application/octet-stream"
+}

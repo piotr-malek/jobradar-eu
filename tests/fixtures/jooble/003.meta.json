@@ -1,0 +1,6 @@
+{
+ "method": "POST",
+ "url": "https://jooble.org/api/TESTKEY",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

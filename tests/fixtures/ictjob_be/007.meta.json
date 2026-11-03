@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.ictjob.be/en/search-it-jobs",
+ "status": 200,
+ "content_type": "text/html;charset=UTF-8"
+}

@@ -1,0 +1,93 @@
+# Role pack: backend and general software engineering.
+# Families are tried in order across all active packs; the first pattern that matches the title wins.
+# NOTE: generic "Software Engineer" / "Software Developer" / "Programista" titles (no front/back word) belong to this pack
+# too, as the adjacent family `software`: most of them are server-side jobs, and a user who wants frontend or mobile only
+# can read them as adjacent matches. Full-stack titles are the fullstack pack's, frontend ones the frontend pack's.
+label: Backend & software engineering
+description: Backend engineer / developer, Java / Python / Go / .NET / PHP / Node developer, generic software engineer and programista.
+
+families:
+  backend:
+    tier: core
+    priority: 30
+    label: Backend
+    any:
+      - 'back[- ]?end\b.{0,25}\b(?:engineer|developer|programmer|entwickler\w*|ingenieur\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*|programista|programisci|inzynier\w*|ingenier\w*|architect\w*|architekt\w*|dev|software)'
+      - '(?:engineer|developer|programmer|entwickler\w*|ingenieur\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*|programista|programisci|inzynier\w*|ingenier\w*|architect\w*|architekt\w*|software)\b.{0,30}\bback[- ]?end'
+      - '(?:java|python|php|ruby|golang|go|rust|scala|node(?:\.?js)?|\.net|dotnet|c#|c\+\+|elixir|clojure|symfony|laravel|django)(?![a-z0-9])[\w/ +#.,&-]{0,20}?\b(?:developer|engineer|programmer|programista|entwickler\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*)'
+      - '(?:programista|programistka|programisci|entwickler\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|developer|engineer)\b[\w/ (+#.,&-]{0,12}?\b(?:java|python|php|ruby|golang|go|rust|scala|node(?:\.?js)?|\.net|dotnet|c#|c\+\+|elixir|clojure)'
+      - 'api (?:engineer|developer)'
+      - 'microservices? (?:engineer|developer)'
+  software:
+    tier: adjacent
+    priority: 20
+    label: Software
+    exclude: ['front[- ]?end', 'full[- ]?stack', 'data', 'machine learning', 'ml', 'ai', 'devops', 'sre', 'qa', 'sdet',
+                 'test\w*', 'mobile', 'ios', 'android', 'flutter', 'react native', 'security', 'embedded', 'firmware', 'hardware',
+                 'plc', 'sap', 'abap', 'salesforce', 'sales', 'marketing', 'recruit\w*', 'support', 'game', 'unity', 'unreal',
+                 'go[- ]to[- ]market', 'gtm', 'automation', 'wordpress', 'ui', 'ux', 'designer', 'mechanical', 'electrical',
+                 'civil', 'automotive', 'robotics', 'network', 'cloud', 'platform', 'infrastructure', 'site reliability', 'react', 'angular', 'vue', 'javascript', 'typescript', 'js', 'bi', 'etl', 'sql', 'power ?bi', 'looker', 'tableau']
+    any:
+      - 'software[- ]?(?:engineer|developer|programmer|entwickler|ingenieur)\w*'
+      - 'application (?:engineer|developer)'
+      - '(?:ingenier|desarrollador|desenvolvedor|engenheir|programador)\w*(?: ?\(a\)| ?/a)? de software'
+      - 'ingenieur\w* (?:logiciel|en developpement)'
+      - 'developpeur\w*(?: ?\(?(?:euse|se)\)?)? (?:logiciel|applicatif)'
+      - 'inzynier\w* oprogramowania'
+      - 'programista|programistka|programisci'
+
+family_exclude: ['front[- ]?end', 'full[- ]?stack', 'data', 'machine learning', 'ml', 'ai', 'devops', 'sre', 'qa', 'sdet',
+                 'test\w*', 'mobile', 'ios', 'android', 'flutter', 'react native', 'security', 'embedded', 'firmware', 'hardware',
+                 'plc', 'sap', 'abap', 'salesforce', 'sales', 'marketing', 'recruit\w*', 'support', 'game', 'unity', 'unreal',
+                 'go[- ]to[- ]market', 'gtm', 'automation', 'wordpress', 'ui', 'ux', 'designer', 'mechanical', 'electrical',
+                 'civil', 'automotive', 'robotics', 'network', 'cloud', 'platform', 'infrastructure', 'site reliability']
+family_exclude_ok: ['back[- ]?end']
+
+stack:
+  weights: {java: 2, python: 2, golang: 2, "node.js": 2, ".net": 2, php: 1, kotlin: 1, scala: 1, rust: 1, ruby: 1,
+            spring: 2, django: 1, postgresql: 2, kafka: 2, redis: 1, docker: 1, kubernetes: 1, microservices: 1, aws: 0}
+  patterns:
+    java: '\bjava\b(?!script)'
+    python: '\bpython\b'
+    golang: 'golang|\bgo\b(?= (?:developer|engineer|lang))'
+    node.js: 'node\.?js|\bnode\b|nestjs'
+    .net: '\.net\b|dotnet|\bc#'
+    php: '\bphp\b|laravel|symfony'
+    kotlin: '\bkotlin\b'
+    scala: '\bscala\b'
+    rust: '\brust\b'
+    ruby: '\bruby\b|rails'
+    spring: 'spring ?(?:boot)?\b'
+    django: 'django|fastapi|flask'
+    postgresql: 'postgres\w*'
+    kafka: 'kafka|rabbitmq'
+    redis: '\bredis\b'
+    docker: 'docker'
+    kubernetes: 'kubernetes|\bk8s\b'
+    microservices: 'microservices?'
+    aws: '\baws\b|\bazure\b|\bgcp\b'
+
+search_terms:
+  en: [backend engineer, backend developer, software engineer, java developer, python developer, golang developer, .net developer]
+  pl: [programista backend, programista java]
+  de: [backend entwickler, softwareentwickler]
+  es: [desarrollador backend]
+  pt: [engenheiro de software backend]
+  fr: [développeur backend]
+
+prefer: ['backend|back-end|software-engineer|java-developer|python-developer|golang|node-js-developer|dotnet|net-developer',
+         'software|developer|programista|engineer|java|python']
+
+boards:
+  nofluffjobs: {categories: [backend]}
+
+golden:
+  keep: [Backend Engineer, Backend Developer, Senior Backend Engineer, Back-End Developer, Backend-Entwickler (m/w/d),
+         Software Engineer - Backend, Software Engineer (Backend), Java Developer, Python Developer, Golang Developer,
+         Node.js Developer, .NET Developer, C# Developer, PHP Developer, Ruby on Rails Developer, Rust Engineer,
+         Programista Java, Programista Python, Programista Backend, Starszy Programista, Desarrollador/a Backend,
+         Desarrollador Java, Engenheiro(a) de Software Back-end, Desenvolvedor Backend, Développeur Back-End (H/F),
+         Développeur Java (H/F), Ingénieur logiciel, Softwareentwickler (m/w/d), Java-Entwickler (m/w/d), Software Engineer,
+         Software Developer, Ingeniero de Software, Inżynier oprogramowania, Backend Kotlin Engineer, Scala Developer]
+  drop: [Frontend Developer, Full Stack Developer, Data Engineer, QA Engineer, DevOps Engineer, Backend Sales Manager,
+         iOS Developer, Software Engineer in Test, Android Developer, Security Engineer, Product Manager]

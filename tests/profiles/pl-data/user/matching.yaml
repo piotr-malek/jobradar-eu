@@ -1,0 +1,9 @@
+# Overrides deep-merged over everything else: this profile ranks a GCP stack far above Spark/Snowflake/Databricks.
+stack:
+  weights: {dbt: 3, bigquery: 4, gcp: 3, airflow: 2, looker: 2, terraform: 2, python: 1, sql: 1, dataform: 2,
+            "cloud functions": 3, "looker studio": 2, snowflake: 1, databricks: 1, fivetran: 1, airbyte: 1, dlt: 1,
+            spark: 1, kafka: 1, "pub/sub": 2, dagster: 1, prefect: 1, llm: 1, mcp: 1, ga4: 1, hubspot: 1,
+            salesforce: 1, pipedrive: 1, stripe: 1, "power bi": 0, tableau: 0, redshift: 0, aws: 0, azure: 0}
+  patterns:
+    cloud functions: 'cloud functions?|cloud run'
+    pub/sub: 'pub ?/ ?sub|pubsub'

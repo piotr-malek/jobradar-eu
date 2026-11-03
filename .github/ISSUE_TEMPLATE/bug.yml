@@ -1,0 +1,27 @@
+name: Bug
+description: Something in setup, the overnight run or the app doesn't work.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please don't paste API keys, e-mail addresses, your CV or anything from ~/.job-radar.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `jr doctor`
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version and system
+      placeholder: "jobradar-eu 0.1.0, macOS 15, Python 3.13, Lite"

@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://solid.jobs/sitemap-offers.xml",
+ "status": 200,
+ "content_type": "application/xml"
+}

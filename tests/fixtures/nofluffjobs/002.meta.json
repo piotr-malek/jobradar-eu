@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://nofluffjobs.com/?criteria=category%3Ddata,business-intelligence,artificial-intelligence&page=10",
+ "status": 200,
+ "content_type": "text/html; charset=utf-8"
+}

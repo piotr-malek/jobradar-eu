@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.themuse.com/api/public/jobs?page=0&category=Data%20and%20Analytics&category=Data%20Science&location=Flexible%20%2F%20Remote&location=Warsaw%2C%20Poland&location=Krakow%2C%20Poland&location=Berlin%2C%20Germany&location=Munich%2C%20Germany&location=Amsterdam%2C%20Netherlands&location=Dublin%2C%20Ireland&location=London%2C%20United%20Kingdom&location=Paris%2C%20France&location=Madrid%2C%20Spain&location=Barcelona%2C%20Spain&location=Lisbon%2C%20Portugal&location=Prague%2C%20Czech%20Republic",
+ "status": 200,
+ "content_type": "application/json; charset=UTF-8"
+}

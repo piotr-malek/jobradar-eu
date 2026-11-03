@@ -1,0 +1,66 @@
+# Role pack: mobile engineering (iOS, Android, React Native, Flutter, cross-platform).
+label: Mobile engineering
+description: iOS, Android, React Native, Flutter and cross-platform mobile developer / engineer.
+
+families:
+  mobile:
+    tier: core
+    priority: 30
+    label: Mobile
+    any:
+      - '(?:ios|android|mobile|flutter|dart|swift|swiftui|react[- ]native|xamarin|maui|kmp|kotlin multiplatform|cross[- ]platform|mobil)\b[\w/ +&-]{0,20}?\b(?:developer|engineer|programmer|programista|entwickler\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*|ingenieur\w*|ingenier\w*|architect\w*|dev)'
+      - '(?:developer|engineer|programmer|programista|entwickler\w*|developpeur\w*|desarrollador\w*|programador\w*|desenvolvedor\w*|engenheir\w*|ingenieur\w*|ingenier\w*|software)\b[\w/ (),&-]{0,30}?\b(?:ios|android|mobile|flutter|swift|swiftui|react[- ]native|xamarin|kmp|mobil\w*)'
+      - 'ios/android|android/ios|ios (?:and|&) android|android (?:and|&) ios'
+      - 'mobile (?:app|application)s?\b.{0,20}\b(?:developer|engineer)'
+
+family_exclude: ['qa', 'sdet', 'test\w*', 'sales', 'marketing', 'recruit\w*', 'network', 'telecom\w*', 'radio', 'ran', '5g', 'rf',
+                 'back[- ]?end', 'front[- ]?end', 'full[- ]?stack', 'devops', 'security', 'data', 'designer', 'support',
+                 'game', 'unity', 'unreal', 'embedded', 'hardware', 'mechanical', 'mobile crane', 'mobile machinery']
+family_exclude_ok: ['ios', 'android', 'flutter', 'react native', 'swift']
+
+stack:
+  weights: {swift: 3, swiftui: 2, kotlin: 3, "jetpack compose": 2, "react native": 3, flutter: 3, dart: 1, objective-c: 1,
+            xcode: 1, "android sdk": 1, firebase: 1, "kotlin multiplatform": 2, xamarin: 1, rxjava: 1, graphql: 1, ci/cd: 1}
+  patterns:
+    swift: '\bswift\b'
+    swiftui: 'swiftui|combine'
+    kotlin: '\bkotlin\b'
+    jetpack compose: 'jetpack compose|compose multiplatform'
+    react native: 'react[- ]native'
+    flutter: 'flutter'
+    dart: '\bdart\b'
+    objective-c: 'objective-?c'
+    xcode: 'xcode|\bcocoa\w*|uikit'
+    android sdk: 'android sdk|\bandroid\b'
+    firebase: 'firebase'
+    kotlin multiplatform: 'kotlin multiplatform|\bkmp\b|\bkmm\b'
+    xamarin: 'xamarin|\bmaui\b'
+    rxjava: 'rxjava|rxswift|coroutines'
+    graphql: 'graphql'
+    ci/cd: 'fastlane|bitrise|app store|google play'
+
+search_terms:
+  en: [ios developer, android developer, mobile developer, react native developer, flutter developer, mobile engineer, swift developer, kotlin developer]
+  pl: [programista mobile, programista android]
+  de: [ios entwickler, android entwickler]
+  es: [desarrollador mobile]
+  pt: [desenvolvedor mobile]
+  fr: [développeur mobile]
+
+prefer: ['ios|android|react-native|flutter|mobile-developer|mobile-engineer|swift|kotlin', 'mobile|-app-']
+
+boards:
+  nofluffjobs: {categories: [mobile]}
+  justjoin: {categories: [mobile]}
+
+golden:
+  keep: [iOS Developer, iOS Engineer, Senior iOS Developer, Android Developer, Android Engineer, Senior Android Engineer,
+         Mobile Developer, Mobile Engineer, Mobile App Developer, Mobile Application Developer, React Native Developer,
+         React Native Engineer, Flutter Developer, Flutter Engineer, Swift Developer, Kotlin Android Developer,
+         Software Engineer - Mobile, Software Engineer (iOS), Developer (Android), Cross-Platform Mobile Developer,
+         Kotlin Multiplatform Developer, iOS/Android Developer, Programista iOS, Programista Android, Programista Mobile,
+         Programista Flutter, iOS-Entwickler (m/w/d), Android-Entwickler (m/w/d), Mobile Entwickler (m/w/d),
+         Desarrollador/a iOS, Desarrollador Android, Desarrollador Mobile, Engenheiro(a) de Software Mobile,
+         Desenvolvedor Android, Desenvolvedor Mobile, Développeur Mobile (H/F), Développeur iOS (H/F), Développeur Android]
+  drop: [Backend Developer, Frontend Developer, Mobile QA Engineer, Mobile Test Automation Engineer, Mobile Network Engineer,
+         Mobile Sales Manager, Game Developer, Unity Developer, Data Engineer, Mobile Crane Operator, Designer]

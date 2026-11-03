@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://nl.engineering.jobs/nl/sitemap-jobs.xml?page=5",
+ "status": 200,
+ "content_type": "text/xml; charset=utf-8"
+}

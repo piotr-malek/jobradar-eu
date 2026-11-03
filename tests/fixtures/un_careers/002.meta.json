@@ -1,0 +1,6 @@
+{
+ "method": "POST",
+ "url": "https://careers.un.org/api/public/opening/jo/list/filteredV2/en",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

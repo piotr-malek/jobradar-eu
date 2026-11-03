@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://jobgether.com/astroapi/ai/jobs.json?keyword=solutions+engineer&locations=europe&limit=25&page=2&sort=date",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

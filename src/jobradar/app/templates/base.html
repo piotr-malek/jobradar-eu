@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="jr-app" content="1">
+<title>{% block title %}Job Radar{% endblock %} · Job Radar</title>
+<link rel="icon" href="{{ url_for('static', filename='icon.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+<header>
+  <a class="brand" href="{{ url_for('morning') }}">Job Radar</a>
+  <nav>
+    <a href="{{ url_for('morning') }}">Jobs</a>
+    {% if module_on('bank') %}<a href="{{ url_for('bank_page') }}">Answer bank</a>{% endif %}
+    <a href="{{ url_for('stats') }}">Stats</a>
+    <a href="{{ url_for('add') }}">Add a job</a>
+    <a href="{{ url_for('setup.index') }}">Setup</a>
+  </nav>
+  <div class="statusbar">
+    {% if last_night %}<span title="last overnight shortlist">Last night: {{ last_night.n_items }} jobs · {{ (last_night.finished_at or '')[:16]|replace('T', ' ') }} UTC</span>
+    {% else %}<span>No overnight results yet</span>{% endif %}
+    <span class="mode">{{ mode|capitalize }}</span>
+    {% if has_sync %}<button class="small" id="sync-btn" onclick="syncNow(this)" title="Download the newest results and push your decisions">Sync</button>
+      {% if sync and not sync.ok %}<span class="bad" title="{{ sync.error }}">sync failed</span>{% endif %}{% endif %}
+  </div>
+</header>
+<main><div id="task" class="task" role="status" aria-live="polite" hidden></div>{% block body %}{% endblock %}</main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

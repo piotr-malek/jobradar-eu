@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://jobgether.com/astroapi/ai/jobs.json?keyword=AI+automation&locations=europe&limit=25&page=1&sort=date",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

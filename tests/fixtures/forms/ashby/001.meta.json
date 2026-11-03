@@ -1,0 +1,6 @@
+{
+ "method": "POST",
+ "url": "https://jobs.ashbyhq.com/api/non-user-graphql?op=ApiJobPosting",
+ "status": 200,
+ "content_type": "application/json; charset=utf-8"
+}

@@ -1,0 +1,3 @@
+default: {provider: mistral, model: ministral-14b-latest}
+steps:
+  draft: {provider: mistral, model: mistral-small-latest}

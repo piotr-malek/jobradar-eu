@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://justjoin.it/sitemaps/active-jobs/part0.xml",
+ "status": 200,
+ "content_type": "text/xml"
+}

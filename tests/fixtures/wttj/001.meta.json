@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.welcometothejungle.com/api/env",
+ "status": 200,
+ "content_type": "application/javascript"
+}

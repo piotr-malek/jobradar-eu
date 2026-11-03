@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://pt.teamlyzer.com/companies/get-job/c8a3b27b-9cd6-4af4-b67b-159741045132?v=company",
+ "status": 302,
+ "content_type": "text/html; charset=utf-8"
+}

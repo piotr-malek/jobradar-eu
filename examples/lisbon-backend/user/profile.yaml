@@ -1,0 +1,23 @@
+# Read by the overnight screen and by prep. No contact details: those stay in the local answer bank.
+summary: Backend engineer building payment and booking APIs in Python and Go on AWS (PostgreSQL, Kafka, Kubernetes).
+level: Mid-level backend engineer, 4 years in the role; senior roles fit when the stack matches.
+priority_roles: [Backend Engineer, Python Developer, Go Developer]
+target_roles: [Platform Engineer, Full-stack Engineer (backend-heavy)]
+strong_stack: [Python, Django, FastAPI, Go, PostgreSQL, Kafka, AWS, Docker]
+nice_stack: [Kubernetes, Terraform, Redis, React]
+languages: {pt: native, en: C1, es: B1}
+location:
+  city: Lisbon
+  country: PT
+  lat: 38.7167
+  lon: -9.1333
+  hybrid_radius_km: 30
+  work_setups: [remote_eu, remote_country, hybrid]
+  relocate_to: []
+contracts: [employment, contractor]
+highlights:
+  - Built the payment service of a ticket marketplace (Python, PostgreSQL), about 40,000 orders a day.
+  - Moved order events from cron jobs to Kafka; refunds went from next-day to minutes.
+  - Personal project, an open-source Go library for rate limiting with 300 GitHub stars.
+draft_rules:
+  - Mention Go only when the posting asks for it; it comes from side projects.

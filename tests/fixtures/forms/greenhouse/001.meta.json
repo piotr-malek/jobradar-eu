@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs/8860302002?questions=true",
+ "status": 200,
+ "content_type": "application/json"
+}

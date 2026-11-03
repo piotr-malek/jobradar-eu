@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://pam-stilling-feed.nav.no/api/v1/feed",
+ "status": 200,
+ "content_type": "application/json"
+}

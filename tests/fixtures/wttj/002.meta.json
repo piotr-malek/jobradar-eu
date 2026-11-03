@@ -1,0 +1,6 @@
+{
+ "method": "POST",
+ "url": "https://csekhvms53-dsn.algolia.net/1/indexes/wttj_jobs_production_en/query",
+ "status": 200,
+ "content_type": "application/json; charset=UTF-8"
+}

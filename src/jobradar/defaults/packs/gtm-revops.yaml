@@ -1,0 +1,93 @@
+# Role pack: go-to-market engineering, RevOps, marketing/sales systems, business automation and integrations.
+label: GTM engineering, RevOps & automation
+description: GTM engineer, RevOps, marketing/sales systems, CRM developer, automation and integration engineer.
+
+families:
+  gtm:
+    tier: core
+    priority: 30
+    label: GTM/RevOps
+    manager_ok: true            # "RevOps Manager" / "Marketing Operations Manager" are usually individual roles
+    any:
+      - rev ?ops|revenue operations
+      - '(?:gtm|go[- ]to[- ]market)(?: \(gtm\))?[- ](?:engineer|systems|operations|ops|automation|technology|technologist|applications? engineer|ai operations|intelligence)'
+      - gtme
+      - (?:ai |agentic )?gtm operator
+      - (?:revenue|(?<!pre-)(?<!pre )sales|marketing|growth) systems\b.{0,25}\b(?:engineer|developer|specialist|admin\w*|architect|manager|operations)
+      - (?:revenue|outbound) engineer
+      - (?<!technical )(?<!product )marketing engineer
+      - growth engineering
+      - growth op(?:eration)?s\b.{0,25}\b(?:engineer|automation|specialist|analyst|manager)
+      - clay (?:engineer|developer|specialist|expert|operator|consultant|architect)
+      - marketing (?:data|analytics|operations|ops|automation|technology) (?:engineer|developer|specialist|manager|lead)
+      - marketing technologist|martech
+      - growth (?:data|analytics|engineer)
+      - crm (?:data|automation|systems|developer|engineer|specialist|admin\w*|operations)
+      - (?:hubspot|pipedrive|salesforce) (?:admin\w*|specialist|operations|developer|consultant)
+      - sales operations (?:engineer|analyst|specialist)
+      - (?:revenue|marketing|gtm|go[- ]to[- ]market) operations analyst
+      - rev ?ops analyst
+  integration:
+    tier: adjacent
+    priority: 20
+    label: Integration/Automation
+    any:
+      - integrations? (?:engineer|developer|specialist|architect|consultant)
+      - (?:business|workflow|process|marketing|sales|revenue|crm|no-?code|low-?code|ai|gtm) automation (?:engineer|specialist|developer|consultant|architect)
+      - (?:data|ai) (?:&|and) automation (?:engineer|developer|specialist|consultant)
+      - automation (?:&|and) (?:data|ai|integrations?) (?:engineer|developer|specialist|consultant)
+      - business systems (?:engineer|developer|specialist|architect)
+      - internal tools? (?:engineer|developer|specialist)
+      - internal tools (?:&|and) (?:automation|integrations?)
+      - '(?:n8n|zapier|make\.com|workato|power automate|power platform)(?: automation)? (?:developer|engineer|specialist|consultant|admin\w*)'
+      - specjalist\w* (?:ds\.? )?(?:\w+ i )?automatyzacji
+    context_any:       # plain titles are mostly PLC/industrial: they count only with automation tooling in the description
+      - (?<!qa )(?<!qe )(?<!test )automation (?:engineer|developer|specialist)
+    context_terms: ['n8n', 'zapier', 'make\.com', 'workato', 'power automate', 'apis?', 'webhooks?', 'llms?', 'openai', 'crm',
+                    'hubspot', 'salesforce', 'airtable', 'python', 'javascript', 'typescript']
+    context_min: 2
+
+family_exclude: ['qa', 'test(?:ing)? engineer', 'plc', 'scada', 'industrial', 'mechanical', 'electrical', 'robotics']
+
+stack:
+  weights: {hubspot: 2, salesforce: 2, pipedrive: 2, clay: 3, n8n: 2, zapier: 2, "make.com": 2, stripe: 1, ga4: 1,
+            python: 1, sql: 1, llm: 1}
+  patterns:
+    hubspot: 'hubspot'
+    salesforce: 'salesforce'
+    pipedrive: 'pipedrive'
+    clay: '\bclay\b'
+    n8n: '\bn8n\b'
+    zapier: 'zapier'
+    make.com: 'make\.com'
+    stripe: '\bstripe\b'
+    ga4: '\bga4\b|google analytics'
+    python: '\bpython\b'
+    sql: '\bsql\b'
+    llm: '\bllms?\b|openai|anthropic|\bclaude\b|gemini|genai|generative ai'
+
+search_terms:
+  en: [gtm engineer, revenue operations, revops, marketing automation, integration engineer, crm developer]
+
+# priority points by title: engineer-type GTM/automation work above ops-manager and admin roles
+title_bonus:
+  '(?:gtm|go[- ]to[- ]market(?: \(gtm\))?|rev ?ops|revenue operations|marketing technology|growth|crm|business systems|integrations?)[- ]engineer|gtme|(?:revenue|gtm) systems\b.{0,25}\bengineer|clay (?:engineer|expert|specialist)': 10
+  '(?<!qa )(?<!qe )(?<!test )automation (?:engineer|developer)': 10
+  'crm admin\w*|(?:revenue|rev ?ops|marketing|sales|gtm|growth) operations manager|(?:rev|marketing) ?ops manager|marketing automation (?:specialist|manager)': -6
+
+prefer: ['gtm|revops|revenue-operations|marketing-automation|crm|integration', 'marketing|automation']
+
+
+boards:
+  remoterocketship: {roles: [revenue-operations, marketing-operations, growth-engineer]}
+
+golden:
+  keep: [GTM Engineer, Go-to-Market Engineer, RevOps Engineer, Revenue Operations Manager, Marketing Operations Manager,
+         HubSpot Administrator, Salesforce Developer, CRM Automation Specialist, Integration Engineer,
+         Marketing Automation Engineer, Business Systems Engineer, n8n Developer, Clay Engineer, Growth Engineer,
+         Internal Tools Engineer, Revenue Systems Engineer, Marketing Technologist, Sales Operations Analyst,
+         Pipedrive Specialist, Workato Developer, Zapier Automation Specialist, Growth Operations Specialist]
+  drop: [Sales Executive, Account Executive, QA Automation Engineer, PLC Automation Engineer, Marketing Designer,
+         Sales Development Representative, Customer Success Manager, Recruiter, Industrial Automation Engineer,
+         Content Marketing Manager, Brand Designer, Data Entry Clerk, Mechanical Engineer, Test Automation Engineer,
+         Talent Acquisition Partner]

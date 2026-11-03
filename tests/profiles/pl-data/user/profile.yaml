@@ -1,0 +1,14 @@
+# Test profile: a mid-level data engineer in Wrocław who takes remote work or hybrid near home, and won't relocate.
+summary: Analytics engineer building data pipelines and models on GCP (BigQuery, dbt, Airflow) and sales automation.
+level: Mid-level analytics engineer; junior-to-mid data engineer.
+priority_roles: [Analytics Engineer, Data Engineer, GTM Engineer]
+target_roles: [BI / ETL Engineer, AI automation engineer]
+strong_stack: [SQL, BigQuery, dbt, Python, GCP, Terraform]
+nice_stack: [Airflow, Looker, HubSpot]
+languages: {en: C1, pl: native, es: B1}
+location:
+  city: Wrocław
+  country: PL
+  hybrid_radius_km: 40
+  work_setups: [remote_eu, remote_country, hybrid]
+contracts: [employment, b2b]

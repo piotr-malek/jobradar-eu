@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://jobsearch.api.jobtechdev.se/search?q=analytics%20engineer&limit=100&offset=0&sort=pubdate-desc&published-after=10080",
+ "status": 200,
+ "content_type": "application/json"
+}

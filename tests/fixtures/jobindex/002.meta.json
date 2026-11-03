@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://www.jobindex.dk/jobsoegning.rss?q=%22data+engineer%22",
+ "status": 200,
+ "content_type": "application/rss+xml"
+}

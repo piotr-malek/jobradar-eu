@@ -1,0 +1,6 @@
+{
+ "method": "GET",
+ "url": "https://pam-stilling-feed.nav.no/api/v1/feedentry/5527c23e-12cb-46db-a143-a61308f0ec76",
+ "status": 200,
+ "content_type": "application/json"
+}

@@ -1,0 +1,8 @@
+mode: full
+timezone: Europe/Lisbon
+run_at: "02:00"
+config_repo: ana-ferreira-demo/job-radar-config
+notify_email: false
+shortlist_cap: 120
+modules: {ats: true, screen: true, bank: true}
+budgets: {daily_minutes: 25, ats_minutes: 20}

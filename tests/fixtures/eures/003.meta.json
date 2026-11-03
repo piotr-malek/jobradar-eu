@@ -1,0 +1,6 @@
+{
+ "method": "POST",
+ "url": "https://europa.eu/eures/api/jv-searchengine/public/jv-search/search",
+ "status": 200,
+ "content_type": "application/json"
+}

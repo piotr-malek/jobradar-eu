@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Job Radar filler",
+  "version": "1.0.0",
+  "description": "Fills application forms with the answers prepped in the local Job Radar app (./jr app). Never submits.",
+  "permissions": ["scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {"service_worker": "background.js"},
+  "content_scripts": [{
+    "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+    "js": ["bridge.js"],
+    "run_at": "document_end"
+  }],
+  "action": {"default_title": "Job Radar: fill this form again with the last job's answers"}
+}

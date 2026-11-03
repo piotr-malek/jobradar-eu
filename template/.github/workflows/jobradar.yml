@@ -1,0 +1,125 @@
+# Job Radar overnight run. `jr setup` writes the cron times from your time zone (the lines tagged jobradar:*).
+# Results go to the `state` branch (one commit, replaced each run); your decisions come from the `picks` branch.
+name: jobradar
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # jobradar:ats    (Full: company ATS boards)
+    - cron: "0 2 * * *"   # jobradar:daily  (job boards + shortlist)
+    - cron: "0 4 * * 0"   # jobradar:weekly (stats + clean-up)
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which job to run
+        type: choice
+        options: [daily, ats, weekly]
+        default: daily
+
+# one run at a time: the state branch has a single writer
+concurrency:
+  group: jobradar-state
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  JOBRADAR_VERSION: "0.1.0"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      JR_USER_DIR: ${{ github.workspace }}/user
+      JR_HOME: ${{ runner.temp }}/jr
+      JR_STATE_DB: ${{ runner.temp }}/state.db
+      JR_RUNNER: github
+      # LLM (only the ones you set are used)
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # optional free source keys
+      JOOBLE_PL_API_KEY: ${{ secrets.JOOBLE_PL_API_KEY }}
+      JOOBLE_DE_API_KEY: ${{ secrets.JOOBLE_DE_API_KEY }}
+      JOOBLE_ES_API_KEY: ${{ secrets.JOOBLE_ES_API_KEY }}
+      JOOBLE_PT_API_KEY: ${{ secrets.JOOBLE_PT_API_KEY }}
+      JOOBLE_NL_API_KEY: ${{ secrets.JOOBLE_NL_API_KEY }}
+      THEIR_STACK_API_KEY: ${{ secrets.THEIR_STACK_API_KEY }}
+      ITJOBS_PT_API_KEY: ${{ secrets.ITJOBS_PT_API_KEY }}
+      # job-alert e-mails (IMAP) and the morning e-mail (SMTP)
+      JR_IMAP_USER: ${{ secrets.JR_IMAP_USER }}
+      JR_IMAP_PASSWORD: ${{ secrets.JR_IMAP_PASSWORD }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Which schedule fired
+        id: which
+        shell: bash
+        run: |
+          JOB="${{ inputs.job }}"
+          SCHED="${{ github.event.schedule }}"
+          if [ -n "$SCHED" ]; then
+            for tag in ats daily weekly; do
+              CRON=$(grep -m1 "jobradar:$tag" .github/workflows/jobradar.yml | sed -E 's/.*cron: "([^"]+)".*/\1/')
+              [ "$CRON" = "$SCHED" ] && JOB=$tag
+            done
+          fi
+          if [ ! -f user/profile.yaml ]; then
+            echo "::notice::No user/profile.yaml yet: run \`jr setup\` on your computer first. Nothing to do."
+            JOB=none
+          fi
+          echo "job=${JOB:-daily}" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.which.outputs.job != 'none'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: .github/workflows/jobradar.yml
+      - name: Install Job Radar
+        if: steps.which.outputs.job != 'none'
+        run: pip install "jobradar-eu==${JOBRADAR_VERSION}"
+      - name: Restore state and picks
+        if: steps.which.outputs.job != 'none'
+        shell: bash
+        run: |
+          mkdir -p "$JR_HOME"
+          if git fetch --depth=1 origin state 2>/dev/null; then
+            git show FETCH_HEAD:state.db.gz | gunzip > "$JR_STATE_DB"
+          fi
+          if git fetch --depth=1 origin picks 2>/dev/null; then
+            git show FETCH_HEAD:picks.jsonl > "$RUNNER_TEMP/picks.jsonl" || true
+          fi
+          touch "$RUNNER_TEMP/picks.jsonl"
+      - name: Run (${{ steps.which.outputs.job }})
+        if: steps.which.outputs.job != 'none'
+        shell: bash
+        run: |
+          case "${{ steps.which.outputs.job }}" in
+            ats)    jr ats ;;
+            weekly) jr weekly --picks "$RUNNER_TEMP/picks.jsonl" ;;
+            *)      jr daily --picks "$RUNNER_TEMP/picks.jsonl" ;;
+          esac
+      - name: Save state (one commit on the state branch)
+        if: always() && steps.which.outputs.job != 'none'
+        shell: bash
+        run: |
+          [ -f "$JR_STATE_DB" ] || exit 0
+          python - <<'PY'
+          import os, sqlite3
+          c = sqlite3.connect(os.environ["JR_STATE_DB"]); c.execute("PRAGMA wal_checkpoint(TRUNCATE)"); c.close()
+          PY
+          cd "$RUNNER_TEMP"
+          rm -rf statebranch && mkdir statebranch && cd statebranch
+          git init -q -b state
+          gzip -c "$JR_STATE_DB" > state.db.gz
+          git add state.db.gz
+          git -c user.name="jobradar" -c user.email="jobradar@users.noreply.github.com" commit -q -m "state $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" state:state
