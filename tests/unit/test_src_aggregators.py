@@ -80,7 +80,7 @@ def test_linkedin_guest_parses_cards():
 
 
 def test_jobspy_indeed(monkeypatch):
-    recorded = json.loads((FIX / "jobspy_indeed" / "records.json").read_text())
+    recorded = json.loads((FIX / "jobspy_indeed" / "records.json").read_text(encoding="utf-8"))
 
     class FakeFrame:
         def __init__(self, rows):

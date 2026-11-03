@@ -187,3 +187,17 @@ input.num { width: 80px; display: inline-block; }
 .preview ul { columns: 2; font-size: 13px; padding-left: 16px; }
 .wiz-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
 .sources q { font-size: 13px; color: var(--muted); }
+
+/* wizard: plain-language layout */
+form.wiz .countries { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 12px; }
+form.wiz .countries label.inline, form.wiz fieldset label.inline { color: var(--text); font-size: 14px; margin-right: 12px; }
+form.wiz details.more { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 12px 0; background: var(--panel); }
+form.wiz details.more > summary { font-size: 14px; color: var(--text); }
+form.wiz details.more[open] > summary { margin-bottom: 8px; }
+form.wiz section.recommended { border-color: var(--accent); }
+form.wiz section.recommended ol { margin: 6px 0 10px; padding-left: 20px; line-height: 1.6; }
+form.wiz .lang select { width: auto; }
+code.big { font-size: 20px; letter-spacing: 2px; padding: 2px 8px; }
+form.wiz label > select { display: block; width: 100%; }
+form.wiz label input[type=checkbox], form.wiz label input[type=radio] { width: auto; margin-right: 6px; vertical-align: middle; }
+form.wiz section.recommended label.inline { color: var(--text); font-size: 15px; font-weight: 600; }

@@ -23,6 +23,7 @@ from jobradar.http.client import Blocked, BudgetExceeded, PoliteClient
 from jobradar.match.engine import MatchEngine
 from jobradar.models import MatchResult, Posting, utcnow
 from jobradar.normalize.names import norm_company
+from jobradar.normalize.text import fix_mojibake
 from jobradar.settings import get_settings
 from jobradar.sources.base import FetchContext, SourceSpec
 from jobradar.sources.registry import get_adapter, load_specs, spec_for
@@ -181,6 +182,8 @@ def run_source(
     postings: list[Posting] = []
     try:
         for p in get_adapter(spec.adapter)(ctx):
+            for f in ("title", "company", "location_raw", "description"):
+                setattr(p, f, fix_mojibake(getattr(p, f) or "") or getattr(p, f))
             postings.append(p)
     except Blocked as exc:
         summary.status, summary.error = ("partial" if postings else "blocked"), str(exc)[:500]

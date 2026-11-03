@@ -54,7 +54,7 @@ def _aliases() -> dict[str, str]:
         path = PACKAGE_DIR / "company_aliases.yaml"
     if not path.exists():
         return {}
-    data = yaml.safe_load(path.read_text()) or {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     out: dict[str, str] = {}
     for canonical, variants in data.items():
         out[norm_company_raw(canonical)] = norm_company_raw(canonical)

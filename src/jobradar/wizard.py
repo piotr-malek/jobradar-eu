@@ -35,6 +35,8 @@ USER_FILES = ("settings.yaml", "profile.yaml", "roles.yaml", "sources.yaml", "ll
 LOCAL_ONLY = (".env", "local.db", "experience.md", "cv.yaml", "draft_style.md", "state.db", "out/", "cache/")
 WORK_SETUPS = ("remote_eu", "remote_country", "hybrid", "onsite")
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
+LEVEL_LABELS = {"A1": "A1 · beginner", "A2": "A2 · basic", "B1": "B1 · intermediate", "B2": "B2 · good working level",
+                "C1": "C1 · fluent", "C2": "C2 · near native", "native": "Native"}
 
 
 @dataclass(frozen=True)
@@ -71,7 +73,7 @@ def state_path() -> Path:
 
 def load_state() -> dict[str, Any]:
     try:
-        st = json.loads(state_path().read_text())
+        st = json.loads(state_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         st = {}
     st.setdefault("mode", config.user_settings().get("mode") or "lite")
@@ -82,7 +84,7 @@ def load_state() -> dict[str, Any]:
 
 def save_state(st: dict[str, Any]) -> None:
     state_path().parent.mkdir(parents=True, exist_ok=True)
-    state_path().write_text(json.dumps(st, indent=1))
+    state_path().write_text(json.dumps(st, indent=1), encoding="utf-8")
 
 
 def steps_for(mode: str) -> list[Step]:
@@ -142,7 +144,7 @@ def env_path() -> Path:
 def read_env() -> dict[str, str]:
     out = {}
     if env_path().is_file():
-        for line in env_path().read_text().splitlines():
+        for line in env_path().read_text(encoding="utf-8").splitlines():
             if "=" in line and not line.lstrip().startswith("#"):
                 k, _, v = line.partition("=")
                 out[k.strip()] = v.strip()
@@ -267,24 +269,78 @@ def sample_titles(n: int = 400) -> list[str]:
     return list(dict.fromkeys(out))[:n]
 
 
-def countries_sources_view(countries: list[str]) -> list[dict[str, Any]]:
-    """Every source with whether it covers these countries, needs a key or is opt-in (for the wizard's list)."""
+def country_names() -> dict[str, str]:
+    """ISO code → English country name (GeoNames countryInfo)."""
+    from jobradar.normalize.location import _DATA
+
+    out = {}
+    for line in (_DATA / "countries.tsv").read_text(encoding="utf-8").splitlines():
+        code, _, name = line.partition("\t")
+        if code and name:
+            out[code.strip().upper()] = name.strip()
+    return out
+
+
+def country_options() -> list[dict[str, Any]]:
+    """The countries the wizard offers (EU, EEA, Switzerland), by name, with how many local boards each has."""
+    from jobradar.normalize.location import ELIGIBLE
+    from jobradar.sources.registry import load_specs
+
+    names = country_names()
+    local: dict[str, int] = {}
+    for spec in load_specs(all_sources=True).values():
+        if spec.enabled or spec.opt_in:
+            for c in spec.countries:
+                local[c.upper()] = local.get(c.upper(), 0) + 1
+    return sorted(({"code": c, "name": names.get(c, c), "boards": local.get(c, 0)} for c in ELIGIBLE),
+                  key=lambda r: r["name"])
+
+
+def countries_sources_view(countries: list[str], opt_in: list[str] | None = None,
+                           disabled: list[str] | None = None) -> dict[str, Any]:
+    """The boards for these countries, split into the ones that will run for this user and the ones that won't
+    (with the reason), using the same rules as the overnight run (registry.selected)."""
     from jobradar.settings import get_settings
-    from jobradar.sources.registry import PAN_EU, load_specs
+    from jobradar.sources.registry import PAN_EU, load_specs, selected
 
     s = get_settings()
-    want = {c.upper() for c in countries}
-    out = []
+    want = [c.upper() for c in countries]
+    user = {"countries": want, "opt_in": list(opt_in or [])}
+    names = country_names()
+    on, off = [], []
     for sid, spec in load_specs(all_sources=True).items():
         covers = {c.upper() for c in spec.countries}
-        relevant = bool(covers & PAN_EU) or bool(covers & want)
-        if not relevant or (not spec.enabled and spec.opt_in is None and sid != "email_alerts"):
+        if not (covers & PAN_EU or covers & set(want)):
             continue
-        out.append({"id": sid, "label": spec.label or sid, "countries": spec.countries, "opt_in": spec.opt_in,
-                    "keys": spec.secrets, "has_keys": s.has_secrets(spec.secrets) if spec.secrets else True,
-                    "local_only": spec.runner == "local", "packs": spec.packs, "notes": spec.notes[:160]})
-    out.sort(key=lambda r: (bool(r["opt_in"]), r["countries"] == ["EU"], r["id"]))
-    return out
+        if not spec.enabled and spec.opt_in is None and sid != "email_alerts":
+            continue                                  # switched off for everyone (e.g. paid or fragile)
+        row = {"id": sid, "label": spec.label or sid,
+               "covers": "all of Europe / remote" if covers & PAN_EU else ", ".join(names.get(c, c) for c in sorted(covers)),
+               "needs_key": bool(spec.secrets) and not s.has_secrets(spec.secrets), "local_only": spec.runner == "local",
+               "checked": sid not in (disabled or [])}
+        if sid == "email_alerts":
+            row["note"] = "needs a mailbox: add it in Free extras"
+        elif row["needs_key"]:
+            row["note"] = "needs a free key: add it in Free extras"
+        elif row["local_only"]:
+            row["note"] = "blocks GitHub: only searched when you run Job Radar on this computer"
+        if selected(spec, user) or sid == "email_alerts":
+            on.append(row)
+            continue
+        if spec.opt_in == "purpose":
+            row["why"] = "only with “UN, EU institutions and NGOs” switched on"
+        elif spec.opt_in == "polish_only":
+            row["why"] = "only with “Polish-language boards” switched on"
+        elif spec.packs:
+            packs = config.available_packs()
+            row["why"] = "only for " + " or ".join(f"“{(packs.get(k) or {}).get('label') or k}”" for k in spec.packs) + " roles"
+        else:
+            row["why"] = "off by default"
+        off.append(row)
+    on.sort(key=lambda r: (r["covers"] == "all of Europe / remote", r["needs_key"] or r["id"] == "email_alerts", r["label"].lower()))
+    off.sort(key=lambda r: r["label"].lower())
+    ready = sum(1 for r in on if r["checked"] and not r["needs_key"] and r["id"] != "email_alerts")
+    return {"on": on, "off": off, "ready": ready}
 
 
 def save_countries_sources(data: dict[str, Any]) -> dict[str, Any]:
@@ -573,15 +629,35 @@ def save_bank(data: dict[str, Any]) -> dict[str, Any]:
 # ------------------------------------------------------------------ optional keys
 KEY_CARDS = [
     {"id": "jooble", "label": "Jooble", "signup": "https://jooble.org/api/about", "per_country": True,
-     "env": "JOOBLE_{CC}_API_KEY", "countries": ["PL", "DE", "ES", "PT", "NL"]},
+     "env": "JOOBLE_{CC}_API_KEY", "countries": ["PL", "DE", "ES", "PT", "NL"],
+     "what": "A big job search engine. One free key per country site: ask for it on their API page."},
     {"id": "theirstack", "label": "TheirStack (free plan)", "signup": "https://app.theirstack.com/settings/api-key",
-     "env": "THEIR_STACK_API_KEY"},
-    {"id": "itjobs_pt", "label": "ITJobs.pt", "signup": "https://www.itjobs.pt/api", "env": "ITJOBS_PT_API_KEY"},
-    {"id": "imap", "label": "Job-alert e-mails (IMAP, e.g. LinkedIn alerts)",
-     "signup": "https://myaccount.google.com/apppasswords", "env": ["JR_IMAP_USER", "JR_IMAP_PASSWORD"]},
-    {"id": "smtp", "label": "Morning e-mail (Gmail SMTP)", "signup": "https://myaccount.google.com/apppasswords",
-     "env": ["SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"]},
+     "env": "THEIR_STACK_API_KEY", "what": "Jobs collected from company career pages; about 40 a week on the free plan."},
+    {"id": "itjobs_pt", "label": "ITJobs.pt", "signup": "https://www.itjobs.pt/api", "env": "ITJOBS_PT_API_KEY",
+     "countries": ["PT"], "what": "The main IT job board in Portugal."},
+    {"id": "imap", "label": "Job-alert e-mails (for example LinkedIn alerts)",
+     "signup": "https://myaccount.google.com/apppasswords", "env": ["JR_IMAP_USER", "JR_IMAP_PASSWORD"],
+     "what": "Reads the job alerts that LinkedIn and some boards e-mail you, so their jobs show up here too."},
+    {"id": "smtp", "label": "A morning e-mail", "signup": "https://myaccount.google.com/apppasswords",
+     "env": ["SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"], "what": "A short “12 new jobs are ready” e-mail each morning."},
 ]
+KEY_LABELS = {"JR_IMAP_USER": "Your e-mail address", "JR_IMAP_PASSWORD": "App password (not your normal password)",
+              "SMTP_USER": "Gmail address that sends it", "SMTP_PASSWORD": "App password (not your normal password)",
+              "EMAIL_TO": "Send it to (e-mail address)"}
+
+
+def key_cards(countries: list[str]) -> list[dict[str, Any]]:
+    """The Free extras cards that apply to these countries (Jooble only for its country sites the user picked)."""
+    want = {c.upper() for c in countries}
+    out = []
+    for c in KEY_CARDS:
+        if c.get("per_country"):
+            cc = [x for x in c["countries"] if x in want]
+            if cc:
+                out.append({**c, "countries": cc})
+        elif not c.get("countries") or want & set(c["countries"]):
+            out.append(c)
+    return out
 
 
 def test_key(card: str, values: dict[str, str]) -> dict[str, Any]:
@@ -685,6 +761,18 @@ def workflow_with_crons(text: str, run_at: str, tz: str) -> str:
     return text
 
 
+def workflow_with_package(text: str, version: str | None = None, spec: str | None = None) -> str:
+    """Pin the overnight run to the Job Radar this computer runs: its version, or $JOBRADAR_SPEC (e.g. a git URL)
+    when the installer used one."""
+    from jobradar import __version__
+
+    version = version or __version__
+    spec = os.environ.get("JOBRADAR_SPEC", "") if spec is None else spec
+    spec = spec.replace("[full]", "")                     # the overnight run needs no browser
+    text = re.sub(r'(JOBRADAR_VERSION: )"[^"]*"', rf'\1"{version}"', text)
+    return re.sub(r'(JOBRADAR_SPEC: )"[^"]*"', lambda m: m.group(1) + json.dumps(spec), text)
+
+
 def secrets_to_set() -> dict[str, str]:
     """Keys from ~/.job-radar/.env that the overnight run needs (LLM keys, source keys, IMAP/SMTP)."""
     env = read_env()
@@ -771,9 +859,9 @@ def create_config_repo(data: dict[str, Any]) -> dict[str, Any]:
     log.append(f"pushed {len(pushed)} file(s)")
     us = config.user_settings()
     wf = gh(["api", "-H", "Accept: application/vnd.github.raw", f"repos/{repo}/contents/{WORKFLOW}"])
-    new_wf = workflow_with_crons(wf, us.get("run_at") or "02:00", us.get("timezone") or "UTC")
+    new_wf = workflow_with_package(workflow_with_crons(wf, us.get("run_at") or "02:00", us.get("timezone") or "UTC"))
     if new_wf != wf:
-        _put_file(repo, WORKFLOW, new_wf.encode(), "Set the overnight run time")
+        _put_file(repo, WORKFLOW, new_wf.encode(), "Set the overnight run time and the Job Radar version")
         log.append("set the overnight run time")
     secrets = secrets_to_set()
     for k, v in secrets.items():

@@ -152,7 +152,7 @@ class UsageLedger:
         self._lock = threading.Lock()
         self.day, self.count = date.today().isoformat(), 0
         try:
-            data = json.loads(path.read_text())
+            data = json.loads(path.read_text(encoding="utf-8"))
             if data.get("date") == self.day:
                 self.count = int(data.get("count") or 0)
         except (OSError, ValueError):
@@ -172,7 +172,7 @@ class UsageLedger:
             self.count += 1
             try:
                 self.path.parent.mkdir(parents=True, exist_ok=True)
-                self.path.write_text(json.dumps({"date": self.day, "count": self.count}))
+                self.path.write_text(json.dumps({"date": self.day, "count": self.count}), encoding="utf-8")
             except OSError:
                 pass
 

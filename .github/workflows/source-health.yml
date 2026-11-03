@@ -16,10 +16,11 @@ jobs:
     timeout-minutes: 50
     env:
       JR_USER_DIR: ${{ github.workspace }}/examples/lisbon-backend/user
-      JR_HOME: ${{ runner.temp }}/jr
       JR_RUNNER: github
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Paths
+        run: echo "JR_HOME=$RUNNER_TEMP/jr" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:

@@ -352,7 +352,7 @@ def test_claude_cli_provider_and_draft_purpose(tmp_path, monkeypatch):
     fake.write_text("#!/bin/sh\n"
                     "printf '%s\\n' \"$@\" > \"$(dirname \"$0\")/args\"; cat > \"$(dirname \"$0\")/stdin\"\n"
                     "if [ -n \"$ANTHROPIC_API_KEY\" ]; then echo '{\"is_error\": true, \"api_error_status\": 401}'; exit 1; fi\n"
-                    "echo '{\"is_error\": false, \"structured_output\": {\"answers\": [{\"key\": \"q\", \"answer\": \"hi\"}]}}'\n")
+                    "echo '{\"is_error\": false, \"structured_output\": {\"answers\": [{\"key\": \"q\", \"answer\": \"hi\"}]}}'\n", encoding="utf-8")
     fake.chmod(0o755)
     monkeypatch.setenv("JR_CLAUDE_BIN", str(fake))
     monkeypatch.setenv("ANTHROPIC_API_KEY", "must-not-be-used")
@@ -368,10 +368,10 @@ def test_claude_cli_provider_and_draft_purpose(tmp_path, monkeypatch):
     with LLMClient("draft", ledger_dir=tmp_path) as llm:
         out = llm.json("Write it.", {"type": "object"}, system="Be honest.")
     assert out == {"answers": [{"key": "q", "answer": "hi"}]}
-    args = (tmp_path / "args").read_text().splitlines()
+    args = (tmp_path / "args").read_text(encoding="utf-8").splitlines()
     assert args[:2] == ["-p", "--safe-mode"] and args[args.index("--tools") + 1] == ""
     assert args[args.index("--model") + 1] == "claude-opus-5-5" and "Be honest." in args
-    assert (tmp_path / "stdin").read_text() == "Write it."
+    assert (tmp_path / "stdin").read_text(encoding="utf-8") == "Write it."
 
 
 def test_style_guide_in_draft_prompt_and_ai_words_flagged(tmp_path, monkeypatch):

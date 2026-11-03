@@ -24,7 +24,8 @@ permissions:
   contents: write
 
 env:
-  JOBRADAR_VERSION: "0.1.0"
+  JOBRADAR_VERSION: "0.1.0"   # `jr setup` writes the version you installed
+  JOBRADAR_SPEC: ""           # optional pip requirement that replaces it, e.g. a git URL for a beta
 
 jobs:
   run:
@@ -32,8 +33,6 @@ jobs:
     timeout-minutes: 35
     env:
       JR_USER_DIR: ${{ github.workspace }}/user
-      JR_HOME: ${{ runner.temp }}/jr
-      JR_STATE_DB: ${{ runner.temp }}/state.db
       JR_RUNNER: github
       # LLM (only the ones you set are used)
       MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
@@ -57,6 +56,12 @@ jobs:
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       EMAIL_TO: ${{ secrets.EMAIL_TO }}
     steps:
+      - name: Paths
+        shell: bash
+        run: |
+          # the runner context isn't allowed in a job's env: set the temp paths here
+          echo "JR_HOME=$RUNNER_TEMP/jr" >> "$GITHUB_ENV"
+          echo "JR_STATE_DB=$RUNNER_TEMP/state.db" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -85,7 +90,7 @@ jobs:
           cache-dependency-path: .github/workflows/jobradar.yml
       - name: Install Job Radar
         if: steps.which.outputs.job != 'none'
-        run: pip install "jobradar-eu==${JOBRADAR_VERSION}"
+        run: pip install "${JOBRADAR_SPEC:-jobradar-eu==${JOBRADAR_VERSION}}"
       - name: Restore state and picks
         if: steps.which.outputs.job != 'none'
         shell: bash

@@ -377,6 +377,21 @@ def morning_rows(state: AppState, tab: str, flt: dict[str, str]) -> list[dict[st
 
 
 # ------------------------------------------------------------------------- app
+FLAG_TEXT = {"worldwide": "remote, worldwide", "scope?": "remote, region not stated",
+             "mode?": "work setup not stated", "location?": "location not stated",
+             "remote option?": "may allow remote work", "relocation": "needs a move", "agency": "recruitment agency"}
+
+
+def flag_text(flag: str) -> str:
+    """A matcher flag in plain words for the job list ("residency:DE" → "only for residents of Germany")."""
+    if flag.startswith("residency:"):
+        from jobradar.wizard import country_names
+
+        code = flag.split(":", 1)[1]
+        return f"only for residents of {country_names().get(code, code)}"
+    return FLAG_TEXT.get(flag, flag)
+
+
 def create_app(db: LocalDB | None = None, *, state_path: Path | None = None, llm_factory: Callable[[], Any] | None = None,
                http_factory: Callable[[], Any] | None = None, syncer: Any = "auto", pull: bool = False) -> Flask:
     if syncer == "auto":
@@ -389,6 +404,7 @@ def create_app(db: LocalDB | None = None, *, state_path: Path | None = None, llm
             syncer = None
     app = Flask(__name__)
     app.jinja_env.tests["startswith"] = lambda s, prefix: str(s).startswith(prefix)
+    app.jinja_env.filters["flag_text"] = flag_text
     app.jinja_env.globals.update(prep_label=lambda v: PREP_LABEL.get(v, v), badge=STATUS_BADGE, tabs=TABS,
                                  section_label=SECTION_LABEL, stages=STAGES, full=lambda: config.mode() == "full",
                                  module_on=config.module_on)

@@ -8,7 +8,7 @@ ROOT = Path(__file__).parents[2]
 
 
 def test_package_data_covers_every_data_file():
-    patterns = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["setuptools"]["package-data"]["jobradar"]
+    patterns = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["setuptools"]["package-data"]["jobradar"]
     pkg = ROOT / "src" / "jobradar"
     missing = [p.relative_to(pkg).as_posix() for p in pkg.rglob("*")
                if p.is_file() and p.suffix not in (".py", ".pyc") and "__pycache__" not in p.parts

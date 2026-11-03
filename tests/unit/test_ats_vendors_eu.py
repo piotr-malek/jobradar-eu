@@ -12,7 +12,7 @@ FIX = Path(__file__).parent.parent / "fixtures" / "ats_vendors"
 
 
 def _txt(name: str) -> str:
-    return (FIX / name).read_text()
+    return (FIX / name).read_text(encoding="utf-8")
 
 
 def _client(handler):

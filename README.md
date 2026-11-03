@@ -15,24 +15,35 @@ morning you open the app, pick the ones worth applying to, and apply.
 
 ## Install
 
-You need Python 3.12 or newer and a GitHub account.
+You need a computer with macOS, Windows or Linux, and a free [GitHub account](https://github.com/signup). You don't
+need to install Python or anything else first.
+
+**macOS or Linux:** open Terminal (on a Mac: press ⌘ Space, type `Terminal`, press Enter), paste this line and press
+Enter:
 
 ```sh
-uv tool install jobradar-eu        # or: pipx install jobradar-eu
+curl -LsSf https://raw.githubusercontent.com/piotr-malek/jobradar-eu/main/install.sh | sh
+```
+
+**Windows:** open PowerShell (Start menu → type `PowerShell` → Enter), paste this line and press Enter:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/piotr-malek/jobradar-eu/main/install.ps1 | iex"
+```
+
+The installer sets up Job Radar and opens the setup wizard in your browser. The wizard walks you through every step:
+connecting GitHub (it can download GitHub's helper program for you and sign you in), your city and languages, the
+kinds of jobs you want, and the countries. You can close it and continue later with `jr setup`.
+
+After that, each morning open Job Radar from the desktop shortcut the wizard makes (or run `jr app`).
+
+<details><summary>Already use Python tools?</summary>
+
+```sh
+uv tool install 'jobradar-eu[full]'    # or: pipx install 'jobradar-eu[full]'
 jr setup
 ```
-
-`jr setup` opens a setup wizard in your browser. It walks you through every step and tests each account and key as
-you add it, and you can close it and continue later. It checks the GitHub CLI and its login, creates your private
-config repository, sets its secrets, and schedules the overnight run in your time zone.
-
-After that, each morning:
-
-```sh
-jr app
-```
-
-The wizard can also put a shortcut on your desktop.
+</details>
 
 ## Lite or Full
 

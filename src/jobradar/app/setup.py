@@ -36,7 +36,9 @@ def _context(step_id: str) -> dict[str, Any]:
         ctx["gh"] = wizard.github_status()
     elif step_id == "basics":
         ctx["levels"] = wizard.LEVELS
-        ctx["lang_names"] = config.LANG_NAMES
+        ctx["level_labels"] = wizard.LEVEL_LABELS
+        ctx["lang_names"] = dict(sorted(config.LANG_NAMES.items(), key=lambda kv: kv[1]))
+        ctx["country_options"] = wizard.country_options()
     elif step_id == "roles":
         ctx["packs"] = {**config.available_packs(), **config.user_packs()}
         ctx["roles"] = config.roles()
@@ -46,12 +48,14 @@ def _context(step_id: str) -> dict[str, Any]:
         countries = us.get("countries") or [((p.get("location") or {}).get("country") or "")]
         ctx["us"] = us
         ctx["countries"] = [c for c in countries if c]
-        ctx["sources"] = wizard.countries_sources_view(ctx["countries"])
+        ctx["country_options"] = wizard.country_options()
     elif step_id == "llm":
         from jobradar.llm.cost import estimate_night
 
         ctx["presets"] = wizard.LLM_PRESETS
         ctx["llm"] = config.llm_config()
+        cur = ctx["llm"].get("default") or {}
+        ctx["llm_choice"] = cur.get("preset") or cur.get("provider") or ("gemini" if st["mode"] == "full" else "off")
         ctx["estimate"] = estimate_night()
     elif step_id == "answer_bank":
         from jobradar.local.db import open_local
@@ -60,7 +64,8 @@ def _context(step_id: str) -> dict[str, Any]:
         db.seed_bank()
         ctx["bank"] = db.bank_rows()
     elif step_id == "optional_keys":
-        ctx["cards"] = wizard.KEY_CARDS
+        ctx["cards"] = wizard.key_cards(config.user_sources().get("countries") or [])
+        ctx["key_labels"] = wizard.KEY_LABELS
         ctx["env"] = {k: bool(v) for k, v in wizard.read_env().items()}
     elif step_id == "extension":
         ctx["extension_dir"] = str(wizard.install_extension())
@@ -108,7 +113,7 @@ def save(step_id: str) -> Any:
     except Exception as exc:  # noqa: BLE001 - shown on the step
         return jsonify(ok=False, error=f"{type(exc).__name__}: {exc}"[:400]), 500
     if step_id == "github" and not wizard.github_status().get("ok"):
-        return jsonify(ok=False, error="GitHub CLI is not ready yet", gh=wizard.github_status()), 400
+        return jsonify(ok=False, error="Connect GitHub first (the button above)", gh=wizard.github_status()), 400
     if step_id == "extension":
         from jobradar.local.db import open_local
 
@@ -163,7 +168,8 @@ def pack_draft() -> Any:
 
 @bp.post("/api/sources")
 def sources_for() -> Any:
-    return jsonify(wizard.countries_sources_view((request.get_json(force=True) or {}).get("countries") or []))
+    d = request.get_json(force=True) or {}
+    return jsonify(wizard.countries_sources_view(d.get("countries") or [], d.get("opt_in") or [], d.get("disable")))
 
 
 @bp.post("/api/llm-test")
@@ -225,6 +231,30 @@ def extension_status() -> Any:
     from jobradar.local.db import open_local
 
     return jsonify(seen=open_local().get_meta("extension_seen"))
+
+
+@bp.post("/api/gh-install")
+def gh_install() -> Any:
+    from jobradar import ghcli
+
+    return jsonify(ghcli.install())
+
+
+@bp.post("/api/gh-login")
+def gh_login() -> Any:
+    from jobradar import ghcli
+
+    return jsonify(ghcli.start_login(refresh=bool((request.get_json(silent=True) or {}).get("refresh"))))
+
+
+@bp.get("/api/gh-login")
+def gh_login_state() -> Any:
+    from jobradar import ghcli
+
+    st = ghcli.login_state()
+    if st.get("done"):
+        st["status"] = wizard.github_status()
+    return jsonify(st)
 
 
 @bp.get("/api/chromium")

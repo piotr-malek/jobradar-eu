@@ -62,7 +62,7 @@ def repo_files() -> list[str]:
     return sorted(set(out.split()))
 
 
-def read_text(path: Path) -> str | None:
+def file_text(path: Path) -> str | None:
     data = path.read_bytes()
     if path.suffix == ".gz":
         try:
@@ -92,7 +92,7 @@ def check(files: list[str], rules: dict) -> list[str]:
         name = rel.rsplit("/", 1)[-1]
         if any(fnmatch.fnmatch(name, p) for p in KEY_FILES) and not matches(rel, rules["allow_key_files"]):
             problems.append(f"{rel}: file name looks like a key, credential or database")
-        text = read_text(ROOT / rel)
+        text = file_text(ROOT / rel)
         if text is None:
             continue
         low = text.lower()

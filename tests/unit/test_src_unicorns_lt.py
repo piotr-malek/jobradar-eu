@@ -20,7 +20,7 @@ class _Replay(ReplayTransport):
         super().__init__(d)
         self._loc = {}
         for m in d.glob("*.meta.json"):
-            meta = json.loads(m.read_text())
+            meta = json.loads(m.read_text(encoding="utf-8"))
             if meta.get("location"):
                 self._loc[meta["url"]] = meta["location"]
 

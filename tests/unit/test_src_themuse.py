@@ -14,7 +14,7 @@ FIX = Path(__file__).parents[1] / "fixtures" / "themuse"
 
 def _recorded_locations() -> list[str]:
     """The location list the fixtures were recorded with (the default list has changed since)."""
-    url = json.loads((FIX / "001.meta.json").read_text())["url"]
+    url = json.loads((FIX / "001.meta.json").read_text(encoding="utf-8"))["url"]
     return [v for k, v in parse_qsl(urlsplit(url).query) if k == "location"]
 
 

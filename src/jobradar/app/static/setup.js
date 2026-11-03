@@ -2,7 +2,6 @@
 const WIZ = document.getElementById("wiz");
 const STEP = WIZ ? WIZ.dataset.step : "";
 const lines = v => (v || "").split(/\n/).map(s => s.trim()).filter(Boolean);
-const codes = v => (v || "").split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
 
 function formData() {
   const f = WIZ, d = {};
@@ -25,16 +24,11 @@ function formData() {
       const code = row.querySelector("[name=lang_code]").value.trim();
       if (code) d.languages[code] = row.querySelector("[name=lang_level]").value;
     }
-    d.work_countries = codes(d.work_countries);
-    d.relocate_to = codes(d.relocate_to);
-    d.contracts = (d.contracts || "").split(",").map(s => s.trim()).filter(Boolean);
+    if ((d.work_setups || []).includes("remote_country") && d.residency_elsewhere) d.work_setups.push("remote_eu");
   }
   if (STEP === "roles") for (const k of ["never", "must_have", "extra_titles"]) d[k] = lines(d[k]);
   if (STEP === "experience") for (const k of ["priority_roles", "target_roles", "strong_stack", "nice_stack", "highlights"]) d[k] = lines(d[k]);
-  if (STEP === "countries_sources") {
-    d.countries = codes(d.countries);
-    d.disable = [...f.querySelectorAll("input.src")].filter(c => !c.checked).map(c => c.value);
-  }
+  if (STEP === "countries_sources") d.disable = [...f.querySelectorAll("input.src")].filter(c => !c.checked).map(c => c.value);
   if (STEP === "answer_bank") {
     d.answers = {}; d.approve = [];
     for (const el of f.querySelectorAll(".bank-answer")) d.answers[el.dataset.id] = el.value;
@@ -78,11 +72,12 @@ function cityLookup(el) {
   clearTimeout(cityTimer);
   cityTimer = setTimeout(async () => {
     const hits = await (await fetch(`/setup/api/cities?q=${encodeURIComponent(el.value)}`)).json();
+    const sel = WIZ.elements.country, name = cc => (sel.querySelector(`option[value="${cc}"]`) || {}).textContent || cc;
     document.getElementById("city-list").innerHTML = hits.map(h =>
-      `<option value="${esc(h.name)}" data-cc="${h.country}" data-lat="${h.lat}" data-lon="${h.lon}">${esc(h.name)}, ${h.country}</option>`).join("");
+      `<option value="${esc(h.name)}">${esc(h.name)}, ${esc(name(h.country))}</option>`).join("");
     const hit = hits.find(h => h.name.toLowerCase() === el.value.trim().toLowerCase());
     if (hit) {
-      WIZ.elements.country.value = WIZ.elements.country.value || hit.country;
+      if (!sel.dataset.touched && sel.querySelector(`option[value="${hit.country}"]`)) sel.value = hit.country;
       WIZ.elements.lat.value = hit.lat; WIZ.elements.lon.value = hit.lon;
     }
   }, 200);
@@ -90,8 +85,10 @@ function cityLookup(el) {
 
 function addLang() {
   const rows = document.getElementById("langs"), first = rows.querySelector(".lang");
-  const row = first.cloneNode(true);
-  row.querySelector("input").value = "";
+  const row = first.cloneNode(true), taken = [...rows.querySelectorAll("[name=lang_code]")].map(s => s.value);
+  const sel = row.querySelector("[name=lang_code]");
+  sel.value = "";
+  row.querySelector("[name=lang_level]").value = "B2";
   rows.appendChild(row);
 }
 
@@ -119,10 +116,49 @@ async function packDraft(btn) {
   } finally { busy(btn, false); }
 }
 
-async function sourcesFor(el) {
-  const rows = await post("/setup/api/sources", {countries: codes(el.value)});
-  document.querySelector("#sources tbody").innerHTML = rows.map(s => `<tr><td><input type="checkbox" class="src" value="${esc(s.id)}" checked></td>
-    <td>${esc(s.label)}</td><td>${esc(s.countries.join(", "))}</td><td class="muted">${s.keys.length ? (s.has_keys ? "key set" : "free key: add it in Free extras") : ""}${s.local_only ? " · runs from your computer only" : ""}${s.opt_in ? " · " + esc(s.opt_in) : ""}</td></tr>`).join("");
+async function sourcesFor() {
+  const checked = n => [...WIZ.querySelectorAll(`input[name="${n}[]"]:checked`)].map(c => c.value);
+  const countries = checked("countries");
+  document.getElementById("opt-pl").hidden = !countries.includes("PL");
+  if (!countries.includes("PL")) WIZ.querySelector('input[value=polish_only]').checked = false;
+  const disable = [...WIZ.querySelectorAll("input.src")].filter(c => !c.checked).map(c => c.value);
+  const v = await post("/setup/api/sources", {countries, opt_in: checked("opt_in"), disable});
+  const note = s => s.note ? `<span class="muted">${esc(s.note)}</span>` : "";
+  document.getElementById("n-ready").textContent = v.ready;
+  document.getElementById("sources").innerHTML = v.on.map(s => `<tr><td><input type="checkbox" class="src" value="${esc(s.id)}" ${s.checked ? "checked" : ""} onchange="sourcesFor()"></td>
+    <td>${esc(s.label)}</td><td class="muted">${esc(s.covers)}</td><td>${note(s)}</td></tr>`).join("");
+  document.getElementById("sources-off").innerHTML = v.off.map(s => `<tr><td>${esc(s.label)}</td><td class="muted">${esc(s.covers)}</td>
+    <td class="muted">${esc(s.why)}</td></tr>`).join("");
+  document.getElementById("boards-off").hidden = !v.off.length;
+}
+
+async function ghInstall(btn) {
+  busy(btn, true, "Downloading…");
+  try {
+    const d = await post("/setup/api/gh-install");
+    if (!d.ok) { toast(d.error, true); return; }
+    location.reload();
+  } finally { busy(btn, false); }
+}
+
+async function ghLogin(btn, refresh) {
+  busy(btn, true, "Starting…");
+  try {
+    const d = await post("/setup/api/gh-login", {refresh});
+    if (!d.ok) { toast(d.error, true); return; }
+    if (!d.code && !d.done) { toast("GitHub didn't answer; try again in a moment", true); return; }
+    btn.hidden = true;
+    document.getElementById("gh-code").hidden = false;
+    document.getElementById("gh-code-text").textContent = d.code || "";
+    if (d.url) document.getElementById("gh-url").href = d.url;
+    const poll = async () => {
+      const s = await (await fetch("/setup/api/gh-login")).json();
+      if (s.done && s.status && s.status.ok) { location.reload(); return; }
+      if (s.error) { document.getElementById("gh-wait").textContent = `Sign-in stopped: ${s.error}. Reload the page to try again.`; return; }
+      setTimeout(poll, 2000);
+    };
+    setTimeout(poll, 2000);
+  } finally { busy(btn, false); }
 }
 
 async function llmTest(btn) {
@@ -228,6 +264,10 @@ if (STEP === "experience" && document.getElementById("chromium-status")) {
   });
 }
 if (STEP === "roles") document.addEventListener("DOMContentLoaded", rolesPreview);
+if (STEP === "countries_sources") document.addEventListener("DOMContentLoaded", sourcesFor);
+if (STEP === "basics") document.addEventListener("DOMContentLoaded", () => {
+  WIZ.elements.country.addEventListener("change", e => (e.target.dataset.touched = "1"));
+});
 if (STEP === "basics") document.addEventListener("DOMContentLoaded", () => {
   const tz = document.getElementById("tz");
   if (tz && !tz.value) tz.value = Intl.DateTimeFormat().resolvedOptions().timeZone || "";

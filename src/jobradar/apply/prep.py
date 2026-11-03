@@ -149,14 +149,14 @@ def reserve_prep() -> None:
     path = get_settings().cache_dir / "prep_usage.json"
     today = date.today().isoformat()
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         data = {}
     n = int(data.get("count") or 0) if data.get("date") == today else 0
     if cap > 0 and n >= cap:
         raise BudgetExhausted(f"prep daily cap of {cap} reached")
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"date": today, "count": n + 1}))
+    path.write_text(json.dumps({"date": today, "count": n + 1}), encoding="utf-8")
 
 
 def job_from_row(row: dict[str, Any], local: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -146,7 +146,7 @@ def test_step_config_from_llm_yaml_and_env(tmp_path, monkeypatch):
 
     user = tmp_path / "user"
     user.mkdir()
-    (user / "llm.yaml").write_text("default: {provider: gemini}\nsteps: {draft: {provider: claude}}\n")
+    (user / "llm.yaml").write_text("default: {provider: gemini}\nsteps: {draft: {provider: claude}}\n", encoding="utf-8")
     use_profile(monkeypatch, user)
     c = step_config("screen")
     assert (c["provider"], c["preset"], c["api_key_env"]) == ("openai_compatible", "gemini", "GEMINI_API_KEY")
@@ -231,7 +231,7 @@ def test_daily_reads_picks_and_never_shows_skipped_jobs(tmp_path, monkeypatch):
     preview = daily.run_daily(store, dry_run=True, skip_fetch=True)["shortlist"]["preview"]
     skipped = next(p for p in preview if p["company"] == "Acme 1")["job_id"]
     picks = tmp_path / "picks.jsonl"
-    picks.write_text(json.dumps({"job_id": skipped, "status": "skipped", "at": NOW.isoformat()}) + "\nnot json\n")
+    picks.write_text(json.dumps({"job_id": skipped, "status": "skipped", "at": NOW.isoformat()}) + "\nnot json\n", encoding="utf-8")
     monkeypatch.setattr("jobradar.pipeline.run.run_sources", lambda ids, f, **kw: [RunSummary(i, "success", "r") for i in ids])
     out = daily.run_daily(store, picks=picks, minutes=1)
     assert out["decisions_imported"] == 1 and out["shortlist"]["shortlisted"] == 1

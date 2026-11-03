@@ -15,7 +15,7 @@ PARAMS = {"max_pages": 3, "per_page": 100, "max_details": 44}
 def _recorded_ids() -> set[str]:
     ids = set()
     for m in FIX.glob("*.meta.json"):
-        url = json.loads(m.read_text())["url"]
+        url = json.loads(m.read_text(encoding="utf-8"))["url"]
         if "/jobs/" in url:
             ids.add(url.rsplit("/", 1)[-1])
     return ids
@@ -35,7 +35,7 @@ def _gate():
     ids = _recorded_ids()
     titles = set()
     for m in FIX.glob("*.meta.json"):
-        meta = json.loads(m.read_text())
+        meta = json.loads(m.read_text(encoding="utf-8"))
         if "/search?" in meta["url"]:
             import gzip
 

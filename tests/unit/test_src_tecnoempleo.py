@@ -35,7 +35,7 @@ def test_parse_posting():
 def test_list_labels_work_mode():
     bodies = []
     for meta in sorted(FIX.glob("*.meta.json")):
-        if json.loads(meta.read_text())["url"].endswith("/ofertas-trabajo/"):
+        if json.loads(meta.read_text(encoding="utf-8"))["url"].endswith("/ofertas-trabajo/"):
             bodies.append(gzip.decompress(meta.with_name(meta.name.replace(".meta.json", ".body.gz")).read_bytes()).decode())
     remote, _ = parse_list(bodies[0])
     hybrid, total = parse_list(bodies[1])

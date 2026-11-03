@@ -275,7 +275,7 @@ class PoliteClient:
             "status": resp.status_code,
             "content_type": resp.headers.get("content-type"),
         }
-        (self.record_dir / f"{stem}.meta.json").write_text(json.dumps(meta, indent=1))
+        (self.record_dir / f"{stem}.meta.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
 
 
 class ReplayTransport(httpx.BaseTransport):
@@ -284,7 +284,7 @@ class ReplayTransport(httpx.BaseTransport):
     def __init__(self, record_dir: Path):
         self._by_url: dict[str, list[tuple[int, str | None, bytes]]] = {}
         for meta_path in sorted(record_dir.glob("*.meta.json")):
-            meta = json.loads(meta_path.read_text())
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
             body = gzip.decompress((meta_path.parent / meta_path.name.replace(".meta.json", ".body.gz")).read_bytes())
             self._by_url.setdefault(meta["url"], []).append((meta["status"], meta.get("content_type"), body))
 

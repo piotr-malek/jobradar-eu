@@ -271,3 +271,13 @@ def test_shape_row_serializes():
                                 "flags": ["x"], "countries": None})
     assert json.loads(row["explain"]) == {"a": 1} and row["countries"] == [] and isinstance(row["matched_at"], str)
 
+
+
+def test_fix_mojibake_repairs_double_encoded_text_only():
+    from jobradar.normalize.text import fix_mojibake
+
+    assert fix_mojibake("Sothebyâ\u0080\u0099s") == "Sotheby’s"          # as RemoteOK sent it
+    assert fix_mojibake("Sothebyâ€™s") == "Sotheby’s"          # the Windows-1252 variant
+    assert fix_mojibake("CafÃ© Lisboa") == "Café Lisboa"
+    for fine in ("Wrocław", "São Paulo", "München – Senior", "Sotheby’s", ""):
+        assert fix_mojibake(fine) == fine

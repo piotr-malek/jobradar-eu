@@ -6,7 +6,7 @@
   <div>
     <h1>{{ job.title or job.job_id }}</h1>
     <p class="muted">{{ job.company }} · {{ job.location_display }} · {{ job.job_id }} · <b>{{ status }}</b>
-      {% if p %} · {{ p.route.vendor }} · ~{{ p.effort_min }} min · <span class="pill {{ p.prep|replace(' ', '-') }}">{{ prep_label(p.prep) }}</span>{% elif guess %} · {{ guess.vendor }}{% endif %}
+      {% if p %} · {{ p.route.vendor }} · ~{{ p.effort_min }} min · <span class="pill {{ p.prep|replace(' ', '-') }}">{{ prep_label(p.prep) }}</span>{% elif guess and guess.vendor not in (none, '', 'unknown') %} · form on {{ guess.vendor|capitalize }}{% endif %}
       {% if job.posting_url %} · <a href="{{ job.posting_url }}" target="_blank" rel="noopener">posting</a>{% endif %}
       {% if p and p.apply_url and p.prep != 'manual form' %} · <a href="{{ p.apply_url }}" target="_blank" rel="noopener">application form</a>{% endif %}
     </p>
@@ -31,8 +31,9 @@
   {% if job.fit %}<p><span class="fit fit{{ job.fit }}">{{ job.fit }}</span> {{ job.summary or '' }}</p>{% endif %}
   {% if job.watch_out %}<p class="watch">⚠ {{ job.watch_out|join(' · ') }}</p>{% endif %}
   <p class="muted">{% if job.screen_salary or job.salary %}Salary: {{ job.screen_salary or job.salary }} · {% endif %}
-    {% if job.why %}Matched as {{ job.why.family or job.family }}{% if job.why.rule %} (“{{ job.why.rule }}”){% endif %}{% if job.why.stack %} · stack: {{ job.why.stack|join(', ') }}{% endif %}{% endif %}
-    {% if job.sources %} · via {{ job.sources|join(', ') }}{% endif %}</p>
+    {% if job.why %}<span title="{{ job.why.rule or '' }}">{{ job.why.family or job.family }} role</span>{% if job.why.stack %} · mentions {{ job.why.stack|join(', ') }}{% endif %}{% endif %}
+    {% set fl = (job.flags or [])|reject('equalto', 'top_pick')|map('flag_text')|list %}{% if fl %} · {{ fl|join(' · ') }}{% endif %}
+    {% if job.sources %} · found on {{ job.sources|join(', ') }}{% endif %}</p>
   {% if job.same_company %}<p class="muted">Same company: {{ job.same_company }}</p>{% endif %}
   {% if job.copies %}<details><summary>{{ job.copies|length }} other listing(s) of this job</summary><ul>{% for c in job.copies %}<li><a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a> <span class="muted">{{ c.location }} · {{ c.source }}</span></li>{% endfor %}</ul></details>{% endif %}
   <label class="muted">Notes <textarea id="notes" rows="2" onchange="saveNotes(this)">{{ local.notes or '' }}</textarea></label>

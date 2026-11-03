@@ -312,7 +312,7 @@ def test_unreadable_form_paste_claude_brief_and_jr_answer(app_env, monkeypatch, 
     assert client.post("/job/JR-LINKED/claude", headers=H, json={"keys": []}).status_code == 400
     r = client.post("/job/JR-LINKED/claude", headers=H, json={"keys": [fit]}).get_json()
     assert r["opened"] and opened[0].startswith("cursor://anthropic.claude-code/open?prompt=")
-    brief = Path(r["brief"]).read_text()
+    brief = Path(r["brief"]).read_text(encoding="utf-8")
     assert "Why are you a good fit?" in brief and f"key: `{fit}`" in brief and "jr answer JR-LINKED --key" in brief
     assert "Have you previously worked" not in brief
 

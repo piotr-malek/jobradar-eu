@@ -47,9 +47,9 @@
     {% if r.summary %}<p class="summary">{{ r.summary }}</p>{% endif %}
     {% if r.watch_out %}<p class="watch">⚠ {{ r.watch_out|join(' · ') }}</p>{% endif %}
     <p class="why muted">
-      {% if r.why %}Matched: {{ r.why.family or r.family }}{% if r.why.stack %} · stack {{ r.why.stack|join(', ') }}{% endif %}{% endif %}
-      {% if r.flags %} · {{ r.flags|reject('equalto', 'top_pick')|join(', ') }}{% endif %}
-      {% if r.sources %} · via {{ r.sources|join(', ') }}{% endif %}
+      {% if r.why %}{{ r.why.family or r.family }}{% if r.why.stack %} · mentions {{ r.why.stack|join(', ') }}{% endif %}{% endif %}
+      {% set fl = r.flags|reject('equalto', 'top_pick')|map('flag_text')|list %}{% if fl %} · {{ fl|join(' · ') }}{% endif %}
+      {% if r.sources %} · found on {{ r.sources|join(', ') }}{% endif %}
       {% if r.same_company %}<br>Same company: {{ r.same_company }}{% endif %}
     </p>
     <div class="row-actions">

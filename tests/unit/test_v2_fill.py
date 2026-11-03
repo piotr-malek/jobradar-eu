@@ -14,7 +14,7 @@ import pytest
 from jobradar.apply import fill
 
 EXT = Path(__file__).parents[2] / "src" / "jobradar" / "extension"
-FILLER = (EXT / "filler.js").read_text()
+FILLER = (EXT / "filler.js").read_text(encoding="utf-8")
 
 FORM = """<!doctype html><html><body>
 <form id="f" action="javascript:void(0)" onsubmit="window.submitted = true; return false;">

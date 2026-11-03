@@ -16,7 +16,7 @@ pytest.importorskip("flask")
 from conftest import use_profile  # noqa: E402
 
 H = {"X-JR": "1"}
-TEMPLATE_WF = (Path(__file__).parents[2] / "template" / ".github" / "workflows" / "jobradar.yml").read_text()
+TEMPLATE_WF = (Path(__file__).parents[2] / "template" / ".github" / "workflows" / "jobradar.yml").read_text(encoding="utf-8")
 
 FAKE_GH = r'''#!/usr/bin/env python3
 import json, os, sys
@@ -62,10 +62,10 @@ def wiz(tmp_path, monkeypatch):
     use_profile(monkeypatch, user)
     gh = tmp_path / "bin" / "gh"
     gh.parent.mkdir()
-    gh.write_text(FAKE_GH.replace("#!/usr/bin/env python3", f"#!{sys.executable}"))
+    gh.write_text(FAKE_GH.replace("#!/usr/bin/env python3", f"#!{sys.executable}"), encoding="utf-8")
     gh.chmod(0o755)
     wf = tmp_path / "wf.yml"
-    wf.write_text(TEMPLATE_WF)
+    wf.write_text(TEMPLATE_WF, encoding="utf-8")
     monkeypatch.setenv("JR_GH", str(gh))
     monkeypatch.setenv("FAKE_GH_LOG", str(tmp_path / "gh.log"))
     monkeypatch.setenv("FAKE_GH_STATE", str(tmp_path / "gh.created"))
@@ -87,7 +87,7 @@ def step(client, sid, **data):
 
 
 def gh_calls(tmp_path):
-    return [json.loads(x) for x in (tmp_path / "gh.log").read_text().splitlines()]
+    return [json.loads(x) for x in (tmp_path / "gh.log").read_text(encoding="utf-8").splitlines()]
 
 
 BASICS = {"city": "Lisbon", "country": "PT", "work_setups": ["remote_eu", "remote_country", "hybrid"],
@@ -113,7 +113,7 @@ def test_lite_walkthrough_ends_green(wiz):
     assert client.get("/setup/").headers["Location"].endswith("/setup/welcome")
     assert "Lite" in client.get("/setup/welcome").data.decode()
     step(client, "welcome", mode="lite")
-    assert "Ready:" in client.get("/setup/github").data.decode() and "ana-demo" in client.get("/setup/github").data.decode()
+    assert "Connected" in client.get("/setup/github").data.decode() and "ana-demo" in client.get("/setup/github").data.decode()
     step(client, "github")
     r = client.post("/setup/basics", headers=H, json={**BASICS, "city": ""})
     assert r.status_code == 400 and "required" in r.get_json()["error"]
@@ -122,7 +122,7 @@ def test_lite_walkthrough_ends_green(wiz):
 
     loc = config.profile()["location"]
     assert loc["lat"] and loc["hybrid_radius_km"] == 30 and config.profile()["languages"]["en"] == "C1"
-    assert "55k" not in (Path(os.environ["JR_USER_DIR"]) / "profile.yaml").read_text()          # salary stays local
+    assert "55k" not in (Path(os.environ["JR_USER_DIR"]) / "profile.yaml").read_text(encoding="utf-8")          # salary stays local
     preview = client.post("/setup/api/roles-preview", headers=H, json={"packs": ["backend"], "min": "junior",
                                                                          "max": "senior"}).get_json()
     kept = {x["title"] for x in preview["kept"]}
@@ -179,7 +179,7 @@ def test_full_walkthrough_ends_green(wiz, monkeypatch):
 
     rows = {r["answer_id"]: r for r in open_local().bank_rows()}
     assert rows["email"]["status"] == "Approved" and rows["phone"]["status"] == "Draft"    # empty stays Draft
-    assert "ana@example.com" not in (Path(os.environ["JR_USER_DIR"]) / "profile.yaml").read_text()
+    assert "ana@example.com" not in (Path(os.environ["JR_USER_DIR"]) / "profile.yaml").read_text(encoding="utf-8")
     step(client, "optional_keys", keys={"JOOBLE_PT_API_KEY": "jk"}, notify_email=False)
     res = step(client, "config_repo", name="cfg")["result"]
     assert set(res["secrets"]) == {"MISTRAL_API_KEY", "JOOBLE_PT_API_KEY"}

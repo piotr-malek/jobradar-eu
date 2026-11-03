@@ -35,7 +35,16 @@ class SyncError(RuntimeError):
 
 
 def gh_path() -> str | None:
-    return shutil.which(os.environ.get("JR_GH", "gh"))
+    """$JR_GH, else gh on the PATH, else the copy the wizard downloaded into ~/.job-radar/bin."""
+    if os.environ.get("JR_GH"):
+        return shutil.which(os.environ["JR_GH"])
+    found = shutil.which("gh")
+    if found:
+        return found
+    from jobradar.ghcli import local_gh
+
+    exe = local_gh()
+    return str(exe) if exe else None
 
 
 def gh(args: list[str], *, input: bytes | None = None, check: bool = True, timeout: int = 120) -> bytes:

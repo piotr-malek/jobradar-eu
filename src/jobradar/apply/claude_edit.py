@@ -72,7 +72,7 @@ def write_brief(p: dict[str, Any], keys: list[str], bank: Bank, posting_text: st
     if posting_text.strip():
         out += ["", "## Posting", "", clip(posting_text.strip(), 12000)]
     path = brief_path(job_id)
-    path.write_text("\n".join(out) + "\n")
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
     return path
 
 
