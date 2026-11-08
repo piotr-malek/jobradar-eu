@@ -36,6 +36,7 @@ class SourceSpec:
     opt_in: str | None = None  # "purpose" | "polish_only" | "local_ip": runs only when the user switched the track on
     label: str = ""  # shown in the wizard
     packs: list[str] = field(default_factory=list)  # role-specific board: runs only when one of these packs is active
+    modes: list[str] = field(default_factory=list)  # lite | full: runs only in these modes (empty = both)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "SourceSpec":

@@ -141,3 +141,17 @@ def test_country_placeholders_follow_the_user(monkeypatch):
         assert {"devbg", "jooble_bg", "jooble_at", "karriere_at"} <= picked and "jooble_ro" not in picked
     finally:
         registry.load_specs.cache_clear()
+
+
+def test_adzuna_runs_in_full_mode_only(monkeypatch):
+    from jobradar import config
+    from jobradar.wizard import key_cards
+
+    spec = load_specs(all_sources=True)["adzuna"]
+    assert spec.params["countries"] == ["pl"] and spec.secrets == ["ADZUNA_APP_ID", "ADZUNA_APP_KEY"]
+    monkeypatch.setattr(config, "mode", lambda: "lite")
+    assert not selected(spec, {"countries": ["PL"]})
+    assert "adzuna" not in {c["id"] for c in key_cards(["PL"], "lite")}
+    monkeypatch.setattr(config, "mode", lambda: "full")
+    assert selected(spec, {"countries": ["PL"]}) and not selected(spec, {"countries": ["BG"]})
+    assert "adzuna" in {c["id"] for c in key_cards(["PL"], "full")}

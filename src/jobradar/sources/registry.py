@@ -22,7 +22,7 @@ An entry with ``each_country: [codes]`` is a template for one source per country
 
 A source runs for a user when it is enabled and covers one of the user's countries (``countries`` in the entry;
 ``EU`` = pan-European or remote boards, always on), its ``opt_in`` track is switched on in user/sources.yaml, and
-the user did not switch it off. ``user/sources.yaml: enable/disable`` override that; ``overrides: {id: {...}}``
+the user did not switch it off, and the setup mode is one of its ``modes`` (if any). ``user/sources.yaml: enable/disable`` override that; ``overrides: {id: {...}}``
 deep-merges into one entry.
 """
 
@@ -157,6 +157,8 @@ def selected(spec: SourceSpec, user: dict[str, Any] | None = None) -> bool:
     if spec.opt_in and spec.opt_in not in (user.get("opt_in") or []):
         return False
     if spec.packs and not set(spec.packs) & set(config.active_pack_names()):
+        return False
+    if spec.modes and config.mode() not in spec.modes:
         return False
     wanted = {c.upper() for c in user.get("countries") or []}
     covers = {c.upper() for c in spec.countries or ["EU"]}

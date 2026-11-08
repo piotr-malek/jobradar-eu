@@ -62,6 +62,8 @@ def _needs(e: dict[str, Any]) -> str:
         out.append(f"opt-in: {e['opt_in']}")
     if e.get("packs"):
         out.append("packs: " + ", ".join(e["packs"]))
+    if e.get("modes"):
+        out.append(" / ".join(m.capitalize() for m in e["modes"]) + " mode only")
     if e.get("enabled") is False:
         out.append("**off by default**")
     return "; ".join(out)

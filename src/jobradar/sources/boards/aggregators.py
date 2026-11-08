@@ -64,7 +64,7 @@ def adzuna(ctx: FetchContext) -> Iterator[Posting]:
     app_key = (ctx.secrets or {}).get("ADZUNA_APP_KEY") or ""
     if not (app_id and app_key):
         raise SourceError("ADZUNA_APP_ID / ADZUNA_APP_KEY missing")
-    countries = [c.lower() for c in (p.get("countries") or ADZUNA_COUNTRIES)]
+    countries = [c.lower() for c in (p.get("countries") or ADZUNA_COUNTRIES) if c.lower() in ADZUNA_COUNTRIES]
     queries = p.get("queries") or default_terms(4)
     per_page = min(int(p.get("results_per_page", 50)), 50)
     max_pages = int(p.get("max_pages", 1))

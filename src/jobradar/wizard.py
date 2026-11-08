@@ -626,6 +626,9 @@ KEY_CARDS = [
     {"id": "jooble", "label": "Jooble", "signup": "https://jooble.org/api/about", "per_country": True,
      "env": "JOOBLE_{CC}_API_KEY",
      "what": "A big job search engine. One free key per country site: ask for it on their API page."},
+    {"id": "adzuna", "label": "Adzuna", "signup": "https://developer.adzuna.com/signup", "modes": ["full"],
+     "env": ["ADZUNA_APP_ID", "ADZUNA_APP_KEY"], "countries": ["AT", "BE", "DE", "ES", "FR", "IT", "NL", "PL", "CH"],
+     "what": "A job search engine that collects jobs from many boards. Free key: sign up, then copy the app ID and key."},
     {"id": "theirstack", "label": "TheirStack (free plan)", "signup": "https://app.theirstack.com/settings/api-key",
      "env": "THEIR_STACK_API_KEY", "what": "Jobs collected from company career pages; about 40 a week on the free plan."},
     {"id": "itjobs_pt", "label": "ITJobs.pt", "signup": "https://www.itjobs.pt/api", "env": "ITJOBS_PT_API_KEY",
@@ -641,15 +644,20 @@ KEY_LABELS = {"JR_IMAP_USER": "Your e-mail address", "JR_IMAP_PASSWORD": "App pa
               "EMAIL_TO": "Send it to (e-mail address)"}
 
 
-def key_cards(countries: list[str]) -> list[dict[str, Any]]:
-    """The Free extras cards that apply to these countries (Jooble only for its country sites the user picked)."""
+def key_cards(countries: list[str], mode: str | None = None) -> list[dict[str, Any]]:
+    """The Free extras cards that apply to these countries and this setup mode (Jooble only for its country sites
+    the user picked)."""
     from jobradar.sources.registry import load_specs
+
+    mode = mode or config.mode()
 
     want = {c.upper() for c in countries}
     sites = {c["id"]: [s.countries[0] for s in load_specs(all_sources=True).values() if s.adapter == c["id"]]
              for c in KEY_CARDS if c.get("per_country")}
     out = []
     for c in KEY_CARDS:
+        if c.get("modes") and mode not in c["modes"]:
+            continue
         if c.get("per_country"):
             cc = [x for x in sites[c["id"]] if x in want]
             if cc:
@@ -684,6 +692,11 @@ def test_key(card: str, values: dict[str, str]) -> dict[str, Any]:
             r = httpx.post("https://api.theirstack.com/v1/jobs/search", timeout=30,
                            headers={"Authorization": f"Bearer {values['THEIR_STACK_API_KEY']}"},
                            json={"limit": 1, "posted_at_max_age_days": 3, "job_country_code_or": ["DE"]})
+            return {"ok": r.status_code == 200, "detail": f"HTTP {r.status_code}"}
+        if card == "adzuna":
+            r = httpx.get("https://api.adzuna.com/v1/api/jobs/de/search/1", timeout=30,
+                          params={"app_id": values["ADZUNA_APP_ID"], "app_key": values["ADZUNA_APP_KEY"],
+                                  "results_per_page": 1})
             return {"ok": r.status_code == 200, "detail": f"HTTP {r.status_code}"}
         if card == "itjobs_pt":
             r = httpx.get("https://api.itjobs.pt/job/list.json", params={"api_key": values["ITJOBS_PT_API_KEY"],
@@ -775,7 +788,7 @@ def workflow_with_package(text: str, version: str | None = None, spec: str | Non
 def secrets_to_set() -> dict[str, str]:
     """Keys from ~/.job-radar/.env that the overnight run needs (LLM keys, source keys, IMAP/SMTP)."""
     env = read_env()
-    names = [k for k in env if re.fullmatch(r"(MISTRAL|GEMINI|GROQ|OPENROUTER|OPENAI|ANTHROPIC)_API_KEY|JOOBLE_[A-Z]{2}_API_KEY|"
+    names = [k for k in env if re.fullmatch(r"(MISTRAL|GEMINI|GROQ|OPENROUTER|OPENAI|ANTHROPIC)_API_KEY|JOOBLE_[A-Z]{2}_API_KEY|ADZUNA_APP_(?:ID|KEY)|"
                                             r"THEIR_STACK_API_KEY|ITJOBS_PT_API_KEY|JR_IMAP_\w+|SMTP_\w+|EMAIL_TO", k)]
     return {k: env[k] for k in names if env[k]}
 

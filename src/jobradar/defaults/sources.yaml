@@ -351,6 +351,18 @@ sources:
     params: {host: '{cc}.jooble.org', locations: ['', '{city}'], published_within_days: 3, max_pages: 1, max_calls: 20,
              keywords: '$terms:10'}          # '' = the whole country site; 50/page, 3 days → page 2 rarely needed
     politeness: {max_requests: 22}
+  - id: adzuna
+    adapter: adzuna
+    label: Adzuna
+    countries: [AT, BE, DE, ES, FR, IT, NL, PL, CH]
+    modes: [full]
+    kind: aggregator
+    every_days: 1
+    rank: 58
+    secrets: [ADZUNA_APP_ID, ADZUNA_APP_KEY]
+    notes: "free key (developer.adzuna.com); job links must be Adzuna's redirect_url (their terms); ~500-character snippets"
+    params: {countries: '$countries_lower', queries: '$terms:8', max_days_old: 3, max_pages: 1, max_calls: 30}
+    politeness: {max_requests: 32}
   - id: linkedin_guest
     adapter: linkedin_guest
     label: LinkedIn (guest search)

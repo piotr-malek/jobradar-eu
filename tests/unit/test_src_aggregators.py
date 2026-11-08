@@ -108,3 +108,28 @@ def test_jobspy_indeed(monkeypatch):
     assert calls[0]["site_name"] == ["indeed"] and calls[0]["country_indeed"] == "poland"
     assert posts and len(posts) == len({p.source_job_id for p in posts})
     assert all(p.title and p.url and p.countries == ["PL"] for p in posts)
+
+
+def test_adzuna_asks_only_its_own_countries_and_keeps_the_redirect_link():
+    import httpx
+
+    asked = []
+
+    def handler(request):
+        asked.append(request.url.path)
+        return httpx.Response(200, json={"results": [{
+            "id": 77, "title": "<strong>Backend</strong> Engineer", "company": {"display_name": "Acme"},
+            "redirect_url": "https://www.adzuna.at/land/ad/77", "location": {"display_name": "Wien",
+                                                                            "area": ["Österreich", "Wien", "Wien"]},
+            "description": "Python and Go.", "created": "2026-11-07T10:00:00Z", "salary_is_predicted": "1",
+            "salary_min": 50000}]})
+
+    spec = SourceSpec(id="adzuna", adapter="adzuna", secrets=["ADZUNA_APP_ID", "ADZUNA_APP_KEY"],
+                      params={"countries": ["bg", "at"], "queries": ["backend engineer"]})
+    with PoliteClient(spec.id, transport=httpx.MockTransport(handler), sleep=False, max_requests=5) as http:
+        posts = list(get_adapter("adzuna")(FetchContext(spec=spec, http=http,
+                                                        secrets={"ADZUNA_APP_ID": "i", "ADZUNA_APP_KEY": "k"})))
+    assert asked == ["/v1/api/jobs/at/search/1"]                  # no Adzuna site for Bulgaria
+    p, = posts
+    assert (p.title, p.company, p.countries, p.cities) == ("Backend Engineer", "Acme", ["AT"], ["Wien"])
+    assert p.url == "https://www.adzuna.at/land/ad/77" and p.salary_min is None     # predicted salaries dropped
