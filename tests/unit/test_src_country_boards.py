@@ -45,3 +45,18 @@ def test_jobup_uses_its_own_site_and_paths():
     detailed = [p for p in posts if p.description]
     assert len(detailed) == 3 and all(len(p.description) > 300 for p in detailed)
     assert all(p.countries == ["CH"] for p in posts if p.countries)
+
+
+def test_devbg_reads_company_city_and_mode_from_the_page():
+    recorded = re.compile(r"delasport senior devops|gamito kotlin|nemetschek bulgaria python|draftkings senior backend|"
+                          r"noto 360 fraud")
+    spec = load_specs(all_sources=True)["devbg"]
+    spec.params = {**spec.params, "max_details": 6, "lastmod_days": None, "skip_expired": False}
+    with PoliteClient("devbg", transport=ReplayTransport(FIX / "devbg"), sleep=False, max_requests=20,
+                      respect_robots=True) as http:
+        ctx = FetchContext(spec=spec, http=http, wants_detail=lambda t: bool(recorded.search(t.replace("-", " "))))
+        posts = list(get_adapter(spec.adapter)(ctx))
+    assert len(posts) == 6 and all(p.countries == ["BG"] and len(p.description) > 200 for p in posts)
+    assert not any(p.company.startswith("http") for p in posts)
+    by_co = {p.company: p for p in posts}
+    assert by_co["Delasport"].workplace == "hybrid" and by_co["Nemetschek Bulgaria"].location_raw

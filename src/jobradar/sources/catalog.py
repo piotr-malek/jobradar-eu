@@ -68,7 +68,7 @@ def _needs(e: dict[str, Any]) -> str:
 
 
 def _section(e: dict[str, Any]) -> str:
-    countries = [c.upper() for c in e.get("countries") or ["EU"]]
+    countries = [c.upper() for c in e.get("each_country") or e.get("countries") or ["EU"]]
     if e.get("track") == "purpose" or e.get("opt_in") == "purpose":
         return "Purpose-driven employers (opt-in)"
     if any(c in PAN_EU for c in countries):
@@ -84,9 +84,11 @@ def markdown() -> str:
     rows: dict[str, list[tuple[str, str]]] = {k: [] for k in ORDER}
     for raw in entries:
         e = {**defaults, **raw}
-        countries = ", ".join(c.upper() for c in e.get("countries") or ["EU"])
+        countries = ", ".join(c.upper() for c in e.get("each_country") or e.get("countries") or ["EU"])
         notes = _md(" ".join(str(e.get("notes") or "").split()))
-        cells = [f"{e.get('label') or e['id']} (`{e['id']}`)", countries, _summary(e["adapter"]),
+        label = (e.get("label") or e["id"]).replace(" {country_name}", "")
+        cid = f"{e['id']}_<cc>" if e.get("each_country") else e["id"]
+        cells = [f"{label} (`{cid}`)", countries, _summary(e["adapter"]),
                  f"{e.get('every_days', 1)}d", str(e.get("runner", "github")), _needs(e), notes]
         sort_key = (countries if _section(e) == "Country boards" else "") + e["id"]
         rows[_section(e)].append((sort_key, "| " + " | ".join(cells) + " |"))

@@ -137,11 +137,11 @@ def jooble(ctx: FetchContext) -> Iterator[Posting]:
     A key is issued for one Jooble country site and is refused (403) on any other: the
     default host ``jooble.org`` searches the US index. Each country site is its own source
     with ``host`` set and its key named first in ``secrets`` (e.g. JOOBLE_DE_API_KEY).
+    An empty ``location`` searches the whole country site.
 
     ``remote_only``: keep only results with a remote word in title, location or snippet (the
     location "Remote" maps to the site's own Teletrabajo/Home office/Homeoffice/Thuiswerken;
-    probed 2026-10-31). The shipped country sites outside Poland are searched this way: their
-    city jobs can't be read (Cloudflare)."""
+    probed 2026-10-31)."""
     from jobradar.normalize.location import mentions_remote
 
     p = ctx.params

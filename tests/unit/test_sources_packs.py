@@ -47,12 +47,14 @@ def test_nofluffjobs_categories_and_city_slice():
 
 def test_keyword_sources_carry_the_pack_terms():
     specs = load_specs(all_sources=True)
-    for sid, key in (("jooble", "keywords"), ("himalayas", "queries"), ("wttj", "queries"), ("eures", "keywords")):
+    for sid, key in (("jooble_pl", "keywords"), ("himalayas", "queries"), ("wttj", "queries"), ("eures", "keywords")):
         kws = specs[sid].params[key]
         assert "data engineer" in kws and "analytics engineer" in kws, sid
     assert len(specs["himalayas"].params["queries"]) == 11
-    assert len(specs["jooble"].params["keywords"]) == 10
-    assert specs["jooble"].params["locations"] == ["Polska", "wroclaw"]
+    assert len(specs["jooble_pl"].params["keywords"]) == 10
+    assert specs["jooble_pl"].params["locations"] == ["", "wroclaw"]
+    assert specs["jooble_de"].params["locations"] == [""]          # the home city only on the home country's site
+    assert specs["jooble_bg"].params["host"] == "bg.jooble.org" and specs["jooble_bg"].secrets == ["JOOBLE_BG_API_KEY"]
     assert specs["remotive"].params["categories"] == ["data"]
     assert "gtm engineer" in specs["remotive"].params["queries"] or len(specs["remotive"].params["queries"]) == 3
 
@@ -86,7 +88,7 @@ def test_selected_by_country():
     user = {"countries": ["PT"]}
     picked = {sid for sid, s in specs.items() if selected(s, user)}
     assert {"itjobs_pt", "teamlyzer", "jooble_pt", "remotive", "himalayas", "eures"} <= picked
-    assert not picked & {"justjoin", "nofluffjobs", "hays_pl", "michaelpage_pl", "sii_pl", "experis_pl", "jooble",
+    assert not picked & {"justjoin", "nofluffjobs", "hays_pl", "michaelpage_pl", "sii_pl", "experis_pl", "jooble_pl",
                          "jooble_de", "arbeitsagentur", "un_careers", "linkedin_apify"}
 
 
@@ -114,3 +116,28 @@ def test_sources_doc_is_current():
 
     doc = Path(__file__).parents[2] / "docs" / "sources.md"
     assert doc.read_text(encoding="utf-8") == markdown()
+
+
+def test_country_placeholders_follow_the_user(monkeypatch):
+    from jobradar import config
+    from jobradar.sources import registry
+
+    def user_sources():
+        return {"countries": ["PL", "BG", "AT"]}
+
+    user_sources.cache_clear = lambda: None
+    monkeypatch.setattr(config, "user_sources", user_sources)
+    registry.load_specs.cache_clear()
+    try:
+        specs = registry.load_specs(all_sources=True)
+        assert specs["workable_search"].params["locations"] == ["Europe", "Poland", "Bulgaria", "Austria"]
+        assert specs["jobgether"].params["locations"] == ["europe", "poland", "bulgaria", "austria"]
+        assert specs["eures"].params["location_codes"] == ["pl", "bg", "at"]
+        assert specs["eures"].langs == ["pl", "bg", "de"]
+        assert "analityk danych" in specs["eures"].params["keywords"] or len(specs["eures"].params["keywords"]) == 12
+        assert specs["jooble_bg"].countries == ["BG"] and specs["jooble_bg"].default_country == "BG"
+        assert specs["jooble_bg"].label == "Jooble Bulgaria"
+        picked = set(registry.load_specs())
+        assert {"devbg", "jooble_bg", "jooble_at", "karriere_at"} <= picked and "jooble_ro" not in picked
+    finally:
+        registry.load_specs.cache_clear()

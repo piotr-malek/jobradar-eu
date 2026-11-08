@@ -73,6 +73,21 @@ def test_lite_polls_only_shipped_tier_a():
     assert len(plan) == 300 and all(b["ats_slug"].startswith("a") for b in plan)
 
 
+def test_lite_run_polls_never_polled_tier_a_boards(monkeypatch):
+    import json
+
+    from jobradar import config
+    from jobradar.pipeline import ats
+
+    reg = [{"ats_type": "greenhouse", "ats_slug": f"a{i}", "origin": "lastround",
+            "extra": json.dumps({"shipped_tier": "A"})} for i in range(400)]
+    monkeypatch.setattr(config, "module_on", lambda name: name == "ats_lite_tier_a")
+    seen = {}
+    monkeypatch.setattr(ats, "poll_boards", lambda store, plan, **kw: seen.setdefault("plan", plan) and {})
+    out = ats.run_ats(_Store(reg, {}), dry_run=True, minutes=1)
+    assert out["lite"] and out["planned"] == 300 and len(seen["plan"]) == 300
+
+
 def test_shipped_registry_loads_once_and_keeps_poll_history(tmp_path):
     from jobradar.pipeline.ats import ensure_registry, shipped_registry
     from jobradar.store.sqlite import SQLiteStore

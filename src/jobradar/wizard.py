@@ -271,14 +271,9 @@ def sample_titles(n: int = 400) -> list[str]:
 
 def country_names() -> dict[str, str]:
     """ISO code → English country name (GeoNames countryInfo)."""
-    from jobradar.normalize.location import _DATA
+    from jobradar.normalize.location import country_names as names
 
-    out = {}
-    for line in (_DATA / "countries.tsv").read_text(encoding="utf-8").splitlines():
-        code, _, name = line.partition("\t")
-        if code and name:
-            out[code.strip().upper()] = name.strip()
-    return out
+    return dict(names())
 
 
 def country_options() -> list[dict[str, Any]]:
@@ -629,7 +624,7 @@ def save_bank(data: dict[str, Any]) -> dict[str, Any]:
 # ------------------------------------------------------------------ optional keys
 KEY_CARDS = [
     {"id": "jooble", "label": "Jooble", "signup": "https://jooble.org/api/about", "per_country": True,
-     "env": "JOOBLE_{CC}_API_KEY", "countries": ["PL", "DE", "ES", "PT", "NL"],
+     "env": "JOOBLE_{CC}_API_KEY",
      "what": "A big job search engine. One free key per country site: ask for it on their API page."},
     {"id": "theirstack", "label": "TheirStack (free plan)", "signup": "https://app.theirstack.com/settings/api-key",
      "env": "THEIR_STACK_API_KEY", "what": "Jobs collected from company career pages; about 40 a week on the free plan."},
@@ -648,11 +643,15 @@ KEY_LABELS = {"JR_IMAP_USER": "Your e-mail address", "JR_IMAP_PASSWORD": "App pa
 
 def key_cards(countries: list[str]) -> list[dict[str, Any]]:
     """The Free extras cards that apply to these countries (Jooble only for its country sites the user picked)."""
+    from jobradar.sources.registry import load_specs
+
     want = {c.upper() for c in countries}
+    sites = {c["id"]: [s.countries[0] for s in load_specs(all_sources=True).values() if s.adapter == c["id"]]
+             for c in KEY_CARDS if c.get("per_country")}
     out = []
     for c in KEY_CARDS:
         if c.get("per_country"):
-            cc = [x for x in c["countries"] if x in want]
+            cc = [x for x in sites[c["id"]] if x in want]
             if cc:
                 out.append({**c, "countries": cc})
         elif not c.get("countries") or want & set(c["countries"]):

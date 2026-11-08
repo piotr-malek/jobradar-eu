@@ -297,8 +297,10 @@ sources:
     kind: national
     every_days: 2
     rank: 35
-    params: {publication_period: LAST_THREE_DAYS, max_pages: 2, keywords: '$terms:9'}
-    politeness: {max_requests: 20}
+    langs: [$country_langs]                  # national employment services post in the local language
+    # big where the public employment service feeds EURES (DE FR NL BE AT SE CH SK ES NO FI); ~empty in BG RO GR LT SI HU PT IE CY
+    params: {publication_period: LAST_THREE_DAYS, max_pages: 2, keywords: '$terms:12', location_codes: '$countries_lower'}
+    politeness: {max_requests: 26}
 
   # ------------------------------------------------------------ public board APIs (no key)
   - id: themuse
@@ -338,72 +340,17 @@ sources:
     politeness: {max_requests: 3}
   - id: jooble
     adapter: jooble
-    label: Jooble Poland
-    countries: [PL]
-    langs: [pl]
+    label: Jooble {country_name}
+    # one source per Jooble country site; a key works only on the site it was issued for (403 elsewhere)
+    each_country: [AT, BE, BG, HR, CZ, DK, FI, FR, DE, GR, HU, IE, IT, NL, PL, PT, RO, SK, ES, SE, 'NO', CH]
     kind: aggregator
     every_days: 1
     rank: 60
-    secrets: [JOOBLE_PL_API_KEY]
-    notes: "pl.jooble.org key: republishes theprotocol.it / pracuj.pl (Cloudflare-blocked for us), NoFluffJobs, Bulldogjob, ATS pages"
-    params: {host: pl.jooble.org, locations: [Polska, '{city}'], published_within_days: 3, max_pages: 1, max_calls: 20,
-             keywords: '$terms:10'}          # 50/page, 3 days → page 2 rarely needed
+    secrets: ['JOOBLE_{CC}_API_KEY']
+    notes: "{cc}.jooble.org: republishes national boards we can't fetch (Cloudflare) and company pages"
+    params: {host: '{cc}.jooble.org', locations: ['', '{city}'], published_within_days: 3, max_pages: 1, max_calls: 20,
+             keywords: '$terms:10'}          # '' = the whole country site; 50/page, 3 days → page 2 rarely needed
     politeness: {max_requests: 22}
-  - id: jooble_es
-    adapter: jooble
-    label: Jooble Spain
-    countries: [ES]
-    langs: [es]
-    kind: aggregator
-    every_days: 1
-    rank: 60
-    default_country: ES
-    secrets: [JOOBLE_ES_API_KEY]
-    notes: "es.jooble.org key; may carry InfoJobs/Tecnoempleo postings"
-    params: {host: es.jooble.org, locations: [Remote, España], remote_only: true, published_within_days: 3,
-             max_pages: 1, max_calls: 20, keywords: '$terms:10'}
-    politeness: {max_requests: 22}   # remote only: "Remote" = Teletrabajo; country results kept only if they say remote
-  - id: jooble_pt
-    adapter: jooble
-    label: Jooble Portugal
-    countries: [PT]
-    langs: [pt]
-    kind: aggregator
-    every_days: 1
-    rank: 60
-    default_country: PT
-    secrets: [JOOBLE_PT_API_KEY]
-    notes: "pt.jooble.org key; matches any search word (5k results/3 days), sorted by relevance: the top 50 per search stay on topic"
-    params: {host: pt.jooble.org, locations: [Remote, Portugal], remote_only: true, published_within_days: 3,
-             max_pages: 1, max_calls: 20, keywords: '$terms:10'}
-    politeness: {max_requests: 22}   # remote only: "Remote" = Home office; country results kept only if they say remote
-  - id: jooble_de
-    adapter: jooble
-    label: Jooble Germany
-    countries: [DE]
-    langs: [de]
-    kind: aggregator
-    every_days: 1
-    rank: 60
-    default_country: DE
-    secrets: [JOOBLE_DE_API_KEY]
-    notes: "de.jooble.org key; may carry StepStone postings; Arbeitsagentur covers the national index"
-    params: {host: de.jooble.org, locations: [Remote, Deutschland], remote_only: true, published_within_days: 3,
-             max_pages: 1, max_calls: 20, keywords: '$terms:10'}
-    politeness: {max_requests: 22}   # remote only: "Remote" = Homeoffice; country results kept only if they say remote
-  - id: jooble_nl
-    adapter: jooble
-    label: Jooble Netherlands
-    countries: [NL]
-    kind: aggregator
-    every_days: 1
-    rank: 60
-    default_country: NL
-    secrets: [JOOBLE_NL_API_KEY]
-    notes: "nl.jooble.org key"
-    params: {host: nl.jooble.org, locations: [Remote, Nederland], remote_only: true, published_within_days: 3,
-             max_pages: 1, max_calls: 20, keywords: '$terms:10'}
-    politeness: {max_requests: 22}   # remote only: "Remote" = Thuiswerken; country results kept only if they say remote
   - id: linkedin_guest
     adapter: linkedin_guest
     label: LinkedIn (guest search)
@@ -536,14 +483,9 @@ sources:
     every_days: 2
     rank: 55                                 # no account slug/shortcode in the data, so no ATS dedup key
     notes: "jobs.workable.com cross-company search: full descriptions; Europe + EU/EEA country slices, all English"
-    # one page (20) per location × query; Workable answered 429 after ~230 calls at 1 rps, so 0.5 rps and ≤192 calls
-    # (LU, MT, NO, LV left out: ≤9 jobs each)
-    params: {queries: '$terms:8',
-             locations: [Europe, Poland, Spain, Portugal, Netherlands, Belgium, Germany, Switzerland, Ireland, France, Italy,
-                         Austria, Denmark, Sweden, Finland, Estonia, Lithuania, Czechia, Slovakia, Slovenia, Hungary, Croatia,
-                         Greece, Cyprus],
-             max_pages: 1, max_calls: 192}
-    politeness: {rps: 0.5, max_requests: 200}
+    # 20 per page; Workable answered 429 after ~230 calls at 1 rps, so 0.5 rps
+    params: {queries: '$terms:8', locations: [Europe, '$country_names'], max_pages: 2, max_calls: 96}
+    politeness: {rps: 0.5, max_requests: 100}
   - id: jobgether
     adapter: jobgether
     label: Jobgether
@@ -552,7 +494,7 @@ sources:
     every_days: 2
     rank: 58                                 # Jobgether republishes employers' jobs; list rows have no description
     notes: "official agents API (robots allows /astroapi/ai/jobs.json, crawl-delay 2); title-only rows"
-    params: {locations: [europe, poland, spain], keywords: '$terms:8', max_pages: 2, max_calls: 40}
+    params: {locations: [europe, '$country_slugs'], keywords: '$terms:8', max_pages: 2, max_calls: 40}
     politeness: {rps: 0.5, max_requests: 45, robots: true}
   - id: un_careers
     adapter: un_careers
@@ -770,6 +712,24 @@ sources:
       lastmod_days: 30
       max_details: 30
     politeness: {rps: 1, max_requests: 35, robots: true}
+  - id: devbg
+    adapter: sitemap_jsonld
+    label: DEV.BG
+    countries: [BG]
+    every_days: 2
+    rank: 45
+    default_country: BG
+    notes: "dev.bg: Bulgaria's main IT board (~1.3k live jobs), WordPress job_listing sitemap with lastmod, JobPosting JSON-LD; English slugs"
+    params:
+      sitemaps: https://dev.bg/wp-sitemap-posts-job_listing-1.xml
+      url_include: ['/company/jobads/[^/]+/?$']
+      id_regex: '/company/jobads/(?P<id>[^/?#]+)'
+      slug_regex: '/company/jobads/(?P<slug>[^/?#]+)'
+      prefer: $prefer
+      lastmod_days: 30
+      max_details: 40
+      enrich: devbg_attrs
+    politeness: {rps: 1, max_requests: 45, robots: true}
   - id: magnet_me
     adapter: sitemap_jsonld
     label: Magnet.me

@@ -383,7 +383,7 @@ def run_ats(store: Any, *, dry_run: bool = False, minutes: float | None = None, 
             known = {(r["ats_type"], r["ats_slug"]) for r in store.ats_registry()}
             out["user_boards_added"] = add_user_boards(
                 store, [b for b in extra["boards"] if (b.get("vendor"), b.get("slug")) not in known])
-    plan = plan_boards(store, lite=lite, max_boards=max_boards or 1200, sweep_budget=0 if lite else 1500)
+    plan = plan_boards(store, lite=lite, max_boards=max_boards or 1200, sweep_budget=LITE_TIER_A_MAX if lite else 1500)
     out["planned"] = len(plan)
     poll_deadline = started + minutes * (0.8 if full else 0.95) * 60
     out["poll"] = poll_boards(store, plan, dry_run=dry_run, deadline=poll_deadline)

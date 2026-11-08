@@ -28,6 +28,13 @@ EU27 = frozenset(
 )
 EEA_CH = frozenset("NO IS LI CH".split())
 ELIGIBLE = EU27 | EEA_CH
+COUNTRY_LANGS = {
+    "AT": ["de"], "BE": ["nl", "fr", "de"], "BG": ["bg"], "HR": ["hr"], "CY": ["el"], "CZ": ["cs"], "DK": ["da"],
+    "EE": ["et"], "FI": ["fi", "sv"], "FR": ["fr"], "DE": ["de"], "GR": ["el"], "HU": ["hu"], "IE": [], "IT": ["it"],
+    "LV": ["lv"], "LT": ["lt"], "LU": ["fr", "de"], "MT": ["mt"], "NL": ["nl"], "PL": ["pl"], "PT": ["pt"],
+    "RO": ["ro"], "SK": ["sk"], "SI": ["sl"], "ES": ["es"], "SE": ["sv"], "NO": ["no"], "IS": ["is"], "LI": ["de"],
+    "CH": ["de", "fr", "it"],
+}
 
 _COUNTRY_ALIASES = {
     "PL": ["poland", "polska", "polen", "pologne", "polonia"],
@@ -197,6 +204,17 @@ def _country_names() -> dict[str, str]:
     for ambiguous in ("georgia", "jersey", "chad", "guinea"):
         names.pop(ambiguous, None)
     return names
+
+
+@lru_cache(maxsize=1)
+def country_names() -> dict[str, str]:
+    """ISO code → English country name (GeoNames countryInfo)."""
+    out = {}
+    for line in (_DATA / "countries.tsv").read_text(encoding="utf-8").splitlines():
+        code, _, name = line.partition("\t")
+        if code and name:
+            out[code.strip().upper()] = name.strip()
+    return out
 
 
 @lru_cache(maxsize=1)
