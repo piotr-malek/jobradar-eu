@@ -539,9 +539,10 @@ sources:
     kind: aggregator
     every_days: 1
     rank: 55
-    notes: "saved-search alerts of boards behind Cloudflare (pracuj.pl, theprotocol.it) and LinkedIn job alerts, read over IMAP; no descriptions"
+    default_country: '{country}'
+    notes: "every job in the mails from the senders listed in the wizard (LinkedIn, boards behind Cloudflare, any board's alerts); no descriptions, links never opened"
     secrets: [JR_IMAP_USER, JR_IMAP_PASSWORD]
-    params: {host: imap.gmail.com, folder: INBOX, days: 3}
+    params: {host: imap.gmail.com, folder: INBOX, days: 3, senders: '$alert_senders'}
   # Purpose track: Impactpool (UN/INGO aggregator; job-function + seniority filters, 3 list pages + details)
   - id: impactpool
     adapter: impactpool

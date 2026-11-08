@@ -183,7 +183,12 @@ def test_full_walkthrough_ends_green(wiz, monkeypatch):
     rows = {r["answer_id"]: r for r in open_local().bank_rows()}
     assert rows["email"]["status"] == "Approved" and rows["phone"]["status"] == "Draft"    # empty stays Draft
     assert "ana@example.com" not in (Path(os.environ["JR_USER_DIR"]) / "profile.yaml").read_text(encoding="utf-8")
-    step(client, "optional_keys", keys={"JOOBLE_PT_API_KEY": "jk"}, notify_email=False)
+    assert "jobalerts-noreply@linkedin.com" in client.get("/setup/optional_keys").data.decode()
+    step(client, "optional_keys", keys={"JOOBLE_PT_API_KEY": "jk"}, notify_email=False,
+         alert_senders=["LinkedIn <jobalerts-noreply@linkedin.com>", "alerts@example.com", "alerts@example.com"])
+    from jobradar import config
+
+    assert config.user_sources()["alert_senders"] == ["jobalerts-noreply@linkedin.com", "alerts@example.com"]
     res = step(client, "config_repo", name="cfg")["result"]
     assert set(res["secrets"]) == {"MISTRAL_API_KEY", "JOOBLE_PT_API_KEY"}
     assert client.post("/setup/extension", headers=H, json={}).status_code == 400     # no ping yet
@@ -275,3 +280,47 @@ def test_chromium_status_route(wiz, monkeypatch):
     assert client.get("/setup/api/chromium").get_json() == {"ok": True, "package": False, "browser": False,
                                                             "fix": "uv tool install"}
     assert client.post("/setup/api/chromium", headers={"X-JR": "1"}).get_json()["ok"] is False
+
+
+def test_find_alert_senders_counts_job_like_subjects(monkeypatch):
+    import imaplib
+
+    from jobradar import wizard
+    from email.message import EmailMessage
+
+    def mail(sender, subject):
+        m = EmailMessage()
+        m["From"], m["Subject"] = sender, subject
+        return m.as_bytes()
+
+    heads = [mail("Jobs <alerts@example.net>", "5 нови обяви за Data Engineer"),
+             mail("alerts@example.net", "New jobs for you"), mail("friend@example.com", "Lunch?"),
+             mail("Karriere <jobagent@example.org>", "Ihr Jobagent: 3 neue Stellen")]
+
+    class Fake:
+        def __init__(self, host, timeout=None):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def login(self, u, p):
+            pass
+
+        def select(self, folder, readonly=False):
+            assert readonly
+
+        def search(self, charset, *criteria):
+            return "OK", [b"1 2 3 4"]
+
+        def fetch(self, ids, what):
+            assert "PEEK" in what and "HEADER.FIELDS" in what
+            return "OK", [(b"x", h) for h in heads] + [b")"]
+
+    monkeypatch.setattr(imaplib, "IMAP4_SSL", Fake)
+    out = wizard.find_alert_senders({"JR_IMAP_USER": "u@example.com", "JR_IMAP_PASSWORD": "p"})
+    assert out["ok"] and [s["sender"] for s in out["senders"]] == ["alerts@example.net", "jobagent@example.org"]
+    assert out["senders"][0]["mails"] == 2

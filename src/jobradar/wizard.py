@@ -635,7 +635,7 @@ KEY_CARDS = [
      "countries": ["PT"], "what": "The main IT job board in Portugal."},
     {"id": "imap", "label": "Job-alert e-mails (for example LinkedIn alerts)",
      "signup": "https://myaccount.google.com/apppasswords", "env": ["JR_IMAP_USER", "JR_IMAP_PASSWORD"],
-     "what": "Reads the job alerts that LinkedIn and some boards e-mail you, so their jobs show up here too."},
+     "what": "Reads the job alerts that LinkedIn and job boards e-mail you, so their jobs show up here too."},
     {"id": "smtp", "label": "A morning e-mail", "signup": "https://myaccount.google.com/apppasswords",
      "env": ["SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"], "what": "A short “12 new jobs are ready” e-mail each morning."},
 ]
@@ -713,9 +713,57 @@ def test_key(card: str, values: dict[str, str]) -> dict[str, Any]:
     return {"ok": False, "detail": "unknown card"}
 
 
+_JOB_SUBJECT = re.compile(
+    r"\bjobs?\b|job alert|vacanc|vacature|stellen|jobagent|praca|ofert|emploi|offres?\b|lavoro|offerte|empleo|"
+    r"trabajo|vagas?\b|emprego|työ|jobb|tjenest|работ|обяв|állás|práce|pracovn|posao|poslov|delo\b|munc|"
+    r"θέσ|εργασ|darbo|darba|töö|career|hiring|positions?\b|roles?\b|opening", re.I)
+
+
+def find_alert_senders(values: dict[str, str] | None = None, days: int = 30, scan: int = 800) -> dict[str, Any]:
+    """Senders in the mailbox whose recent subjects look like job alerts, most mails first (headers only, read-only)."""
+    import email as email_lib
+    import imaplib
+    from datetime import datetime, timedelta, timezone
+    from email.header import decode_header, make_header
+    from email.utils import parseaddr
+
+    env = {**read_env(), **{k: v for k, v in (values or {}).items() if v}}
+    if not (env.get("JR_IMAP_USER") and env.get("JR_IMAP_PASSWORD")):
+        return {"ok": False, "detail": "enter the e-mail address and app password first", "senders": []}
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%d-%b-%Y")
+    counts: dict[str, dict[str, Any]] = {}
+    try:
+        with imaplib.IMAP4_SSL(env.get("JR_IMAP_HOST") or "imap.gmail.com", timeout=60) as m:
+            m.login(env["JR_IMAP_USER"], env["JR_IMAP_PASSWORD"])
+            m.select('"INBOX"', readonly=True)
+            _, data = m.search(None, "SINCE", since)
+            ids = (data[0] or b"").split()[-scan:]
+            if ids:
+                _, parts = m.fetch(b",".join(ids), "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT)])")
+                for part in parts:
+                    if not isinstance(part, tuple):
+                        continue
+                    msg = email_lib.message_from_bytes(part[1])
+                    addr = parseaddr(msg.get("From") or "")[1].lower()
+                    subject = str(make_header(decode_header(msg.get("Subject") or "")))
+                    if addr and _JOB_SUBJECT.search(subject):
+                        c = counts.setdefault(addr, {"sender": addr, "mails": 0, "subject": subject[:90]})
+                        c["mails"] += 1
+    except Exception as exc:  # noqa: BLE001 - shown on the card
+        return {"ok": False, "detail": f"{type(exc).__name__}: {exc}"[:200], "senders": []}
+    listed = {s.lower() for s in config.user_sources().get("alert_senders") or []}
+    found = sorted((c for c in counts.values() if c["sender"] not in listed), key=lambda c: -c["mails"])[:25]
+    return {"ok": True, "detail": f"{len(found)} possible job-alert senders in the last {days} days", "senders": found}
+
+
 def save_keys(data: dict[str, Any]) -> dict[str, Any]:
     keys = {k: v for k, v in (data.get("keys") or {}).items() if re.fullmatch(r"[A-Z0-9_]+", k)}
     set_env(keys)
+    if "alert_senders" in data:
+        from email.utils import parseaddr
+
+        senders = [parseaddr(s)[1] or s.strip() for s in data.get("alert_senders") or [] if s.strip()]
+        write_user_yaml("sources.yaml", {"alert_senders": list(dict.fromkeys(senders))})
     if "notify_email" in data:
         write_user_yaml("settings.yaml", {"notify_email": bool(data["notify_email"])})
     return {"saved": sorted(k for k, v in keys.items() if v)}

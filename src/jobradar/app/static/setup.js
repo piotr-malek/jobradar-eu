@@ -37,6 +37,8 @@ function formData() {
   if (STEP === "optional_keys") {
     d.keys = {};
     for (const el of f.querySelectorAll("input.key")) if (el.value.trim()) d.keys[el.name] = el.value.trim();
+    const senders = document.getElementById("alert-senders");
+    if (senders) d.alert_senders = lines(senders.value);
   }
   return d;
 }
@@ -200,6 +202,23 @@ async function keyTest(btn) {
     const d = await post("/setup/api/key-test", {card: card.dataset.card, values});
     const out = card.querySelector(".out");
     out.textContent = d.detail; out.className = "out " + (d.ok ? "good" : "bad");
+  } finally { busy(btn, false); }
+}
+
+async function findSenders(btn) {
+  const card = btn.closest(".keycard"), values = {};
+  for (const el of card.querySelectorAll("input.key")) if (el.value.trim()) values[el.name] = el.value.trim();
+  busy(btn, true, "Reading the last 30 days of e-mail headers…");
+  try {
+    const d = await post("/setup/api/alert-senders", {values});
+    const out = document.getElementById("sender-out");
+    out.innerHTML = `<p class="${d.ok ? "muted" : "bad"}">${esc(d.detail)}</p>` + d.senders.map(s =>
+      `<label class="inline"><input type="checkbox" class="sender-pick" value="${esc(s.sender)}"> <b>${esc(s.sender)}</b>
+       <span class="muted">${s.mails} e-mails · “${esc(s.subject)}”</span></label>`).join("");
+    for (const box of out.querySelectorAll(".sender-pick")) box.addEventListener("change", () => {
+      const ta = document.getElementById("alert-senders"), cur = lines(ta.value);
+      ta.value = (box.checked ? [...cur, box.value] : cur.filter(x => x !== box.value)).filter((x, i, a) => a.indexOf(x) === i).join("\n");
+    });
   } finally { busy(btn, false); }
 }
 

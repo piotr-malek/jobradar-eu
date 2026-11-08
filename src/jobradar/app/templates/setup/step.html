@@ -202,7 +202,13 @@
   {% if c.per_country %}{% for cc in c.countries %}<label>Key for {{ cc }} <input class="key" name="{{ c.env|replace('{CC}', cc) }}" placeholder="{{ 'already set' if env.get(c.env|replace('{CC}', cc)) else '' }}"></label>{% endfor %}
   {% elif c.env is string %}<label>Key <input class="key" name="{{ c.env }}" placeholder="{{ 'already set' if env.get(c.env) else '' }}"></label>
   {% else %}{% for e in c.env %}<label>{{ key_labels.get(e, e) }} <input class="key" name="{{ e }}" {{ 'type=password' if 'PASSWORD' in e }} placeholder="{{ 'already set' if env.get(e) else '' }}"></label>{% endfor %}{% endif %}
-  {% if c.id == 'imap' %}<p class="muted">On linkedin.com: Jobs → Set alert (daily, to this e-mail address). Gmail: an app password needs 2-step verification switched on.</p>{% endif %}
+  {% if c.id == 'imap' %}<p class="muted">Use a Gmail address: an app password needs 2-step verification switched on
+    (Outlook.com no longer allows this). Then set up job alerts where you look for jobs, sent to this address: on
+    linkedin.com, Jobs → search → Set alert (daily); on job boards, their "job alert" or "job agent".</p>
+  <label>Senders you get job alerts from, one per line (every job in their e-mails is read)
+    <textarea id="alert-senders" rows="4">{{ alert_senders|join('\n') }}</textarea></label>
+  <button type="button" class="small" onclick="findSenders(this)">Find job-alert senders in my inbox</button>
+  <div id="sender-out"></div>{% endif %}
   {% if c.id == 'smtp' %}<label class="inline"><input type="checkbox" name="notify_email" {{ 'checked' if settings.notify_email }}> Send me the morning e-mail</label>{% endif %}
   <button type="button" class="small" onclick="keyTest(this)">Test</button> <span class="out muted"></span>
 </details>{% endfor %}

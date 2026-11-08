@@ -11,7 +11,8 @@ are expanded when the specs load:
 * ``{city}``/``{country}`` inside a string: the home city slug / ISO country code from profile.yaml
 * ``$countries`` (``$countries_lower``) the user's countries as ISO codes, home country first; ``$country_names``
   their English names; ``$country_slugs`` the names lowercased with hyphens; ``$country_langs`` their languages
-  (also accepted as an entry's ``langs``)
+  (also accepted as an entry's ``langs``); ``$alert_senders`` the job-alert senders from user/sources.yaml
+* ``default_country: "{country}"`` the home country
 * ``{"$each": <list or placeholder>, "as": "x", "template": "...{x}..."}``  one string per item
 
 A list item that expands to a list is spliced in (``queries: [$terms, "extra"]``).
@@ -109,6 +110,8 @@ class Expander:
                 return country_langs(self.countries)
             full = [names.get(c, c) for c in self.countries]
             return full if s == "$country_names" else [_slug(n) for n in full]
+        if s == "$alert_senders":
+            return list(config.user_sources().get("alert_senders") or [])
         if s == "$city":
             return self.city
         if s == "$country":
@@ -207,6 +210,8 @@ def load_specs(path: str | None = None, *, all_sources: bool = False) -> dict[st
         merged["politeness"] = {**defaults.get("politeness", {}), **entry.get("politeness", {})}
         if entry["id"] in overrides:
             merged = config.deep_merge(merged, overrides[entry["id"]])
+        if merged.get("default_country") == "{country}":
+            merged["default_country"] = ((config.profile().get("location") or {}).get("country") or "").upper() or None
         if "$country_langs" in (merged.get("langs") or []):
             merged["langs"] = country_langs(user_countries())
         merged["params"] = Expander(merged.get("langs")).expand(merged.get("params") or {})

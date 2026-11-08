@@ -67,6 +67,7 @@ def _context(step_id: str) -> dict[str, Any]:
         ctx["cards"] = wizard.key_cards(config.user_sources().get("countries") or [])
         ctx["key_labels"] = wizard.KEY_LABELS
         ctx["env"] = {k: bool(v) for k, v in wizard.read_env().items()}
+        ctx["alert_senders"] = config.user_sources().get("alert_senders") or ["jobalerts-noreply@linkedin.com"]
     elif step_id == "extension":
         ctx["extension_dir"] = str(wizard.install_extension())
     elif step_id == "summary":
@@ -198,6 +199,12 @@ def cv_upload() -> Any:
 def key_test() -> Any:
     data = request.get_json(force=True) or {}
     return jsonify(wizard.test_key(data.get("card") or "", data.get("values") or {}))
+
+
+@bp.post("/api/alert-senders")
+def alert_senders() -> Any:
+    data = request.get_json(force=True) or {}
+    return jsonify(wizard.find_alert_senders(data.get("values") or {}))
 
 
 @bp.get("/api/github")

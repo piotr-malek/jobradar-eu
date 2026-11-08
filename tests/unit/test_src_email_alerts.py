@@ -91,3 +91,88 @@ def test_linkedin_single_card_with_work_mode():
     [p] = parse_alert("email_alerts", "linkedin", _msg(html), re.compile(DEFAULT_LINKS["linkedin"]))
     assert (p.title, p.company, p.location_raw, p.workplace) == ("GTM Engineer", "CaptivateIQ", "European Union", "remote")
     assert p.url == "https://www.linkedin.com/jobs/view/123456789/" and "SECRET" not in repr(p)
+
+
+# ------------------------------------------------------------------ any sender (generic parser)
+def _gate(title: str) -> bool:
+    return bool(re.search(r"\b(data|analytics)\b", title, re.I))
+
+
+def test_generic_alert_reads_title_company_place_and_salary():
+    from jobradar.sources.boards.email_alerts import parse_generic
+
+    html = (FIX / "generic_cards.html").read_text(encoding="utf-8")
+    posts = parse_generic("email_alerts", "Jobagent <jobagent@example.org>", _msg(html), _gate)
+    assert [(p.title, p.company, p.location_raw) for p in posts] == [
+        ("Data Engineer (m/w/d)", "Donaufeld Analytics GmbH", "Wien"),
+        ("Analytics Engineer", "Murinsel Software", "Graz, Steiermark")]
+    first = posts[0]
+    assert (first.salary_min, first.salary_max, first.salary_currency) == (55000, 70000, "EUR")
+    assert "utm_" not in first.url and first.url.endswith("1234567-inline.html")
+    assert first.source_job_id.startswith("example.org:") and first.tags == ["alert:example.org"]
+
+
+def test_generic_alert_ids_are_stable_across_mails():
+    from jobradar.sources.boards.email_alerts import parse_generic
+
+    html = (FIX / "generic_cards.html").read_text(encoding="utf-8")
+    a = parse_generic("email_alerts", "jobagent@example.org", _msg(html), _gate)
+    b = parse_generic("email_alerts", "jobagent@example.org", _msg(html.replace("utm_campaign=jobagent", "x=1")), _gate)
+    assert [p.source_job_id for p in a] == [p.source_job_id for p in b]
+
+
+def test_generic_plain_text_alert():
+    from jobradar.sources.boards.email_alerts import parse_generic
+
+    m = EmailMessage()
+    m["Subject"], m["Date"] = "New jobs", "Sat, 07 Nov 2026 07:00:00 +0100"
+    m.set_content("Your alert\nSenior Data Engineer\nhttps://jobs.example.bg/offer/991?utm_source=mail\n"
+                  "Unsubscribe\nhttps://jobs.example.bg/unsubscribe")
+    posts = parse_generic("email_alerts", "alerts@example.net", m, _gate)
+    assert [(p.title, p.url) for p in posts] == [("Senior Data Engineer", "https://jobs.example.bg/offer/991")]
+
+
+class _FakeIMAP:
+    def __init__(self, mails):
+        self.mails, self.searched = mails, []
+
+    def __call__(self, host):
+        return self
+
+    def login(self, user, password):
+        pass
+
+    def select(self, folder, readonly=False):
+        assert readonly
+
+    def search(self, charset, key, value, *rest):
+        self.searched.append((key, value.strip('"')))
+        hits = [n for n, (sender, _) in self.mails.items() if value.strip('"') in sender]
+        return "OK", [b" ".join(hits)]
+
+    def fetch(self, num, what):
+        assert "PEEK" in what
+        return "OK", [(b"1", self.mails[num][1].as_bytes())]
+
+    def logout(self):
+        pass
+
+
+def test_adapter_reads_every_listed_sender(monkeypatch):
+    from jobradar.sources.base import FetchContext, SourceSpec
+    from jobradar.sources.boards import email_alerts as ea
+
+    li = _msg((FIX / "linkedin_jobalert.html").read_text(encoding="utf-8"))
+    generic = _msg((FIX / "generic_cards.html").read_text(encoding="utf-8"))
+    fake = _FakeIMAP({b"1": ("jobalerts-noreply@linkedin.com", li), b"2": ("jobagent@example.org", generic)})
+    monkeypatch.setattr(ea.imaplib, "IMAP4_SSL", fake)
+    spec = SourceSpec(id="email_alerts", adapter="email_alerts",
+                      params={"senders": ["LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+                                          "jobagent@example.org", "example.org"]})
+    ctx = FetchContext(spec=spec, http=None, wants_detail=_gate, secrets={"JR_IMAP_USER": "u", "JR_IMAP_PASSWORD": "p"})
+    posts = list(ea.email_alerts(ctx))
+    assert fake.searched[0] == ("TEXT", "jobalerts-noreply@linkedin.com")           # forwarded LinkedIn mails too
+    assert ("FROM", "jobagent@example.org") in fake.searched
+    boards = {p.source_job_id.split(":")[0] for p in posts}
+    assert boards == {"linkedin", "example.org"}
+    assert sum(p.source_job_id.startswith("example.org") for p in posts) == 2   # mail 2 read once
