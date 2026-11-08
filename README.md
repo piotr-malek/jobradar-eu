@@ -6,9 +6,12 @@ morning you open the app, pick the ones worth applying to, and apply.
 
 - **Nothing runs on your computer overnight.** The search runs on GitHub Actions in your own private repository.
   Your computer is only used to pick jobs and apply.
-- **About 80 job boards and public APIs** across 19 countries plus pan-European and remote boards, and in Full mode
-  about 6,200 company career pages (Greenhouse, Lever, Ashby, Workable, Personio, Teamtailor, Workday and more).
-  See [docs/sources.md](docs/sources.md).
+- **Any EU/EEA country, on-site jobs too.** About 80 job boards and public APIs, searched for your countries
+  (pan-European boards, national employment services through EURES, local boards in 27 countries, Jooble and Adzuna
+  with free keys), and in Full mode about 6,200 company career pages (Greenhouse, Lever, Ashby, Workable, Personio,
+  Teamtailor, Workday and more), those hiring in your countries first. See [docs/sources.md](docs/sources.md).
+- **Job-alert e-mails from any board.** List the senders of the job alerts you get (LinkedIn, or any job board that
+  e-mails you), and every job in those mails joins the list. The links are never opened.
 - **Role packs** for data, backend, frontend, full-stack, mobile, DevOps/SRE/platform, QA, security, ML/AI,
   product/PM, GTM/RevOps, and sales & customer success, with a seniority range and your own "never" words.
 - **Free to run.** The only possible cost is an LLM, which is optional in Lite.
@@ -67,8 +70,8 @@ You can switch from Lite to Full later with `jr setup --upgrade`. Your jobs and 
 | GitHub account, private repository, Actions | both | free (2,000 minutes a month) |
 | GitHub CLI (`gh`) | both | free |
 | Job boards, national job services, company career pages | both | free |
-| Jooble, TheirStack and ITJobs.pt API keys | optional | free plans |
-| Gmail (or any) SMTP/IMAP with an app password: morning e-mail, job-alert e-mails | optional | free |
+| Jooble, TheirStack and ITJobs.pt API keys; Adzuna (Full) | optional | free plans |
+| Gmail with an app password (IMAP/SMTP): job-alert e-mails, morning e-mail | optional | free |
 | Playwright + Chromium for PDFs | Full | free |
 | LLM (Mistral, Gemini, Groq, OpenRouter, OpenAI, Anthropic) | optional in Lite, needed in Full | free tiers exist; otherwise pay per use. The wizard shows an estimate per night. |
 

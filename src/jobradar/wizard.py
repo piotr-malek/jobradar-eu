@@ -277,18 +277,24 @@ def country_names() -> dict[str, str]:
 
 
 def country_options() -> list[dict[str, Any]]:
-    """The countries the wizard offers (EU, EEA, Switzerland), by name, with how many local boards each has."""
+    """The countries the wizard offers (EU, EEA, Switzerland), by name, with how many local boards run there without
+    a key and how many company career pages in the registry were seen hiring there."""
     from jobradar.normalize.location import ELIGIBLE
+    from jobradar.pipeline.ats import shipped_registry
     from jobradar.sources.registry import load_specs
 
     names = country_names()
     local: dict[str, int] = {}
     for spec in load_specs(all_sources=True).values():
-        if spec.enabled or spec.opt_in:
+        if spec.enabled and not spec.opt_in and not spec.secrets:
             for c in spec.countries:
                 local[c.upper()] = local.get(c.upper(), 0) + 1
-    return sorted(({"code": c, "name": names.get(c, c), "boards": local.get(c, 0)} for c in ELIGIBLE),
-                  key=lambda r: r["name"])
+    companies: dict[str, int] = {}
+    for row in shipped_registry()[1]:
+        for cc in {x.partition(":")[0] for x in (row.get("countries") or "").split()}:
+            companies[cc] = companies.get(cc, 0) + 1
+    return sorted(({"code": c, "name": names.get(c, c), "boards": local.get(c, 0), "companies": companies.get(c, 0)}
+                   for c in ELIGIBLE), key=lambda r: r["name"])
 
 
 def countries_sources_view(countries: list[str], opt_in: list[str] | None = None,

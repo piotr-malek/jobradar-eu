@@ -114,9 +114,10 @@
 {% elif step == 'countries_sources' %}
 <h1>Countries and job boards</h1>
 <p>Tick the countries you want jobs in. Job boards for those countries are added, and boards that cover all of Europe
-  or remote work are always included.</p>
+  or remote work are always included. Few local boards? Job-alert e-mails (LinkedIn or any board, under Free extras)
+  fill the gap{{ ', and company career pages hiring there are searched too' if st.mode == 'full' }}.</p>
 <fieldset><legend>Countries</legend>
-  <div class="countries">{% for c in country_options %}<label class="inline"><input type="checkbox" name="countries[]" value="{{ c.code }}" {{ 'checked' if c.code in countries }} onchange="sourcesFor()"> {{ c.name }}{% if c.boards %} <span class="muted">· {{ c.boards }} board{{ 's' if c.boards > 1 }}</span>{% endif %}</label>{% endfor %}</div>
+  <div class="countries">{% for c in country_options %}<label class="inline"><input type="checkbox" name="countries[]" value="{{ c.code }}" {{ 'checked' if c.code in countries }} onchange="sourcesFor()"> {{ c.name }}{% if c.boards or (st.mode == 'full' and c.companies) %} <span class="muted">{% if c.boards %}· {{ c.boards }} local board{{ 's' if c.boards > 1 }}{% endif %}{% if st.mode == 'full' and c.companies %} · {{ c.companies }} companies hiring{% endif %}</span>{% endif %}</label>{% endfor %}</div>
 </fieldset>
 <fieldset><legend>Optional</legend>
   <label><input type="checkbox" name="opt_in[]" value="purpose" {{ 'checked' if 'purpose' in (us.opt_in or []) }} onchange="sourcesFor()"> UN, EU institutions and NGOs</label>
