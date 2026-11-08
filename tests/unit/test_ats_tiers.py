@@ -101,3 +101,18 @@ def test_shipped_registry_loads_once_and_keeps_poll_history(tmp_path):
                                        "http_status": 200, "n_eu": 2}])
     assert ensure_registry(store)["added"] == 0                     # same version: nothing re-added
     assert store.ats_poll_summary()[("greenhouse", rows[0]["slug"])]["max_eu"] == 2
+
+
+def test_lite_slice_prefers_boards_hiring_in_the_users_countries():
+    import json
+
+    from jobradar.pipeline.ats import lite_boards
+
+    def row(slug, tier, countries):
+        return {"ats_type": "greenhouse", "ats_slug": slug, "origin": "lastround",
+                "extra": json.dumps({"shipped_tier": tier, "countries": countries})}
+
+    reg = [row(f"de{i}", "A", {"DE": 50, "EU": 9}) for i in range(350)]
+    reg += [row("pl_small", "B", {"PL": 2}), row("pl_big", "B", {"PL": 40, "DE": 1}), row("remote", "A", {"EU": 30})]
+    slugs = [r["ats_slug"] for r in lite_boards(reg)]          # the test profile hunts in PL
+    assert slugs[:2] == ["pl_big", "pl_small"] and len(slugs) == 300 and "remote" in slugs[:3]

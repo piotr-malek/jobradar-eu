@@ -11,8 +11,8 @@ Tiers (from this user's own polls; before the first poll the shipped tier decide
   dead after 3 consecutive 404s, a 404 on a board that never answered 200, or a successful poll with no
   EU-eligible posting (maintainer and the user's own boards excepted).
 
-Lite mode can switch on a small slice (user settings: modules.ats_lite_tier_a): shipped tier A boards only,
-at most 300 per night.
+Lite mode can switch on a small slice (user settings: modules.ats_lite_tier_a): the 300 boards with most jobs in
+the user's countries (registry ``countries`` counts), topped up with tier A boards hiring remotely in Europe.
 """
 
 from __future__ import annotations
@@ -70,18 +70,20 @@ def ensure_registry(store: Any) -> dict[str, Any]:
     have = store.ats_registry()
     if any(r.get("origin") == origin or (r.get("extra") or "").find(f'"registry": "{version}"') >= 0 for r in have):
         return {"version": version, "added": 0}
-    known = {(r["ats_type"], r["ats_slug"]) for r in have}
+    known = {(r["ats_type"], r["ats_slug"]): r.get("origin") for r in have}
     now = utcnow()
     fresh = []
     for r in rows:
         key = (r["vendor"], r["slug"])
-        if r["vendor"] not in FETCHERS or key in known:
+        if r["vendor"] not in FETCHERS or known.get(key) == "user":
             continue
         extra = json.loads(r["extra"]) if r.get("extra") else {}
         extra.update({"company_name": r.get("company_name") or None, "shipped_tier": r.get("tier"),
                       "registry": version, "source": r.get("origin")})
         if r.get("country_hint"):
             extra["country_hint"] = r["country_hint"].split()
+        if r.get("countries"):
+            extra["countries"] = {cc: int(n) for cc, _, n in (x.partition(":") for x in r["countries"].split())}
         fresh.append({"ats_type": r["vendor"], "ats_slug": r["slug"], "company_name": r.get("company_name"),
                       "extra": json.dumps(extra, ensure_ascii=False), "origin": r.get("origin") or "package",
                       "discovered_at": now})
@@ -124,7 +126,7 @@ def plan_boards(store: Any, *, max_boards: int = 1200, sweep_budget: int = 1500,
     now = now or utcnow()
     registry = [r for r in store.ats_registry() if r["ats_type"] != "none"]
     if lite:
-        registry = [r for r in registry if _extra(r).get("shipped_tier") == "A" or r.get("origin") == "user"]
+        registry = lite_boards(registry)
         max_boards = min(max_boards, LITE_TIER_A_MAX)
     polls = store.ats_poll_summary()
     buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -146,9 +148,22 @@ def plan_boards(store: Any, *, max_boards: int = 1200, sweep_budget: int = 1500,
         r = dict(r)
         r["tier"] = tier
         buckets[tier].append(r)
-    buckets["new"].sort(key=_sweep_key)
+    countries = _home_countries()
+    buckets["new"].sort(key=lambda r: _sweep_key(r, countries))
     plan = buckets["A"] + buckets["B"] + buckets["new"][:sweep_budget] + buckets["C"]
     return plan[:max_boards]
+
+
+def lite_boards(registry: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Lite's fixed slice: the user's own boards, then the boards with most jobs in the user's countries, then
+    shipped tier A boards with remote EU jobs; at most LITE_TIER_A_MAX."""
+    countries = _home_countries()
+    own = [r for r in registry if r.get("origin") == "user"]
+    rest = [r for r in registry if r.get("origin") != "user"]
+    local = sorted((r for r in rest if local_jobs(r, countries)), key=lambda r: -local_jobs(r, countries))
+    remote = sorted((r for r in rest if not local_jobs(r, countries) and _extra(r).get("shipped_tier") == "A"),
+                    key=lambda r: -int((_extra(r).get("countries") or {}).get("EU", 0)))
+    return (own + local + remote)[:LITE_TIER_A_MAX]
 
 
 def _extra(r: dict[str, Any]) -> dict[str, Any]:
@@ -167,14 +182,23 @@ def _home_countries() -> set[str]:
     return {c.upper() for c in us.get("countries") or []} | ({home} if home else set())
 
 
-def _sweep_key(r: dict[str, Any]) -> tuple[int, int, int]:
-    """Never-polled boards: shipped tier A first, boards seen hiring in the user's countries first, EU vendors next."""
+def local_jobs(r: dict[str, Any], countries: set[str] | None = None) -> int:
+    """Jobs the board was seen with in the user's countries (registry counts; a bare country hint counts as 1)."""
+    countries = _home_countries() if countries is None else countries
     extra = _extra(r)
-    hint = set(extra.get("country_hint") or [])
-    local = 0 if hint & _home_countries() else 1
+    seen = extra.get("countries") or {}
+    n = sum(int(seen.get(c, 0)) for c in countries)
+    return n or int(bool(set(extra.get("country_hint") or []) & countries))
+
+
+def _sweep_key(r: dict[str, Any], countries: set[str] | None = None) -> tuple[int, int, int, int, int]:
+    """Never-polled boards: boards seen hiring in the user's countries first (most jobs first), then shipped tier A,
+    then origin, EU vendors first."""
+    extra = _extra(r)
+    local = local_jobs(r, countries)
     tier = {"A": 0, "B": 1}.get(extra.get("shipped_tier"), 2)
     eu = r["ats_type"] in EU_VENDORS or extra.get("region") == "eu"
-    return tier * 2 + local, ORIGIN_ORDER.get(r.get("origin"), 6), 0 if eu else 1
+    return 0 if local else 1, tier, -local, ORIGIN_ORDER.get(r.get("origin"), 6), 0 if eu else 1
 
 
 # ------------------------------------------------------------------ poll

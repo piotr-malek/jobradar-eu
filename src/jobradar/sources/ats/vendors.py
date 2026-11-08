@@ -18,7 +18,7 @@ import httpx
 from jobradar.http.client import PoliteClient
 from jobradar.models import Posting
 from jobradar.normalize.text import html_to_text
-from jobradar.sources.base import as_list, first, parse_date, to_float
+from jobradar.sources.base import as_list, default_terms, first, parse_date, to_float
 
 Result = tuple[int, list[Posting]]
 WantsDetail = Callable[[str], bool]
@@ -359,7 +359,7 @@ def fetch_workday(http: PoliteClient, slug: str, extra: dict, wants_detail: Want
     api = f"{base}/wday/cxs/{tenant}/{site}"
     out: dict[str, Posting] = {}
     status = 0
-    for text in extra.get("search", ["data", "analytics", "BI"]):
+    for text in extra.get("search") or default_terms(4):
         offset = 0
         while offset < int(extra.get("max_results", 100)):
             resp = http.post(f"{api}/jobs", json={"appliedFacets": extra.get("facets", {}), "limit": 20,

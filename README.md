@@ -7,7 +7,7 @@ morning you open the app, pick the ones worth applying to, and apply.
 - **Nothing runs on your computer overnight.** The search runs on GitHub Actions in your own private repository.
   Your computer is only used to pick jobs and apply.
 - **About 80 job boards and public APIs** across 19 countries plus pan-European and remote boards, and in Full mode
-  about 5,700 company career pages (Greenhouse, Lever, Ashby, Workable, Personio, Teamtailor, Workday and more).
+  about 6,200 company career pages (Greenhouse, Lever, Ashby, Workable, Personio, Teamtailor, Workday and more).
   See [docs/sources.md](docs/sources.md).
 - **Role packs** for data, backend, frontend, full-stack, mobile, DevOps/SRE/platform, QA, security, ML/AI,
   product/PM, GTM/RevOps, and sales & customer success, with a seniority range and your own "never" words.
