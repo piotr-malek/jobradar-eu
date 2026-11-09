@@ -110,6 +110,16 @@ function rolesPreview() {
   }, 300);
 }
 
+function alertBoard(box) {
+  const area = document.getElementById("alert-senders");
+  const have = lines(area.value);
+  const senders = box.value.split(",").filter(Boolean);
+  const stillUsed = new Set([...WIZ.querySelectorAll("input.alert-board:checked")].flatMap(c => c.value.split(",")));
+  const next = box.checked ? [...have, ...senders.filter(x => !have.includes(x))]
+    : have.filter(x => !senders.includes(x) || stillUsed.has(x));    // Indeed's countries share one sender
+  area.value = next.join("\n");
+}
+
 async function positionsFind(btn) {
   busy(btn, true, "Asking the AI…");
   try {
@@ -152,13 +162,6 @@ async function sourcesFor() {
   document.getElementById("sources-off").innerHTML = v.off.map(s => `<tr><td>${esc(s.label)}</td><td class="muted">${esc(s.covers)}</td>
     <td class="muted">${esc(s.why)}</td></tr>`).join("");
   document.getElementById("boards-off").hidden = !v.off.length;
-  const kept = new Set([...WIZ.querySelectorAll("input[name='alert_add[]']:checked")].map(c => c.value));
-  const alerts = v.alerts || [];
-  document.getElementById("alert-boards").hidden = !alerts.length;
-  document.getElementById("alert-list").innerHTML = alerts.map(b => `<tr>
-    <td>${b.senders.length ? `<input type="checkbox" name="alert_add[]" value="${esc(b.senders.join(","))}" ${b.added || kept.has(b.senders.join(",")) ? "checked" : ""}>` : ""}</td>
-    <td><a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.name)}</a>${b.account ? ' <span class="muted">(free account)</span>' : ""}</td>
-    <td class="muted">${esc(b.country)}</td><td class="muted">${esc(b.roles)}</td></tr>`).join("");
 }
 
 async function ghInstall(btn) {

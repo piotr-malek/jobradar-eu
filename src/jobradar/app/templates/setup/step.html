@@ -92,11 +92,12 @@
 
 {% elif step == 'roles' %}
 <h1>Roles</h1>
-<p>Tick the kinds of jobs you want (one or more). The preview below shows real job titles we'd keep or skip.</p>
+<p>Type the positions you want, tick the groups that fit, or both. The preview at the bottom shows job titles we'd
+  keep or skip with what you chose.</p>
 <section class="recommended"><h3>Positions you want <span class="muted">(optional, uses your AI model)</span></h3>
   <p class="muted">Type the positions you're after; the AI lists the titles job ads use for them in your languages and
     ticks the matching groups below. Untick any title that isn't for you: it will be skipped.</p>
-  <textarea name="positions" rows="2" placeholder="e.g. content marketing manager, SEO specialist, copywriter">{{ roles.positions or '' }}</textarea>
+  <textarea name="positions" rows="2" placeholder="e.g. content marketing manager, SEO specialist, copywriter">{{ roles.positions or cv_positions or '' }}</textarea>
   <button type="button" class="small" onclick="positionsFind(this)">Find the titles</button>
   <div id="positions-out">{% if roles.position_titles or roles.position_skip %}<ul class="titles">{% for t in roles.position_titles or [] %}<li><label class="inline"><input type="checkbox" name="pos_keep[]" value="{{ t }}" checked onchange="rolesPreview()"> {{ t }}</label></li>{% endfor %}{% for t in roles.position_skip or [] %}<li><label class="inline"><input type="checkbox" name="pos_keep[]" value="{{ t }}" onchange="rolesPreview()"> {{ t }}</label></li>{% endfor %}</ul>{% endif %}</div>
 </section>
@@ -119,17 +120,17 @@
   <textarea name="must_have" rows="2">{{ (roles.must_have or [])|join('\n') }}</textarea></label>
 <label>Extra job titles to include <span class="muted">(one per line, e.g. "data steward")</span>
   <textarea name="extra_titles" rows="2" onchange="rolesPreview()">{{ (roles.extra_titles or [])|join('\n') }}</textarea></label>
-</details>
-<details><summary>Describe roles no pack covers (needs an AI model)</summary>
+<h4>A whole new group of roles <span class="muted">(needs an AI model)</span></h4>
   <textarea id="pack-desc" rows="2" placeholder="e.g. Salesforce administrators and CRM consultants"></textarea>
-  <button type="button" onclick="packDraft(this)">Draft a custom pack</button><div id="pack-out"></div></details>
+  <button type="button" onclick="packDraft(this)">Draft a custom group</button><div id="pack-out"></div>
+</details>
 <section><h3>Preview <span class="muted">sample titles, kept or dropped</span></h3><div id="preview" class="preview"></div></section>
 
 {% elif step == 'countries_sources' %}
 <h1>Countries and job boards</h1>
 <p>Tick the countries you want jobs in. Job boards for those countries are added, and boards that cover all of Europe
-  or remote work are always included. Few local boards? Job-alert e-mails (LinkedIn or any board, under Free extras)
-  fill the gap, and company career pages hiring there are searched too.</p>
+  or remote work are always included, and so are company career pages hiring there. The big boards that block
+  automated searches come in through their job-alert e-mails: the next step lists them for your countries.</p>
 <fieldset><legend>Countries</legend>
   <div class="countries">{% for c in country_options %}<label class="inline"><input type="checkbox" name="countries[]" value="{{ c.code }}" {{ 'checked' if c.code in countries }} onchange="sourcesFor()"> {{ c.name }}{% if c.boards or c.companies %} <span class="muted">{% if c.boards %}· {{ c.boards }} local board{{ 's' if c.boards > 1 }}{% endif %}{% if c.companies %} · {{ c.companies }} companies hiring{% endif %}</span>{% endif %}</label>{% endfor %}</div>
 </fieldset>
@@ -142,11 +143,6 @@
   <table class="queue"><tbody id="sources"></tbody></table></details>
 <details class="more" id="boards-off"><summary class="muted">Boards not used for your choices</summary>
   <table class="queue"><tbody id="sources-off"></tbody></table></details>
-<section id="alert-boards" hidden><h3>Boards to follow by e-mail</h3>
-  <p class="muted">These big boards can't be searched overnight (they block automated visits), but they send job-alert
-    e-mails. Create an alert on each for the jobs you want, sent to the mailbox you connect under Free extras, and tick
-    it here: every job in those e-mails then lands in your list.</p>
-  <table class="queue"><tbody id="alert-list"></tbody></table></section>
 
 {% elif step == 'notion' %}
 <h1>Notion: where your jobs land</h1>
@@ -182,7 +178,7 @@
   <label class="inline"><input type="radio" name="provider" value="gemini" {{ 'checked' if llm_choice == 'gemini' }}> Use Google Gemini</label>
 </section>
 <details class="more" {{ 'open' if llm_choice not in ('off', 'gemini') }}><summary>Other AI services</summary>
-<div class="cards">{% for p in presets if p.id != 'gemini' %}
+<div class="cards">{% for p in presets if p.id != 'gemini' and (p.actions or st.mode == 'apply') %}
   <label class="card small"><input type="radio" name="provider" value="{{ p.id }}" {{ 'checked' if llm_choice == p.id }}>
     <b>{{ p.label }}</b> <a href="{{ p.signup }}" target="_blank" rel="noopener">{{ 'get a key' if p.env else 'download' }} ↗</a>
     {% if not p.actions %}<span class="muted">runs on this computer, so not overnight</span>{% endif %}</label>{% endfor %}
@@ -199,21 +195,24 @@
 {% elif step == 'experience' %}
 <h1>Your experience</h1>
 <p>Upload your CV (PDF or DOCX) or paste it. {% if settings %}With an AI model the profile below is drafted from it, each fact shown next to the CV line it came from. Edit anything.{% endif %}
-  Contact details are never put in the profile: they stay in your local answer bank.</p>
+  The AI review compares each job with this profile, so the more it says about what you do, the better the ranking.
+  Contact details are never put in it{{ ': they stay in your local answer bank' if st.mode == 'apply' }}.</p>
 <div class="row"><input type="file" id="cv-file" accept=".pdf,.docx,.txt"><button type="button" onclick="cvUpload(this)">Read the CV</button></div>
 <textarea id="cv-paste" rows="4" placeholder="…or paste your CV or LinkedIn profile text"></textarea>
 <div id="cv-sources" class="sources"></div>
 <label>Summary <textarea name="summary" rows="2">{{ profile.summary or '' }}</textarea></label>
-<label>Level <input name="level" value="{{ profile.level or '' }}" placeholder="e.g. Mid-level backend engineer, 4 years"></label>
+<label>Level <input name="level" value="{{ profile.level or '' }}" placeholder="e.g. Mid-level, 4 years in content marketing"></label>
 <div class="grid">
   <label>Priority roles <span class="muted">(one per line)</span><textarea name="priority_roles" rows="3">{{ (profile.priority_roles or [])|join('\n') }}</textarea></label>
   <label>Other target roles<textarea name="target_roles" rows="3">{{ (profile.target_roles or [])|join('\n') }}</textarea></label>
-  <label>Strong stack<textarea name="strong_stack" rows="3">{{ (profile.strong_stack or [])|join('\n') }}</textarea></label>
-  <label>Nice to have<textarea name="nice_stack" rows="3">{{ (profile.nice_stack or [])|join('\n') }}</textarea></label>
+  <label>Main skills and tools <span class="muted">(one per line)</span><textarea name="strong_stack" rows="3">{{ (profile.strong_stack or [])|join('\n') }}</textarea></label>
+  <label>Other skills and tools<textarea name="nice_stack" rows="3">{{ (profile.nice_stack or [])|join('\n') }}</textarea></label>
 </div>
+{% if st.mode == 'apply' %}
 <label>Highlights <span class="muted">(one per line; used for drafts)</span><textarea name="highlights" rows="4">{{ (profile.highlights or [])|join('\n') }}</textarea></label>
-<details {{ 'open' if st.mode == 'apply' }}><summary>Projects for drafts (experience.md, local only)</summary>
+<details open><summary>Projects for drafts (experience.md, local only)</summary>
   <textarea name="experience_md" rows="8" placeholder="## Main projects&#10;- …"></textarea></details>
+{% endif %}
 {% if st.mode == 'apply' %}
 <section><h3>PDF renderer</h3>
   <p>CV and cover-letter PDFs are made with Chromium (a one-time download of about 150 MB).
@@ -235,24 +234,36 @@
 <p class="muted">Story answers (why this company, a project you're proud of) are drafted per job in prep, or edit them later on the Answer bank page.</p>
 
 {% elif step == 'optional_keys' %}
-<h1>Free extras</h1>
-<p>Each of these is optional and free, and adds more jobs or a morning e-mail. You can skip them all and add any later
-  (Setup → Free extras).</p>
-{% for c in cards %}<details class="keycard more" data-card="{{ c.id }}"><summary><b>{{ c.label }}</b> <span class="muted">· {{ c.what }}</span></summary>
-  <p><a href="{{ c.signup }}" target="_blank" rel="noopener">{{ 'Create an app password' if c.id in ('imap', 'smtp') else 'Get the free key' }} ↗</a></p>
+<h1>Job alerts and extras</h1>
+<p>All optional and free. Job-alert e-mails are the one most worth a few minutes: they bring in LinkedIn and the big
+  boards that can't be searched overnight.</p>
+{% for c in cards if c.id == 'imap' %}
+<section class="keycard recommended" data-card="imap"><h3>Job-alert e-mails <span class="muted">(recommended)</span></h3>
+  <ol><li>Use a Gmail address and <a href="{{ c.signup }}" target="_blank" rel="noopener">create an app password ↗</a>
+      (it needs 2-step verification switched on; Outlook.com no longer allows this).</li>
+    <li>On each board below, create a job alert for what you're looking for, sent to that address, then tick it.
+      On LinkedIn: Jobs → search → Set alert (daily).</li></ol>
+  {% for e in c.env %}<label>{{ key_labels.get(e, e) }} <input class="key" name="{{ e }}" {{ 'type=password' if 'PASSWORD' in e }} placeholder="{{ 'already set' if env.get(e) else '' }}"></label>{% endfor %}
+  {% if alert_boards %}<table class="queue">{% for b in alert_boards %}<tr>
+    <td>{% if b.senders %}<input type="checkbox" class="alert-board" value="{{ b.senders|join(',') }}" {{ 'checked' if b.added }} onchange="alertBoard(this)">{% endif %}</td>
+    <td><a href="{{ b.url }}" target="_blank" rel="noopener">{{ b.name }}</a>{% if b.account %} <span class="muted">(free account)</span>{% endif %}</td>
+    <td class="muted">{{ b.country }}</td><td class="muted">{{ b.roles }}</td></tr>{% endfor %}</table>{% endif %}
+  <details class="more"><summary>Senders read <span class="muted">(every job in their e-mails is read; add any other board here)</span></summary>
+    <textarea id="alert-senders" rows="4">{{ alert_senders|join('\n') }}</textarea>
+    <button type="button" class="small" onclick="findSenders(this)">Find job-alert senders in my inbox</button>
+    <div id="sender-out"></div></details>
+  <button type="button" class="small" onclick="keyTest(this)">Test the mailbox</button> <span class="out muted"></span>
+</section>{% endfor %}
+{% set others = cards|rejectattr('id', 'equalto', 'imap')|list %}
+{% if others %}<h3>More free extras</h3>
+{% for c in others %}<details class="keycard more" data-card="{{ c.id }}"><summary><b>{{ c.label }}</b> <span class="muted">· {{ c.what }}</span></summary>
+  <p><a href="{{ c.signup }}" target="_blank" rel="noopener">{{ 'Create an app password' if c.id == 'smtp' else 'Get the free key' }} ↗</a></p>
   {% if c.per_country %}{% for cc in c.countries %}<label>Key for {{ cc }} <input class="key" name="{{ c.env|replace('{CC}', cc) }}" placeholder="{{ 'already set' if env.get(c.env|replace('{CC}', cc)) else '' }}"></label>{% endfor %}
   {% elif c.env is string %}<label>Key <input class="key" name="{{ c.env }}" placeholder="{{ 'already set' if env.get(c.env) else '' }}"></label>
   {% else %}{% for e in c.env %}<label>{{ key_labels.get(e, e) }} <input class="key" name="{{ e }}" {{ 'type=password' if 'PASSWORD' in e }} placeholder="{{ 'already set' if env.get(e) else '' }}"></label>{% endfor %}{% endif %}
-  {% if c.id == 'imap' %}<p class="muted">Use a Gmail address: an app password needs 2-step verification switched on
-    (Outlook.com no longer allows this). Then set up job alerts where you look for jobs, sent to this address: on
-    linkedin.com, Jobs → search → Set alert (daily); on job boards, their "job alert" or "job agent".</p>
-  <label>Senders you get job alerts from, one per line (every job in their e-mails is read)
-    <textarea id="alert-senders" rows="4">{{ alert_senders|join('\n') }}</textarea></label>
-  <button type="button" class="small" onclick="findSenders(this)">Find job-alert senders in my inbox</button>
-  <div id="sender-out"></div>{% endif %}
   {% if c.id == 'smtp' %}<label class="inline"><input type="checkbox" name="notify_email" {{ 'checked' if settings.notify_email }}> Send me the morning e-mail</label>{% endif %}
   <button type="button" class="small" onclick="keyTest(this)">Test</button> <span class="out muted"></span>
-</details>{% endfor %}
+</details>{% endfor %}{% endif %}
 
 {% elif step == 'config_repo' %}
 <h1>Your private GitHub space</h1>

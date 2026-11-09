@@ -249,11 +249,11 @@ def test_upgrade_reopens_the_apply_steps(wiz):
 
     client, _ = wiz
     step(client, "welcome", mode="radar")
-    for s in ("github", "basics", "roles"):
+    for s in ("github", "llm", "notion", "basics", "experience", "roles"):
         wizard.mark(s)
     r = client.get("/setup/?upgrade=1")
     assert config.mode() == "apply" and config.module_on("bank") and config.module_on("app")
-    assert r.headers["Location"].endswith("/setup/countries_sources")
+    assert r.headers["Location"].endswith("/setup/experience")                     # reopened: Apply asks for more
     assert "answer_bank" in [s.id for s in wizard.steps_for("apply")]
     assert "answer_bank" not in [s.id for s in wizard.steps_for("radar")]
 
@@ -392,12 +392,17 @@ def test_alert_boards_for_the_countries_once_each_and_ticked_ones_become_senders
                                         "indeedmail.com", "wysylka.pracuj.pl"]
 
 
-def test_countries_step_lists_alert_boards(wiz):
+def test_alerts_step_lists_the_boards_to_follow_for_the_countries(wiz):
+    from jobradar import wizard
+
     client, _ = wiz
-    assert 'id="alert-boards"' in client.get("/setup/countries_sources").data.decode()
+    wizard.save_countries_sources({"countries": ["PL"]})
+    html = client.get("/setup/optional_keys").data.decode()
+    assert "Job-alert e-mails" in html and "Pracuj.pl" in html and 'value="wysylka.pracuj.pl"' in html
+    assert "LinkedIn Jobs" in html and 'id="alert-senders"' in html
+    assert "Boards to follow" not in client.get("/setup/countries_sources").data.decode()
     v = client.post("/setup/api/sources", headers={"X-JR": "1"}, json={"countries": ["PL"], "opt_in": []}).get_json()
-    assert any(b["name"] == "Pracuj.pl" and b["senders"] == ["wysylka.pracuj.pl"] for b in v["alerts"])
-    assert any(b["country"] == "Europe-wide" and b["name"] == "LinkedIn Jobs" for b in v["alerts"])
+    assert any(b["name"] == "Pracuj.pl" for b in v["alerts"])
 
 
 def test_unconfirmed_alert_senders_match_on_the_brand_word():

@@ -43,6 +43,7 @@ def _context(step_id: str) -> dict[str, Any]:
     elif step_id == "roles":
         ctx["packs"] = {**config.available_packs(), **config.user_packs()}
         ctx["roles"] = config.roles()
+        ctx["cv_positions"] = ", ".join([*(p.get("priority_roles") or []), *(p.get("target_roles") or [])])
         ctx["seniority"] = config.SENIORITY_LEVELS
     elif step_id == "countries_sources":
         us = config.user_sources()
@@ -74,6 +75,9 @@ def _context(step_id: str) -> dict[str, Any]:
         ctx["key_labels"] = wizard.KEY_LABELS
         ctx["env"] = {k: bool(v) for k, v in wizard.read_env().items()}
         ctx["alert_senders"] = config.user_sources().get("alert_senders") or ["jobalerts-noreply@linkedin.com"]
+        listed = " ".join(ctx["alert_senders"]).lower()             # the boxes follow the senders list shown
+        ctx["alert_boards"] = [{**b, "added": bool(b["senders"]) and all(x in listed for x in b["senders"])}
+                               for b in wizard.alert_boards(config.user_sources().get("countries") or [])]
     elif step_id == "extension":
         ctx["extension_dir"] = str(wizard.install_extension())
     elif step_id == "summary":

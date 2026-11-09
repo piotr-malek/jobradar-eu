@@ -50,16 +50,17 @@ class Step:
 
 
 STEPS = [
+    # the three accounts first (the later steps use the AI), then the user, then where to search
     Step("welcome", "Welcome", BOTH),
     Step("github", "GitHub", BOTH),
-    Step("basics", "Where and how you work", BOTH),
-    Step("roles", "Roles", BOTH),
-    Step("countries_sources", "Countries and job boards", BOTH),
     Step("llm", "AI review", BOTH),
     Step("notion", "Notion", BOTH),
+    Step("basics", "Where and how you work", BOTH),
     Step("experience", "Your experience", BOTH, optional_in=("radar",)),
-    Step("answer_bank", "Answer bank", ("apply",)),
+    Step("roles", "Roles", BOTH),
+    Step("countries_sources", "Countries and job boards", BOTH),
     Step("optional_keys", "Job alerts and extras", BOTH, optional_in=BOTH),
+    Step("answer_bank", "Answer bank", ("apply",)),
     Step("config_repo", "Your private repo", BOTH),
     Step("extension", "Chrome extension", ("apply",), optional_in=("apply",)),
     Step("first_run", "First run", BOTH),

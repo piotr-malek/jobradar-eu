@@ -12,10 +12,10 @@
 <header>
   <a class="brand" href="{{ url_for('morning') }}">Job Radar</a>
   <nav>
-    <a href="{{ url_for('morning') }}">Jobs</a>
+    {% if module_on('app') %}<a href="{{ url_for('morning') }}">Jobs</a>
     {% if module_on('bank') %}<a href="{{ url_for('bank_page') }}">Answer bank</a>{% endif %}
     <a href="{{ url_for('stats') }}">Stats</a>
-    <a href="{{ url_for('add') }}">Add a job</a>
+    <a href="{{ url_for('add') }}">Add a job</a>{% endif %}
     <a href="{{ url_for('setup.index') }}">Setup</a>
   </nav>
   <div class="statusbar">
