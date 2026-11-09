@@ -139,7 +139,7 @@ def item_to_posting(source: str, j: dict, now: datetime | None = None) -> Postin
     )
 
 
-def _page(ctx: FetchContext, keyword: str, page: int) -> tuple[list[Posting], bool]:
+def _page(ctx: FetchContext, keyword: str, page: int, now: datetime | None = None) -> tuple[list[Posting], bool]:
     """(postings, has_next) for one search page; JSON first, HTML fallback."""
     url = f"{SITE}/jobs"
     resp = ctx.http.get(url, params={"keywords": keyword, "page": page},
@@ -151,23 +151,24 @@ def _page(ctx: FetchContext, keyword: str, page: int) -> tuple[list[Posting], bo
         data = (resp.json() or {}).get("data") or {}
         lst = data.get("jobsSearchList") or {}
         items = [x.get("jobsItem") for x in ((lst.get("activeItems") or {}).get("items") or []) if x.get("jobsItem")]
-        posts = [p for p in (item_to_posting(ctx.spec.id, j) for j in items) if p]
+        posts = [p for p in (item_to_posting(ctx.spec.id, j, now) for j in items) if p]
         nxt = (lst.get("loadMoreJobsButton") or {})
         return posts, bool(nxt.get("active") and nxt.get("next"))
-    return parse_list(resp.text, ctx.spec.id), False
+    return parse_list(resp.text, ctx.spec.id, now), False
 
 
 @adapter("karriere_at")
 def karriere_at(ctx: FetchContext) -> Iterator[Posting]:
     p = ctx.params
     max_details = int(p.get("max_details", 20))
+    now = datetime.now(timezone.utc)            # one clock reading: "Heute" jobs tie on every OS (Windows' clock is coarse)
     seen: set[str] = set()
     to_detail: list[Posting] = []
     stop = False
     for kw in as_list(p.get("keywords") or default_terms(4)):
         for page in range(1, int(p.get("max_pages", 3)) + 1):
             try:
-                rows, has_next = _page(ctx, kw, page)
+                rows, has_next = _page(ctx, kw, page, now)
             except (Blocked, BudgetExceeded) as exc:
                 ctx.notes.append(f"list stopped: {exc}")
                 stop = True
@@ -187,7 +188,8 @@ def karriere_at(ctx: FetchContext) -> Iterator[Posting]:
                 break
         if stop:
             break
-    to_detail.sort(key=lambda x: x.posted_at.timestamp() if x.posted_at else 0, reverse=True)
+    order = {id(x): i for i, x in enumerate(to_detail)}
+    to_detail.sort(key=lambda x: (x.posted_at.timestamp() if x.posted_at else 0, order[id(x)]), reverse=True)
     blocked = False
     for i, post in enumerate(to_detail):
         if not blocked and i < max_details:

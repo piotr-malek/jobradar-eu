@@ -190,7 +190,7 @@ def test_a_later_review_updates_the_page_and_a_low_fit_trashes_it_while_new(fake
     later = datetime.now(timezone.utc)                            # reviewed tonight, after the page was written
     for job, fit, hidden in (("JR-3", 4, None), ("JR-4", 1, "low_fit")):
         store.execute("UPDATE shortlist SET fit = :fit, summary = 'Reviewed', hidden = :hidden, screened_at = :at, "
-                      "screen_model = 'mistral:m' WHERE job_id = :job", {"fit": fit, "hidden": hidden, "at": later,
+                      "screen_model = 'mistral:m', notion_synced_at = NULL WHERE job_id = :job", {"fit": fit, "hidden": hidden, "at": later,
                                                                         "job": job})
     out = notion_sync.run_push(store)
     assert (out["updated"], out["trashed"], out["created"]) == (1, 1, 0)
@@ -291,3 +291,18 @@ def _patched_init(fake, init):
     def patched(self, token=None, *, jobs_ds=None, transport=None, sleep=True):
         init(self, token, jobs_ds=jobs_ds, transport=transport or fake.transport(), sleep=False)
     return patched
+
+
+def test_a_job_reviewed_on_a_later_night_gets_its_page_updated(fake, tmp_path):
+    from fakes import FakeLLM, screen_reply
+    from jobradar.llm.client import LLMClient
+    from jobradar.pipeline.shortlist import screen_queue
+
+    store = _store(tmp_path)
+    notion_sync.run_push(store)                                     # JR-3 and JR-4 written without a review
+    llm = LLMClient("screen", provider="mistral", transport=FakeLLM(screen_reply(4)).transport(), sleep=False,
+                    ledger_dir=tmp_path)
+    assert screen_queue(store, llm=llm, now=NOW)["screened"] == 2   # same clock tick as the push is fine
+    out = notion_sync.run_push(store)
+    assert out["updated"] == 2 and fake.value(fake.by_job()["JR-3"], "Fit") == 4
+    assert notion_sync.run_push(store)["updated"] == 0

@@ -318,7 +318,8 @@ def screen_minutes() -> float:
 def screen_queue(store: Any, *, llm: Any = None, deadline: float | None = None,
                  now: datetime | None = None) -> dict[str, Any]:
     """Screen shortlisted jobs that have no screen result yet, newest night first, until the provider chain's
-    quota or `deadline` runs out; the rest wait for the next night. Skipped jobs are left alone."""
+    quota or `deadline` runs out; the rest wait for the next night. Skipped jobs are left alone. A reviewed job
+    already on a Notion page is marked unsynced (notion_synced_at NULL), so the push updates its page."""
     from jobradar.apply.screen import screen_chain
 
     now = now or datetime.now(timezone.utc)
@@ -346,6 +347,7 @@ def screen_queue(store: Any, *, llm: Any = None, deadline: float | None = None,
                  instructions = :instructions, work_setup = :work_setup, screen_salary = :salary,
                  languages_required = :languages_required, years_required = :years_required,
                  contract = :contract, apply_deadline = :deadline, screen_model = :model, screened_at = :at,
+                 notion_synced_at = NULL,
                  hidden = CASE WHEN :low THEN 'low_fit' ELSE hidden END
                WHERE job_id = :job_id AND night_id = :night_id""",
             {"fit": sc.get("fit"), "summary": sc.get("summary"),

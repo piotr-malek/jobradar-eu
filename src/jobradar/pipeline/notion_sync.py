@@ -77,7 +77,7 @@ def push(store: Any, client: NotionClient, *, deadline: float | None = None,
     phases = [
         ("create", _rows(store, f"s.notion_page_id IS NULL AND s.screened_at IS NOT NULL AND {open_}",
                          "s.fit DESC, s.night DESC, s.rank", since)),
-        ("update", _rows(store, "s.notion_page_id NOT IN ('', 'unknown') AND s.screened_at > s.notion_synced_at",
+        ("update", _rows(store, "s.notion_page_id NOT IN ('', 'unknown') AND s.notion_synced_at IS NULL AND s.screened_at IS NOT NULL",
                          "s.night DESC, s.rank", since)),
         ("create", _rows(store, f"s.notion_page_id IS NULL AND s.screened_at IS NULL AND {open_}",
                          "s.night DESC, s.rank", since)),
