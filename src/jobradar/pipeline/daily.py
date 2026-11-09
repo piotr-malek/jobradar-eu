@@ -121,6 +121,11 @@ def run_daily(store: Any, *, dry_run: bool = False, force: bool = False,
         except Exception as exc:  # noqa: BLE001 - pages left now go out the next night
             log.warning("notion push failed: %s", exc)
             out["notion"] = {"status": "failed", "error": str(exc)[:200]}
+        if config.module_on("screen"):
+            try:
+                out["filter_suggestions"] = notion_sync.run_suggest(store, llm)
+            except Exception as exc:  # noqa: BLE001 - e.g. the AI quota is spent: next night
+                log.warning("filter suggestions skipped: %s", exc)
     if not dry_run:
         out["upkeep"] = store.maintenance()
         if notify is None:

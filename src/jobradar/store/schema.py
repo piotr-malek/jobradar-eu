@@ -59,6 +59,12 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], str | None, list[str], int |
         [("provider", S, "REQUIRED"), ("day", D, "REQUIRED"), ("requests", I, "REQUIRED"), ("at", T, "REQUIRED")],
         "day", ["provider"], None,
     ),
+    "filter_suggestions": (   # "skip titles with ..." proposals from Not relevant jobs, ticked by the user in Notion
+        [("suggestion_id", S, "REQUIRED"), ("kind", S, "REQUIRED"), ("value", S, "NULLABLE"), ("why", S, "NULLABLE"),
+         ("examples", S, R), ("status", S, "NULLABLE"), ("block_id", S, "NULLABLE"), ("page_id", S, "NULLABLE"),
+         ("created_at", T, "REQUIRED"), ("closed_at", T, "NULLABLE")],
+        "created_at", [], None,
+    ),
     "nights": (               # one row per overnight shortlist (the "one shortlist per night" guard)
         [
             ("night_id", S, "REQUIRED"), ("night", D, "REQUIRED"), ("kind", S, "NULLABLE"),

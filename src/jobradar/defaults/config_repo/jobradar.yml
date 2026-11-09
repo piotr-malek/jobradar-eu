@@ -89,6 +89,16 @@ jobs:
             weekly) jr weekly ;;
             *)      jr daily ;;
           esac
+      - name: Save the filters you ticked in Notion (user/learned.yaml)
+        if: always() && steps.which.outputs.job != 'none'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -n "$(git status --porcelain user/learned.yaml)" ] || exit 0
+          SHA=$(gh api "repos/${{ github.repository }}/contents/user/learned.yaml" --jq .sha 2>/dev/null || true)
+          gh api -X PUT "repos/${{ github.repository }}/contents/user/learned.yaml" \
+            -f message="Filters ticked in Notion" -f content="$(base64 -w0 user/learned.yaml)" ${SHA:+-f sha="$SHA"} >/dev/null
       - name: Save state (one commit on the state branch)
         if: always() && steps.which.outputs.job != 'none'
         shell: bash

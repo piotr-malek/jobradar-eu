@@ -367,6 +367,36 @@ class NotionClient:
                        {"property": "Status", "select": {"does_not_equal": "New"}}]}
         return [plain_page(p) for p in self.query(self.need_jobs(), flt)]
 
+    # -- plain pages and to-do blocks (filter suggestions) ---------------------------
+    def create_child_page(self, parent: str, title: str, blocks: list[dict[str, Any]] | None = None) -> str:
+        page = self.request("POST", "/pages", {"parent": {"type": "page_id", "page_id": parent},
+                                               "properties": {"title": {"title": rich(title)}},
+                                               "children": (blocks or [])[:100]}, retry_unsafe=False)
+        return page["id"]
+
+    def append_todos(self, page_id: str, texts: list[str]) -> list[str]:
+        """Unchecked to-do blocks; returns their ids in order."""
+        res = self.request("PATCH", f"/blocks/{page_id}/children", {"children": [
+            {"object": "block", "type": "to_do", "to_do": {"rich_text": rich(t), "checked": False}} for t in texts]})
+        return [b["id"] for b in res.get("results") or []]
+
+    def todo_states(self, page_id: str) -> dict[str, bool]:
+        """{block id: checked} for the page's to-do blocks."""
+        out: dict[str, bool] = {}
+        cursor = None
+        while True:
+            res = self.request("GET", f"/blocks/{page_id}/children?page_size=100"
+                               + (f"&start_cursor={cursor}" if cursor else ""))
+            for b in res.get("results") or []:
+                if b.get("type") == "to_do":
+                    out[b["id"]] = bool((b.get("to_do") or {}).get("checked"))
+            if not res.get("has_more"):
+                return out
+            cursor = res.get("next_cursor")
+
+    def remove_block(self, block_id: str) -> None:
+        self.request("PATCH", f"/blocks/{block_id}", {"in_trash": True})
+
     def job_page(self, job_id: str) -> dict[str, Any] | None:
         hit = next(iter(self.query(self.need_jobs(), {"property": "Job ID", "rich_text": {"equals": job_id}})), None)
         return plain_page(hit) if hit else None

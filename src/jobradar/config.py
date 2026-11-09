@@ -119,6 +119,12 @@ def active_pack_names() -> list[str]:
     return list(names) if names else sorted(available_packs())
 
 
+def learned_never() -> list[str]:
+    """Skip patterns the user approved on the Notion "Filter suggestions" page (user/learned.yaml, written only by
+    the overnight run, so the wizard never overwrites them)."""
+    return [w for w in read_yaml(user_dir() / "learned.yaml").get("never") or [] if isinstance(w, str) and w]
+
+
 def fold_title(title: str) -> str:
     from jobradar.normalize.text import fold
 
@@ -295,7 +301,7 @@ def matching_config(*, p: dict[str, Any] | None = None, r: dict[str, Any] | None
     cfg["family_labels"] = bundle["labels"]
     cfg["seniority_range"] = seniority_rules(r)
     cfg["user_titles"] = {
-        "never": r.get("never") or [],
+        "never": list(r.get("never") or []) + learned_never(),
         "never_unless": r.get("never_unless") or [],
         "keep": r.get("keep_titles") or [],
         "must_have": r.get("must_have") or [],

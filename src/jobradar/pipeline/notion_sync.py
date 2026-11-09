@@ -120,10 +120,28 @@ def _still_new(store: Any, job_id: str) -> bool:
 
 
 def run_pull(store: Any) -> dict[str, Any]:
+    """Statuses from Notion, then the filter suggestions the user ticked (they apply from tonight)."""
     if not configured():
         return {"status": "off"}
+    from jobradar.pipeline import suggest
+
     with NotionClient() as client:
-        return {"decisions_imported": pull_decisions(store, client)}
+        out: dict[str, Any] = {"decisions_imported": pull_decisions(store, client)}
+        try:
+            out["filters"] = suggest.apply_ticked(store, client)
+        except Exception as exc:  # noqa: BLE001 - suggestions are an extra; the night goes on
+            log.warning("filter suggestions not applied: %s", exc)
+        return out
+
+
+def run_suggest(store: Any, llm: Any = None) -> dict[str, Any]:
+    """New Not relevant jobs → proposed rules on the Filter suggestions page (one AI call at most)."""
+    if not configured():
+        return {"status": "off"}
+    from jobradar.pipeline import suggest
+
+    with NotionClient() as client:
+        return suggest.propose(store, client, llm)
 
 
 def run_push(store: Any, *, deadline: float | None = None) -> dict[str, Any]:

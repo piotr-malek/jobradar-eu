@@ -4,8 +4,10 @@ updates on later nights, and the user's Status changes read back into `decisions
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -25,6 +27,7 @@ class FakeNotion:
         self.props: dict[str, dict] = {}
         self.pages: dict[str, dict] = {}
         self.calls: list[tuple[str, str]] = []
+        self.blocks: dict[str, dict] = {}
         self.throttle_once = False
 
     def transport(self) -> httpx.MockTransport:
@@ -59,6 +62,22 @@ class FakeNotion:
             page["properties"].update(body.get("properties") or {})
             page["in_trash"] = body.get("in_trash", page["in_trash"])
             return httpx.Response(200, json=page)
+        if method == "PATCH" and path.startswith("/blocks/") and path.endswith("/children"):
+            parent = path.split("/")[2]
+            made = []
+            for child in body["children"]:
+                bid = uuid.uuid4().hex
+                self.blocks[bid] = {"id": bid, "parent": parent, "type": child["type"], child["type"]: child[child["type"]],
+                                    "in_trash": False}
+                made.append(self.blocks[bid])
+            return httpx.Response(200, json={"results": made})
+        if method == "GET" and path.startswith("/blocks/") and path.endswith("/children"):
+            parent = path.split("/")[2]
+            kids = [b for b in self.blocks.values() if b["parent"] == parent and not b["in_trash"]]
+            return httpx.Response(200, json={"results": kids, "has_more": False})
+        if method == "PATCH" and path.startswith("/blocks/"):
+            self.blocks[path.split("/")[2]]["in_trash"] = True
+            return httpx.Response(200, json={})
         if method == "POST" and path == "/data_sources/ds1/query":
             hits = [p for p in self.pages.values() if not p["in_trash"] and self._match(p, body.get("filter"))]
             return httpx.Response(200, json={"results": hits, "has_more": False})
@@ -122,7 +141,7 @@ def _typed(f: FakeNotion, resp: httpx.Response) -> httpx.Response:
     if resp.status_code == 200 and resp.content:
         data = resp.json()
         if "results" in data:
-            data["results"] = [f.page_view(p) for p in data["results"]]
+            data["results"] = [f.page_view(p) if "properties" in p else p for p in data["results"]]
             return httpx.Response(200, json=data)
     return resp
 
@@ -209,11 +228,11 @@ def test_status_changes_in_notion_become_decisions(fake, tmp_path):
     fake.user_sets(pids["JR-0"], "Apply")
     fake.user_sets(pids["JR-1"], "Not relevant")
     fake.user_sets(pids["JR-3"], "Skip")
-    assert notion_sync.run_pull(store) == {"decisions_imported": 3}
+    assert notion_sync.run_pull(store)["decisions_imported"] == 3
     current = store.decisions_current()
     assert current["JR-0"]["status"] == "picked" and current["JR-3"]["status"] == "skipped"
     assert current["JR-1"]["status"] == "skipped" and current["JR-1"]["note"] == "not_relevant"
-    assert notion_sync.run_pull(store) == {"decisions_imported": 0}   # read again: no duplicates
+    assert notion_sync.run_pull(store)["decisions_imported"] == 0   # read again: no duplicates
 
     class NoLLM:                                                       # the skipped job is never sent to the LLM
         def __getattr__(self, name):
@@ -259,7 +278,7 @@ def test_weekly_reads_notion_then_posts_the_week_next_to_the_database(fake, tmp_
     fake.handle = lambda req: (posted.append(json.loads(req.content)) if req.url.path == "/v1/pages" and
                                json.loads(req.content)["parent"].get("page_id") else None) or orig(req)
     stats = run_weekly(store, email=False)
-    assert stats["notion_pull"] == {"decisions_imported": 1} and stats["applied_total"] == 1
+    assert stats["notion_pull"]["decisions_imported"] == 1 and stats["applied_total"] == 1
     assert stats["notion_page"]["status"] == "posted"
     assert "Applied 1" in json.dumps(posted[0]["children"])
 
@@ -306,3 +325,46 @@ def test_a_job_reviewed_on_a_later_night_gets_its_page_updated(fake, tmp_path):
     out = notion_sync.run_push(store)
     assert out["updated"] == 2 and fake.value(fake.by_job()["JR-3"], "Fit") == 4
     assert notion_sync.run_push(store)["updated"] == 0
+
+
+
+def test_not_relevant_jobs_become_rules_the_user_ticks(fake, tmp_path, monkeypatch):
+    from fakes import FakeLLM
+    from jobradar import config
+    from jobradar.llm.client import LLMClient
+    from jobradar.match.engine import MatchEngine
+
+    monkeypatch.setenv("NOTION_PARENT_PAGE", "0123456789abcdef0123456789abcdef")
+    user = tmp_path / "user"
+    user.mkdir()
+    for f in ("profile.yaml", "roles.yaml", "settings.yaml", "sources.yaml"):
+        src = Path(os.environ["JR_USER_DIR"]) / f
+        if src.is_file():
+            (user / f).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setenv("JR_USER_DIR", str(user))
+    config.clear_caches()
+    store = _store(tmp_path)
+    store.execute("UPDATE shortlist SET title = 'Data Entry Clerk' WHERE job_id IN ('JR-1', 'JR-3')")
+    store.execute("UPDATE shortlist SET title = 'Data Analyst' WHERE job_id = 'JR-0'")
+    notion_sync.run_push(store)
+    pids = fake.by_job()
+    fake.user_sets(pids["JR-1"], "Not relevant")
+    fake.user_sets(pids["JR-3"], "Not relevant")
+    fake.user_sets(pids["JR-0"], "Apply")
+    notion_sync.run_pull(store)
+    reply = {"rules": [{"phrase": "entry clerk", "why": "clerical, not analysis"},
+                       {"phrase": "data", "why": "too broad"},                    # would drop the picked Data Analyst
+                       {"phrase": "nurse", "why": "matches nothing"}]}
+    llm = LLMClient("screen", provider="mistral", transport=FakeLLM(lambda p: reply).transport(), sleep=False,
+                    ledger_dir=tmp_path)
+    out = notion_sync.run_suggest(store, llm)
+    assert out == {"proposed": 1, "not_relevant": 2}
+    todos = [b for b in fake.blocks.values() if b["type"] == "to_do"]
+    assert len(todos) == 1 and "entry clerk" in todos[0]["to_do"]["rich_text"][0]["text"]["content"]
+    assert notion_sync.run_suggest(store, llm)["proposed"] == 0               # nothing new marked Not relevant
+    todos[0]["to_do"]["checked"] = True                                       # the user ticks it in Notion
+    assert notion_sync.run_pull(store)["filters"]["applied"] == [r"entry\s+clerk"]
+    assert todos[0]["in_trash"]
+    engine = MatchEngine.from_config(config.matching_config())
+    assert engine.title_verdict("Data Entry Clerk").tier == "excluded"
+    assert (user / "learned.yaml").is_file()
