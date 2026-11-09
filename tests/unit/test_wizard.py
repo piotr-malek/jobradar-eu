@@ -324,3 +324,35 @@ def test_find_alert_senders_counts_job_like_subjects(monkeypatch):
     out = wizard.find_alert_senders({"JR_IMAP_USER": "u@example.com", "JR_IMAP_PASSWORD": "p"})
     assert out["ok"] and [s["sender"] for s in out["senders"]] == ["alerts@example.net", "jobagent@example.org"]
     assert out["senders"][0]["mails"] == 2
+
+
+def test_alert_boards_for_the_countries_once_each_and_ticked_ones_become_senders(monkeypatch):
+    from jobradar import config, wizard
+
+    monkeypatch.setattr(config, "active_domains", lambda: {"business"})
+    def user_sources():
+        return {"alert_senders": ["jobalerts-noreply@linkedin.com"]}
+    user_sources.cache_clear = lambda: None                               # config's cache reset calls it
+    monkeypatch.setattr(config, "user_sources", user_sources)
+    boards = wizard.alert_boards(["PL", "DE"])
+    names = [b["name"] for b in boards]
+    assert "Pracuj.pl" in names and "StepStone Germany" in names and "LinkedIn Jobs" in names
+    assert "theprotocol.it" not in names                                  # IT-only board, business-only user
+    assert names.count("XING Jobs") + names.count("XING") == 1            # DE and Europe-wide: shown once
+    assert sum(n.startswith("Indeed") for n in names) == 2                # Poland and Germany, not again Europe-wide
+    assert next(b for b in boards if b["name"] == "LinkedIn Jobs")["added"]
+    indeed = next(b for b in boards if b["name"] == "Indeed Poland")
+    assert indeed["senders"] == ["indeed.com", "indeedemail.com", "indeedmail.com"] and not indeed["added"]
+    written = {}
+    monkeypatch.setattr(wizard, "write_user_yaml", lambda name, data, merge=True: written.update(data))
+    wizard.save_countries_sources({"countries": ["PL"], "alert_add": [",".join(indeed["senders"]), "wysylka.pracuj.pl"]})
+    assert written["alert_senders"] == ["jobalerts-noreply@linkedin.com", "indeed.com", "indeedemail.com",
+                                        "indeedmail.com", "wysylka.pracuj.pl"]
+
+
+def test_countries_step_lists_alert_boards(wiz):
+    client, _ = wiz
+    assert 'id="alert-boards"' in client.get("/setup/countries_sources").data.decode()
+    v = client.post("/setup/api/sources", headers={"X-JR": "1"}, json={"countries": ["PL"], "opt_in": []}).get_json()
+    assert any(b["name"] == "Pracuj.pl" and b["senders"] == ["wysylka.pracuj.pl"] for b in v["alerts"])
+    assert any(b["country"] == "Europe-wide" and b["name"] == "LinkedIn Jobs" for b in v["alerts"])

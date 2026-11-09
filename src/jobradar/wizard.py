@@ -349,20 +349,27 @@ ROLE_LABELS = {"general": "all kinds of jobs", "it": "IT jobs", "business": "off
 
 def alert_boards(countries: list[str]) -> list[dict[str, Any]]:
     """Big boards in these countries (and Europe-wide) that can't be searched overnight, so their job-alert e-mails
-    are the way in (defaults/alert_boards.yaml). `added`: its sender is already in the user's alert senders."""
+    are the way in (defaults/alert_boards.yaml): a Europe-wide board only when no country entry has its sender,
+    IT-only or business-only boards only
+    for users with packs of that kind. `added`: its senders are already in the user's alert senders."""
     from jobradar.settings import PACKAGE_DIR
 
     data = config.read_yaml(PACKAGE_DIR / "alert_boards.yaml").get("countries") or {}
     names = country_names()
     have = " ".join(s.lower() for s in config.user_sources().get("alert_senders") or [])
-    out = []
+    domains = config.active_domains()
+    out, seen = [], set()
     for cc in [*[c.upper() for c in countries], "EU"]:
         for b in data.get(cc) or []:
-            sender = str(b.get("sender") or "").strip().lower()
-            out.append({"id": b.get("id"), "name": b.get("name"), "country": "Europe-wide" if cc == "EU" else names.get(cc, cc),
-                        "url": b.get("alerts_url") or b.get("url"), "sender": sender,
-                        "roles": ROLE_LABELS.get(b.get("roles") or "general", b.get("roles")),
-                        "account": bool(b.get("account_needed")), "added": bool(sender) and sender in have})
+            senders = [x.strip().lower() for x in [b.get("sender"), *(b.get("senders") or [])] if x and str(x).strip()]
+            roles = b.get("roles") or "general"
+            if (cc == "EU" and senders and senders[0] in seen) or (roles in ("it", "business") and roles not in domains):
+                continue
+            seen.update(senders)
+            out.append({"id": b.get("id"), "name": b.get("name"), "url": b.get("alerts_url") or b.get("url"),
+                        "country": "Europe-wide" if cc == "EU" else names.get(cc, cc), "senders": senders,
+                        "roles": ROLE_LABELS.get(roles, roles), "account": b.get("account_needed") is True,
+                        "added": bool(senders) and all(x in have for x in senders)})
     return out
 
 
@@ -373,9 +380,10 @@ def save_countries_sources(data: dict[str, Any]) -> dict[str, Any]:
     out = {"countries": countries, "opt_in": [o for o in data.get("opt_in") or [] if o in ("polish_only", "purpose")],
            "disable": list(data.get("disable") or []), "enable": list(data.get("enable") or [])}
     senders = list(config.user_sources().get("alert_senders") or [])   # set on the e-mail card: kept
-    for sender in data.get("alert_add") or []:
-        if sender and sender.strip().lower() not in (x.lower() for x in senders):
-            senders.append(sender.strip().lower())
+    for value in data.get("alert_add") or []:
+        for sender in str(value).split(","):              # a board can send from several domains (Indeed)
+            if sender.strip() and sender.strip().lower() not in (x.lower() for x in senders):
+                senders.append(sender.strip().lower())
     if senders:
         out["alert_senders"] = senders
     write_user_yaml("sources.yaml", out, merge=False)

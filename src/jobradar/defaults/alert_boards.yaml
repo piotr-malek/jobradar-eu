@@ -1,0 +1,127 @@
+# Big job boards that can't be searched overnight (bot protection, robots.txt or a login wall), so their job-alert
+# e-mails are the way in. The wizard lists them for the user's countries. sender = what the alert e-mails come from
+# (an IMAP FROM search matches it as a substring); sender_verified: false = the board's own domain, not yet seen on a
+# real alert e-mail. Checked 2026-11-09 from a home connection; GitHub's network may be blocked on more of them.
+version: '2026-11-09'
+countries:
+  AT:
+    - {account_needed: null, alerts_url: 'https://www.stepstone.at', id: stepstone_at, name: StepStone Austria, roles: general, sender: stepstone.at, sender_verified: false, url: 'https://www.stepstone.at'}
+    - {account_needed: null, alerts_url: 'https://at.indeed.com/help/job-seekers/articles/204488890', id: indeed_at, name: Indeed Austria, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://at.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.willhaben.at/jobs/', id: willhaben_jobs, name: willhaben Jobs, roles: general, sender: willhaben.at, sender_verified: false, url: 'https://www.willhaben.at/jobs/'}
+  BE:
+    - {account_needed: null, alerts_url: 'https://www.jobat.be', id: jobat, name: Jobat, roles: general, sender: jobat.be, sender_verified: false, url: 'https://www.jobat.be'}
+    - {account_needed: null, alerts_url: 'https://www.stepstone.be', id: stepstone_be, name: StepStone Belgium, roles: general, sender: stepstone.be, sender_verified: false, url: 'https://www.stepstone.be'}
+    - {account_needed: null, alerts_url: 'https://www.vdab.be', id: vdab, name: VDAB, roles: general, sender: vdab.be, sender_verified: false, url: 'https://www.vdab.be'}
+    - {account_needed: null, alerts_url: 'https://be.indeed.com/help/job-seekers/articles/204488890', id: indeed_be, name: Indeed Belgium, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://be.indeed.com'}
+  BG:
+    - {account_needed: null, alerts_url: 'https://www.jobs.bg', id: jobs_bg, name: Jobs.bg, roles: general, sender: jobs.bg, sender_verified: false, url: 'https://www.jobs.bg'}
+  HR:
+    - {account_needed: null, alerts_url: 'https://www.mojposao.net', id: mojposao, name: MojPosao, roles: general, sender: mojposao.net, sender_verified: false, url: 'https://www.mojposao.net'}
+    - {account_needed: null, alerts_url: 'https://www.posao.hr', id: posao_hr, name: Posao.hr, roles: general, sender: posao.hr, sender_verified: false, url: 'https://www.posao.hr'}
+  CY:
+    - {account_needed: null, alerts_url: 'https://www.carierista.com', id: carierista, name: Carierista, roles: general, sender: carierista.com, sender_verified: false, url: 'https://www.carierista.com'}
+    - {account_needed: null, alerts_url: 'https://cyprusworks.com', id: cyprusworks, name: Cyprus Work, roles: general, sender: cyprusworks.com, sender_verified: false, url: 'https://cyprusworks.com'}
+  CZ:
+    - {account_needed: true, alerts_url: 'https://www.jobs.cz', id: jobs_cz, name: Jobs.cz, roles: general, sender: jobs.cz, sender_verified: false, url: 'https://www.jobs.cz'}
+    - {account_needed: null, alerts_url: 'https://www.profesia.cz', id: profesia_cz, name: Profesia.cz, roles: general, sender: profesia.cz, sender_verified: false, url: 'https://www.profesia.cz'}
+    - {account_needed: null, alerts_url: 'https://cz.indeed.com/help/job-seekers/articles/204488890', id: indeed_cz, name: Indeed Czechia, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://cz.indeed.com'}
+  DK:
+    - {account_needed: null, alerts_url: 'https://dk.indeed.com/help/job-seekers/articles/204488890', id: indeed_dk, name: Indeed Denmark, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://dk.indeed.com'}
+    - {account_needed: true, alerts_url: 'https://jobnet.dk', id: jobnet, name: Jobnet, roles: general, sender: jobnet.dk, sender_verified: false, url: 'https://jobnet.dk'}
+    - {account_needed: null, alerts_url: 'https://www.ofir.dk', id: ofir, name: Ofir, roles: general, sender: ofir.dk, sender_verified: false, url: 'https://www.ofir.dk'}
+    - {account_needed: null, alerts_url: 'https://www.it-jobbank.dk', id: it_jobbank, name: IT-jobbank, roles: it, sender: it-jobbank.dk, sender_verified: false, url: 'https://www.it-jobbank.dk'}
+  EE:
+    - {account_needed: null, alerts_url: 'https://www.jobs.ee', id: jobs_ee, name: Jobs.ee, roles: general, sender: jobs.ee, sender_verified: false, url: 'https://www.jobs.ee'}
+  FI:
+    - {account_needed: false, alerts_url: 'https://duunitori.fi/duunivahti', id: duunitori, name: Duunitori, roles: general, sender: duunitori.fi, sender_verified: false, url: 'https://duunitori.fi'}
+    - {account_needed: null, alerts_url: 'https://www.jobly.fi', id: jobly, name: Jobly, roles: general, sender: jobly.fi, sender_verified: false, url: 'https://www.jobly.fi'}
+    - {account_needed: null, alerts_url: 'https://fi.indeed.com/help/job-seekers/articles/204488890', id: indeed_fi, name: Indeed Finland, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://fi.indeed.com'}
+  FR:
+    - {account_needed: null, alerts_url: 'https://fr.indeed.com/help/job-seekers/articles/204488890', id: indeed_fr, name: Indeed France, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://fr.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.hellowork.com/fr-fr/offres/alertes', id: hellowork, name: HelloWork, roles: general, sender: hellowork.com, sender_verified: false, url: 'https://www.hellowork.com'}
+    - {account_needed: true, alerts_url: 'https://www.apec.fr', id: apec, name: APEC, roles: business, sender: apec.fr, sender_verified: false, url: 'https://www.apec.fr'}
+    - {account_needed: null, alerts_url: 'https://www.chooseyourboss.com', id: chooseyourboss, name: Choose Your Boss, roles: it, sender: chooseyourboss.com, sender_verified: false, url: 'https://www.chooseyourboss.com'}
+  DE:
+    - {account_needed: false, alerts_url: 'https://www.stepstone.de', id: stepstone_de, name: StepStone Germany, roles: general, sender: stepstone.de, sender_verified: false, url: 'https://www.stepstone.de'}
+    - {account_needed: null, alerts_url: 'https://de.indeed.com/help/job-seekers/articles/204488890', id: indeed_de, name: Indeed Germany, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://de.indeed.com'}
+    - {account_needed: true, alerts_url: 'https://www.xing.com/jobs/search', id: xing_jobs, name: XING Jobs, roles: general, sender: xing.com, sender_verified: false, url: 'https://www.xing.com/jobs'}
+    - {account_needed: null, alerts_url: 'https://www.stellenanzeigen.de', id: stellenanzeigen_de, name: Stellenanzeigen.de, roles: general, sender: stellenanzeigen.de, sender_verified: false, url: 'https://www.stellenanzeigen.de'}
+    - {account_needed: null, alerts_url: 'https://www.meinestadt.de/deutschland/jobs', id: meinestadt_jobs, name: meinestadt.de Jobs, roles: general, sender: meinestadt.de, sender_verified: false, url: 'https://www.meinestadt.de/deutschland/jobs'}
+  GR:
+    - {account_needed: null, alerts_url: 'https://www.kariera.gr', id: kariera_gr, name: Kariera.gr, roles: general, sender: kariera.gr, sender_verified: false, url: 'https://www.kariera.gr'}
+    - {account_needed: null, alerts_url: 'https://www.skywalker.gr', id: skywalker_gr, name: Skywalker.gr, roles: general, sender: skywalker.gr, sender_verified: false, url: 'https://www.skywalker.gr'}
+    - {account_needed: null, alerts_url: 'https://gr.indeed.com/help/job-seekers/articles/204488890', id: indeed_gr, name: Indeed Greece, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://gr.indeed.com'}
+  HU:
+    - {account_needed: null, alerts_url: 'https://www.profession.hu', id: profession_hu, name: Profession.hu, roles: general, sender: profession.hu, sender_verified: false, url: 'https://www.profession.hu'}
+    - {account_needed: null, alerts_url: 'https://www.cvonline.hu', id: cvonline_hu, name: CV Online Hungary, roles: general, sender: cvonline.hu, sender_verified: false, url: 'https://www.cvonline.hu'}
+    - {account_needed: null, alerts_url: 'https://hu.indeed.com/help/job-seekers/articles/204488890', id: indeed_hu, name: Indeed Hungary, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://hu.indeed.com'}
+  IE:
+    - {account_needed: null, alerts_url: 'https://www.irishjobs.ie', id: irishjobs, name: IrishJobs.ie, roles: general, sender: irishjobs.ie, sender_verified: false, url: 'https://www.irishjobs.ie'}
+    - {account_needed: null, alerts_url: 'https://www.jobs.ie', id: jobs_ie, name: Jobs.ie, roles: general, sender: jobs.ie, sender_verified: false, url: 'https://www.jobs.ie'}
+    - {account_needed: null, alerts_url: 'https://ie.indeed.com/help/job-seekers/articles/204488890', id: indeed_ie, name: Indeed Ireland, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://ie.indeed.com'}
+  IT:
+    - {account_needed: null, alerts_url: 'https://it.indeed.com/help/job-seekers/articles/204488890', id: indeed_it, name: Indeed Italy, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://it.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://it.jobrapido.com', id: jobrapido_it, name: Jobrapido Italia, roles: general, sender: jobrapido.com, sender_verified: false, url: 'https://it.jobrapido.com'}
+    - {account_needed: null, alerts_url: 'https://www.monster.it', id: monster_it, name: Monster Italia, roles: general, sender: monster.it, sender_verified: false, url: 'https://www.monster.it'}
+  LT:
+    - {account_needed: null, alerts_url: 'https://www.cvbankas.lt', id: cvbankas, name: CVbankas, roles: general, sender: cvbankas.lt, sender_verified: false, url: 'https://www.cvbankas.lt'}
+    - {account_needed: null, alerts_url: 'https://www.uzt.lt', id: uzt_lt, name: Užimtumo tarnyba, roles: general, sender: uzt.lt, sender_verified: false, url: 'https://www.uzt.lt'}
+  LU:
+    - {account_needed: null, alerts_url: 'https://www.moovijob.com', id: moovijob, name: Moovijob, roles: general, sender: moovijob.com, sender_verified: false, url: 'https://www.moovijob.com'}
+    - {account_needed: null, alerts_url: 'https://www.jobs.lu', id: jobs_lu, name: Jobs.lu, roles: general, sender: jobs.lu, sender_verified: false, url: 'https://www.jobs.lu'}
+    - {account_needed: null, alerts_url: 'https://lu.indeed.com/help/job-seekers/articles/204488890', id: indeed_lu, name: Indeed Luxembourg, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://lu.indeed.com'}
+  MT:
+    - {account_needed: null, alerts_url: 'https://www.keepmeposted.com.mt', id: keepmeposted, name: KeepMePosted, roles: general, sender: keepmeposted.com.mt, sender_verified: false, url: 'https://www.keepmeposted.com.mt'}
+    - {account_needed: true, alerts_url: 'https://jobsplus.gov.mt', id: jobsplus_mt, name: Jobsplus, roles: general, sender: jobsplus.gov.mt, sender_verified: false, url: 'https://jobsplus.gov.mt'}
+  NL:
+    - {account_needed: null, alerts_url: 'https://nl.indeed.com/help/job-seekers/articles/204488890', id: indeed_nl, name: Indeed Netherlands, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://nl.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.nationalevacaturebank.nl', id: nationale_vacaturebank, name: Nationale Vacaturebank, roles: general, sender: nationalevacaturebank.nl, sender_verified: false, url: 'https://www.nationalevacaturebank.nl'}
+    - {account_needed: null, alerts_url: 'https://www.werkzoeken.nl', id: werkzoeken, name: Werkzoeken.nl, roles: general, sender: werkzoeken.nl, sender_verified: false, url: 'https://www.werkzoeken.nl'}
+    - {account_needed: null, alerts_url: 'https://tweakers.net/carriere/', id: tweakers_carriere, name: Tweakers Carrière, roles: it, sender: tweakers.net, sender_verified: false, url: 'https://tweakers.net/carriere/'}
+    - {account_needed: null, alerts_url: 'https://www.intermediair.nl', id: intermediair, name: Intermediair, roles: business, sender: intermediair.nl, sender_verified: false, url: 'https://www.intermediair.nl'}
+  PL:
+    - {account_needed: null, alerts_url: 'https://www.pracuj.pl', id: pracuj, name: Pracuj.pl, roles: general, sender: wysylka.pracuj.pl, sender_verified: true, url: 'https://www.pracuj.pl'}
+    - {account_needed: null, alerts_url: 'https://theprotocol.it', id: theprotocol, name: theprotocol.it, roles: it, sender: mailing.theprotocol.it, sender_verified: true, url: 'https://theprotocol.it'}
+    - {account_needed: null, alerts_url: 'https://www.olx.pl/praca/', id: olx_praca, name: OLX Praca, roles: general, sender: olx.pl, sender_verified: false, url: 'https://www.olx.pl/praca/'}
+    - {account_needed: null, alerts_url: 'https://pl.indeed.com/help/job-seekers/articles/204488890', id: indeed_pl, name: Indeed Poland, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://pl.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.gowork.pl', id: gowork_pl, name: GoWork.pl, roles: general, sender: gowork.pl, sender_verified: false, url: 'https://www.gowork.pl'}
+  PT:
+    - {account_needed: null, alerts_url: 'https://pt.indeed.com/help/job-seekers/articles/204488890', id: indeed_pt, name: Indeed Portugal, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://pt.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.net-empregos.com', id: net_empregos, name: Net-Empregos, roles: general, sender: net-empregos.com, sender_verified: false, url: 'https://www.net-empregos.com'}
+    - {account_needed: null, alerts_url: 'https://emprego.sapo.pt', id: sapo_emprego, name: Sapo Emprego, roles: general, sender: sapo.pt, sender_verified: false, url: 'https://emprego.sapo.pt'}
+  RO:
+    - {account_needed: true, alerts_url: 'https://www.ejobs.ro', id: ejobs, name: eJobs, roles: general, sender: ejobs.ro, sender_verified: false, url: 'https://www.ejobs.ro'}
+    - {account_needed: null, alerts_url: 'https://www.bestjobs.ro', id: bestjobs_ro, name: BestJobs, roles: general, sender: bestjobs.ro, sender_verified: false, url: 'https://www.bestjobs.ro'}
+    - {account_needed: null, alerts_url: 'https://ro.indeed.com/help/job-seekers/articles/204488890', id: indeed_ro, name: Indeed Romania, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://ro.indeed.com'}
+  SK:
+    - {account_needed: null, alerts_url: 'https://www.profesia.sk', id: profesia_sk, name: Profesia.sk, roles: general, sender: profesia.sk, sender_verified: false, url: 'https://www.profesia.sk'}
+    - {account_needed: null, alerts_url: 'https://www.kariera.sk', id: kariera_sk, name: Kariera.sk, roles: general, sender: kariera.sk, sender_verified: false, url: 'https://www.kariera.sk'}
+  SI:
+    - {account_needed: null, alerts_url: 'https://www.mojedelo.com', id: mojedelo, name: MojeDelo, roles: general, sender: mojedelo.com, sender_verified: false, url: 'https://www.mojedelo.com'}
+  ES:
+    - {account_needed: true, alerts_url: 'https://www.infojobs.net', id: infojobs, name: InfoJobs, roles: general, sender: infojobs.net, sender_verified: false, url: 'https://www.infojobs.net'}
+    - {account_needed: null, alerts_url: 'https://es.indeed.com/help/job-seekers/articles/204488890', id: indeed_es, name: Indeed Spain, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://es.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.infoempleo.com', id: infoempleo, name: Infoempleo, roles: general, sender: infoempleo.com, sender_verified: false, url: 'https://www.infoempleo.com'}
+  SE:
+    - {account_needed: null, alerts_url: 'https://se.indeed.com/help/job-seekers/articles/204488890', id: indeed_se, name: Indeed Sweden, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://se.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.jobbsafari.se', id: jobbsafari, name: Jobbsafari, roles: general, sender: jobbsafari.se, sender_verified: false, url: 'https://www.jobbsafari.se'}
+  IS:
+    - {account_needed: null, alerts_url: 'https://www.job.is', id: job_is, name: Job.is, roles: general, sender: job.is, sender_verified: false, url: 'https://www.job.is'}
+  LI:
+    - {account_needed: null, alerts_url: 'https://www.jobagent.ch', id: jobagent_ch, name: jobagent.ch, roles: general, sender: jobagent.ch, sender_verified: false, url: 'https://www.jobagent.ch'}
+    - {account_needed: null, alerts_url: 'https://www.jobscout24.ch', id: jobscout24_ch, name: JobScout24, roles: general, sender: jobscout24.ch, sender_verified: false, url: 'https://www.jobscout24.ch'}
+    - {account_needed: null, alerts_url: 'https://ch.indeed.com/help/job-seekers/articles/204488890', id: indeed_ch, name: Indeed Switzerland, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://ch.indeed.com'}
+  NO:
+    - {account_needed: null, alerts_url: 'https://www.finn.no/job/artikler/aktuelt/lagre-soket-ditt-og-ga-aldri-glipp-av-drommejobben-igjen', id: finn_jobb, name: FINN jobb, roles: general, sender: finn.no, sender_verified: false, url: 'https://www.finn.no/job'}
+    - {account_needed: null, alerts_url: 'https://no.indeed.com/help/job-seekers/articles/204488890', id: indeed_no, name: Indeed Norway, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://no.indeed.com'}
+  CH:
+    - {account_needed: null, alerts_url: 'https://ch.indeed.com/help/job-seekers/articles/204488890', id: indeed_ch, name: Indeed Switzerland, roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://ch.indeed.com'}
+    - {account_needed: null, alerts_url: 'https://www.jobagent.ch', id: jobagent_ch, name: jobagent.ch, roles: general, sender: jobagent.ch, sender_verified: false, url: 'https://www.jobagent.ch'}
+    - {account_needed: null, alerts_url: 'https://www.jobscout24.ch', id: jobscout24_ch, name: JobScout24, roles: general, sender: jobscout24.ch, sender_verified: false, url: 'https://www.jobscout24.ch'}
+    - {account_needed: true, alerts_url: 'https://www.job-room.ch', id: job_room, name: Job-Room (RAV), roles: general, sender: job-room.ch, sender_verified: false, url: 'https://www.job-room.ch'}
+  EU:
+    - {account_needed: true, alerts_url: 'https://www.linkedin.com/jobs/', id: linkedin, name: LinkedIn Jobs, roles: general, sender: jobalerts-noreply@linkedin.com, sender_verified: true, url: 'https://www.linkedin.com/jobs/'}
+    - {account_needed: null, alerts_url: 'https://www.indeed.com/help/job-seekers/articles/204488890', id: indeed, name: Indeed (country sites), roles: general, sender: indeed.com, sender_verified: true, senders: [indeedemail.com, indeedmail.com], url: 'https://www.indeed.com'}
+    - {account_needed: true, alerts_url: 'https://help.glassdoor.com/articles/en_US/Article/Job-Alerts-on-Glassdoor', id: glassdoor, name: Glassdoor, roles: general, sender: glassdoor.com, sender_verified: false, url: 'https://www.glassdoor.com'}
+    - {account_needed: true, alerts_url: 'https://www.xing.com/jobs/search', id: xing_eu, name: XING, roles: general, sender: xing.com, sender_verified: false, url: 'https://www.xing.com/jobs'}
+    - {account_needed: null, alerts_url: 'https://www.monster.de', id: monster_de, name: Monster (DE/FR/IT/NL), roles: general, sender: monster, sender_verified: false, url: 'https://www.monster.de'}

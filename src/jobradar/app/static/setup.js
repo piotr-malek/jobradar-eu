@@ -136,7 +136,7 @@ async function sourcesFor() {
   const alerts = v.alerts || [];
   document.getElementById("alert-boards").hidden = !alerts.length;
   document.getElementById("alert-list").innerHTML = alerts.map(b => `<tr>
-    <td>${b.sender ? `<input type="checkbox" name="alert_add[]" value="${esc(b.sender)}" ${b.added || kept.has(b.sender) ? "checked" : ""}>` : ""}</td>
+    <td>${b.senders.length ? `<input type="checkbox" name="alert_add[]" value="${esc(b.senders.join(","))}" ${b.added || kept.has(b.senders.join(",")) ? "checked" : ""}>` : ""}</td>
     <td><a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.name)}</a>${b.account ? ' <span class="muted">(free account)</span>' : ""}</td>
     <td class="muted">${esc(b.country)}</td><td class="muted">${esc(b.roles)}</td></tr>`).join("");
 }
