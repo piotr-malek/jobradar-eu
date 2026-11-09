@@ -15,7 +15,7 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], str | None, list[str], int |
             ("retries", I, "NULLABLE"), ("status_counts", S, "NULLABLE"), ("bytes", I, "NULLABLE"),
             ("records_fetched", I, "NULLABLE"), ("new_versions", I, "NULLABLE"), ("sightings", I, "NULLABLE"),
             ("matched", I, "NULLABLE"), ("dropped", I, "NULLABLE"), ("error", S, "NULLABLE"),
-            ("rule_version", S, "NULLABLE"), ("code_version", S, "NULLABLE"),
+            ("rule_version", S, "NULLABLE"), ("code_version", S, "NULLABLE"), ("notes", S, "NULLABLE"),
         ],
         "started_at", ["source_id"], None,
     ),

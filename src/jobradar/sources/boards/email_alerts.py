@@ -284,7 +284,7 @@ def email_alerts(ctx: FetchContext) -> Iterator[Posting]:
             key = "TEXT" if board in text_search else "FROM"
             _, data = imap.search(None, key, f'"{sender}"', "SINCE", since)
             ids = [n for n in (data[0] or b"").split() if n not in done]
-            ctx.notes.append(f"{board or f'sender {i + 1}'}: {len(ids)} alert e-mails")
+            ctx.notes.append(f"{sender}: {len(ids)} alert e-mails")
             for num in ids[-int(p.get("max_messages", 40)):]:
                 done.add(num)
                 _, parts = imap.fetch(num, "(BODY.PEEK[])")

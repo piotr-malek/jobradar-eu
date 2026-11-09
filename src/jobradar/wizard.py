@@ -347,6 +347,21 @@ def countries_sources_view(countries: list[str], opt_in: list[str] | None = None
 ROLE_LABELS = {"general": "all kinds of jobs", "it": "IT jobs", "business": "office and business jobs"}
 
 
+GENERIC_SENDER_WORDS = {"jobs", "job", "work", "kariera", "karriere", "career", "careers", "praca", "posao", "emploi",
+                        "empleo", "emprego", "trabajo", "jobbank", "vacatures"}
+
+
+def sender_keyword(domain: str) -> str:
+    """For a sender not yet seen on a real alert: the board's brand word ("stepstone.at" → "stepstone"). The IMAP
+    FROM search matches it anywhere in the From line, display name included, so alerts sent through a mailing
+    service still match. Short or generic words keep the whole domain."""
+    if "@" in domain or "." not in domain:
+        return domain
+    parts = [x for x in domain.split(".") if x not in ("www", "mail", "mailing", "email", "e", "news", "noreply")]
+    word = parts[0] if parts else domain
+    return word if len(word) >= 6 and word not in GENERIC_SENDER_WORDS else domain
+
+
 def alert_boards(countries: list[str]) -> list[dict[str, Any]]:
     """Big boards in these countries (and Europe-wide) that can't be searched overnight, so their job-alert e-mails
     are the way in (defaults/alert_boards.yaml): a Europe-wide board only when no country entry has its sender,
@@ -362,6 +377,8 @@ def alert_boards(countries: list[str]) -> list[dict[str, Any]]:
     for cc in [*[c.upper() for c in countries], "EU"]:
         for b in data.get(cc) or []:
             senders = [x.strip().lower() for x in [b.get("sender"), *(b.get("senders") or [])] if x and str(x).strip()]
+            if not b.get("sender_verified"):
+                senders = list(dict.fromkeys(sender_keyword(x) for x in senders))
             roles = b.get("roles") or "general"
             if (cc == "EU" and senders and senders[0] in seen) or (roles in ("it", "business") and roles not in domains):
                 continue

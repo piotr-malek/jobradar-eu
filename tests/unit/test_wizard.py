@@ -356,3 +356,14 @@ def test_countries_step_lists_alert_boards(wiz):
     v = client.post("/setup/api/sources", headers={"X-JR": "1"}, json={"countries": ["PL"], "opt_in": []}).get_json()
     assert any(b["name"] == "Pracuj.pl" and b["senders"] == ["wysylka.pracuj.pl"] for b in v["alerts"])
     assert any(b["country"] == "Europe-wide" and b["name"] == "LinkedIn Jobs" for b in v["alerts"])
+
+
+def test_unconfirmed_alert_senders_match_on_the_brand_word():
+    from jobradar.wizard import alert_boards, sender_keyword
+
+    assert sender_keyword("stepstone.at") == "stepstone" and sender_keyword("mail.infojobs.net") == "infojobs"
+    assert sender_keyword("jobs.ie") == "jobs.ie" and sender_keyword("olx.pl") == "olx.pl"        # short or generic
+    assert sender_keyword("kariera.gr") == "kariera.gr"
+    assert sender_keyword("jobalerts-noreply@linkedin.com") == "jobalerts-noreply@linkedin.com"
+    de = {b["name"]: b["senders"] for b in alert_boards(["DE"])}
+    assert de["StepStone Germany"] == ["stepstone"] and de["Indeed Germany"][0] == "indeed.com"

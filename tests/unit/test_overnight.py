@@ -239,7 +239,7 @@ def test_cost_estimate_on_a_free_tier_is_zero_and_counts_nights(monkeypatch):
                                                                 "daily_budget": 500})
     est = estimate_night()
     assert est["free_tier"] and est["usd_per_month"] == 0.0
-    assert est["jobs_per_night"] == 8 * 8 * 10                    # 8 screen minutes × 8 requests a minute × 10 jobs
+    assert est["jobs_per_night"] == 8 * 14 * 10                   # 8 screen minutes × 14 requests a minute × 10 jobs
 
 
 # --------------------------------------------------------------------- routes
@@ -455,3 +455,56 @@ def test_gemini_auto_model_takes_the_first_preferred_model_the_key_lists(tmp_pat
     assert c.model == "gemini-3.5-flash-lite-preview-11-2026" and c.label.startswith("gemini:")
     c.json("q2", {})
     assert [m for m, _ in seen] == ["GET", "POST", "POST"]                     # the model list is read once
+
+
+def test_gemini_key_falls_back_to_the_next_model_with_its_own_quota(tmp_path, monkeypatch):
+    from jobradar.apply import screen as screen_mod
+    from jobradar.llm import client as client_mod
+
+    spent = {"error": {"message": "You exceeded your current quota",
+                       "details": [{"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}}
+    calls = []
+
+    def handle(req):
+        if req.url.path.endswith("/models"):
+            return httpx.Response(200, json={"data": [{"id": "models/gemini-3.5-flash-lite"},
+                                                      {"id": "models/gemini-3.1-flash-lite"},
+                                                      {"id": "models/gemma-4-31b-it"}]})
+        body = json.loads(req.content)
+        calls.append(body["model"])
+        if body["model"].startswith("gemini-"):
+            return httpx.Response(429, json=spent)
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(screen_reply(4)(body))}}]})
+
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setattr(client_mod, "step_config", lambda step: client_mod.step_config_for("gemini"))
+    real = client_mod.LLMClient
+    monkeypatch.setattr(screen_mod, "LLMClient", lambda purpose, provider=None, **k: real(
+        purpose, provider=provider or "gemini", transport=httpx.MockTransport(handle), sleep=False,
+        ledger_dir=tmp_path))
+    monkeypatch.setattr(screen_mod, "screen_off", lambda: False)
+    out = screen_mod.screen_chain(_jobs(9))
+    assert len(out) == 9 and {r["model"] for r in out.values()} == {"gemini:gemma-4-31b-it"}
+    assert calls[:2] == ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]          # each spent quota: one try
+    assert calls[2:] == ["gemma-4-31b-it"] * 3                                      # batches of 4, 4, 1
+    assert client_mod.step_config_for("gemini:gemma-4-31b")["rpm"] == 3
+
+
+def test_weekly_names_alert_senders_that_sent_nothing(tmp_path, monkeypatch):
+    from jobradar import config
+    from jobradar.pipeline.weekly import silent_senders, weekly_text, weekly_stats
+    from jobradar.store.sqlite import SQLiteStore
+
+    def user_sources():
+        return {"alert_senders": ["wysylka.pracuj.pl", "stepstone", "indeed.com"]}
+    user_sources.cache_clear = lambda: None
+    monkeypatch.setattr(config, "user_sources", user_sources)
+    store = SQLiteStore(tmp_path / "state.db")
+    assert silent_senders(store) == []                                   # the reader never ran: no verdict
+    store.append("source_runs", [{"run_id": f"r{i}", "source_id": "email_alerts", "started_at": NOW - timedelta(days=d),
+                                  "notes": notes} for i, (d, notes) in enumerate([
+        (1, "wysylka.pracuj.pl: 3 alert e-mails; stepstone: 0 alert e-mails; indeed.com: 0 alert e-mails"),
+        (9, "indeed.com: 5 alert e-mails")])])
+    assert silent_senders(store) == ["stepstone", "indeed.com"]
+    stats = {**weekly_stats(store), "silent_senders": ["stepstone"]}
+    assert "No job-alert e-mails in the last 7 days from: stepstone" in weekly_text(stats)

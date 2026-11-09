@@ -70,6 +70,7 @@ def run_weekly(store: Any, *, dry_run: bool = False, email: bool | None = None) 
     if notion_on:
         stats_pull = _safe(lambda: notion_sync.run_pull(store))
     stats = weekly_stats(store)
+    stats["silent_senders"] = silent_senders(store)
     if notion_on:
         stats["notion_pull"] = stats_pull
         stats["notion_page"] = _safe(lambda: notion_sync.post_weekly(_week(datetime.now(timezone.utc)),
@@ -81,6 +82,26 @@ def run_weekly(store: Any, *, dry_run: bool = False, email: bool | None = None) 
         if email:
             stats["emailed"] = send_weekly(stats)
     return stats
+
+
+def silent_senders(store: Any, *, days: int = 7, now: datetime | None = None) -> list[str]:
+    """Alert senders the user listed that sent no e-mail in the last `days` (alert not created, or a sender
+    address that is not the one the board really uses)."""
+    import re
+
+    listed = list(config.user_sources().get("alert_senders") or [])
+    if not listed:
+        return []
+    since = (now or datetime.now(timezone.utc)) - timedelta(days=days)
+    rows = store.query("SELECT notes FROM source_runs WHERE source_id = 'email_alerts' AND started_at >= :since "
+                       "AND notes IS NOT NULL", {"since": since})
+    if not rows:
+        return []                                  # the reader didn't run (no mailbox yet): nothing to judge
+    got: Counter[str] = Counter()
+    for r in rows:
+        for sender, n in re.findall(r"([^;:]+): (\d+) alert e-mails", r["notes"]):
+            got[sender.strip().lower()] += int(n)
+    return [s for s in listed if got.get(s.lower(), 0) == 0]
 
 
 def _safe(fn: Any) -> Any:
@@ -99,6 +120,10 @@ def weekly_text(stats: dict[str, Any]) -> str:
         if rows:
             lines += ["", f"Reply rate by {dim}:"]
             lines += [f"  {r['name']}: {r['replied']}/{r['applied']} ({int(r['reply_rate'] * 100)}%)" for r in rows[:8]]
+    if stats.get("silent_senders"):
+        lines += ["", "No job-alert e-mails in the last 7 days from: " + ", ".join(stats["silent_senders"])
+                  + ". Check that the alert exists and is sent to the mailbox Job Radar reads; if the board sends from"
+                  " another address, the wizard's \"Find job-alert senders in my inbox\" finds it."]
     return "\n".join(lines) + "\n"
 
 

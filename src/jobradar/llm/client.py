@@ -40,7 +40,7 @@ log = logging.getLogger(__name__)
 # preset → (base_url, api key env var, default model, rpm, json mode: schema | object)
 PRESETS: dict[str, tuple[str, str | None, str, int, str]] = {
     "mistral": ("https://api.mistral.ai/v1", "MISTRAL_API_KEY", "ministral-14b-latest", 8, "schema"),
-    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY", "auto", 8, "schema"),
+    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY", "auto", 14, "schema"),
     "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY", "llama-3.3-70b-versatile", 20, "object"),
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "mistralai/mistral-small-3.2-24b-instruct:free",
                    10, "schema"),
@@ -52,8 +52,15 @@ PRESETS: dict[str, tuple[str, str | None, str, int, str]] = {
 }
 # model "auto": the first of these the key can use (Google retires model ids without notice)
 AUTO_MODELS: dict[str, list[str]] = {
-    "gemini": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"],
+    "gemini": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"],
 }
+# Free quotas are per model (AI Studio, 2026-11-09: 3.5 and 3.1 Flash-Lite 15 RPM / 250K TPM / 500 RPD each;
+# Gemma 4 30 RPM / 16K TPM / 14.4K RPD), so one key can fall back to the next model when one is spent.
+DEFAULT_FALLBACKS: dict[str, list[str]] = {
+    "gemini": ["gemini:gemini-3.1-flash-lite", "gemini:gemma-4-31b", "gemini:gemma-4-26b"],
+}
+PRESET_DAILY_BUDGET = {"gemini": 480}
+MODEL_RPM = {"gemma-4": 3}     # 16K tokens a minute: about three small batches
 QUOTA_SPENT = re.compile(r"per ?day|perday|daily|per ?month|permonth|monthly|exceeded your current quota", re.I)
 RETRY_DELAY = re.compile(r'"?retry_?delay"?\s*:\s*"?(\d+(?:\.\d+)?)s', re.I)
 LOCAL_PRESETS = ("ollama", "lmstudio")
@@ -254,12 +261,16 @@ class LLMClient:
         self.sleep = sleep
         self._next_ok = 0.0
         name = self.preset or self.provider
-        budget = int(_env("JR_LLM_DAILY_BUDGET") or c.get("daily_budget") or 400)
+        if self.model and self.model != "auto" and self.preset in AUTO_MODELS:
+            name = f"{name}:{self.model}"         # a separate free quota per model
+        budget = int(_env("JR_LLM_DAILY_BUDGET") or c.get("daily_budget") or PRESET_DAILY_BUDGET.get(self.preset)
+                     or 400)
         state_db = get_settings().state_db
         self.ledger = (StateLedger(state_db, name, budget) if on_actions() and ledger_dir is None and state_db.is_file()
                        else UsageLedger((ledger_dir or get_settings().cache_dir) / f"llm_usage_{name}.json", budget))
         self.requests = 0
         self.free_tier: bool | None = None
+        self._resolved = False
         self._retry_after = 0.0
         self.json_mode = c.get("json_mode") or "schema"
         self._http: httpx.Client | None = None
@@ -354,9 +365,11 @@ class LLMClient:
         return f"{self.preset or self.provider}:{self.model}"
 
     def _resolve_model(self) -> None:
-        """Model "auto": ask the provider which models this key can use and take the first preferred one."""
-        prefs = AUTO_MODELS.get(self.preset) or []
-        if self.model != "auto" or not prefs:
+        """Ask the provider which models this key can use: model "auto" takes the first preferred one, any other
+        model name its newest listed version ("gemma-4-31b" → "gemma-4-31b-it")."""
+        self._resolved = True
+        prefs = AUTO_MODELS.get(self.preset) if self.model == "auto" else [self.model]
+        if not prefs:
             return
         self.model = prefs[0]
         if self._http is None:
@@ -374,7 +387,7 @@ class LLMClient:
                 return
 
     def _call(self, payload: dict[str, Any]) -> dict[str, Any]:
-        if self.model == "auto":
+        if not self._resolved and self.preset in AUTO_MODELS:
             self._resolve_model()
         payload["model"] = self.model
         self.ledger.reserve()
@@ -473,10 +486,12 @@ def _parse_json_text(text: str) -> dict[str, Any]:
 
 
 def step_config_for(provider: str) -> dict[str, Any]:
-    """Settings for an explicit provider/preset name (tests, `jr llm test --provider`)."""
-    prov = provider.lower()
+    """Settings for an explicit provider/preset name, or "preset:model" (tests, fallbacks, `jr llm test`)."""
+    prov, _, model_override = provider.lower().partition(":")
     if prov in PRESETS:
         base, key_env, model, rpm, mode = PRESETS[prov]
+        model = model_override or model
+        rpm = next((r for prefix, r in MODEL_RPM.items() if model.startswith(prefix)), rpm)
         return {"provider": "openai_compatible", "preset": prov, "base_url": _fill_env(base), "api_key_env": key_env,
                 "model": model, "rpm": rpm, "json_mode": mode}
     if prov == "anthropic":

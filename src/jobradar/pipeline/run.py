@@ -280,7 +280,7 @@ def _record_run(store, spec, summary: RunSummary, started, dry_run, trigger, eng
         "bytes": http.stats.bytes if http else 0, "records_fetched": summary.fetched,
         "new_versions": summary.new_versions, "sightings": summary.fetched, "matched": summary.matched,
         "dropped": summary.dropped, "error": summary.error, "rule_version": engine.rule_version,
-        "code_version": code_version(),
+        "code_version": code_version(), "notes": "; ".join(summary.notes)[:1000] or None,
     }])
 
 

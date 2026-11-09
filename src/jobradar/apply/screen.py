@@ -27,7 +27,7 @@ from jobradar.normalize.text import clip, fold
 log = logging.getLogger(__name__)
 
 BATCH = 10
-SMALL_BATCH = {"groq": 5}      # Groq's free tier allows 8K tokens a minute: 10 postings don't fit
+SMALL_BATCH = {"groq": 5}      # Groq's free tier allows 8K tokens a minute: 10 postings don't fit (Gemma: 4, 16K)
 MAX_FAILED_IN_A_ROW = 3
 DESC_CHARS = 3500
 WORK_SETUPS = ("remote", "home", "elsewhere", "unclear")
@@ -216,7 +216,8 @@ def screen_jobs(jobs: list[dict[str, Any]], client: LLMClient | None = None, *,
         return {}
     profile = profile_text()
     system = system_prompt()
-    size = int(client.cfg.get("batch") or SMALL_BATCH.get(client.preset, BATCH))
+    size = int(client.cfg.get("batch") or SMALL_BATCH.get(client.preset)
+               or (4 if str(client.cfg.get("model") or "").startswith("gemma") else BATCH))
     out: dict[str, dict[str, Any]] = {}
     failed = in_a_row = 0
     try:
@@ -257,16 +258,25 @@ def screen_chain(jobs: list[dict[str, Any]], *, deadline: float | None = None,
                  client: LLMClient | None = None) -> dict[str, dict[str, Any]]:
     """Screen with the user's screen provider, then with each of its `fallbacks` (user/llm.yaml) for the jobs the
     previous one left, e.g. when its free quota ran out."""
-    from jobradar.llm.client import step_config
+    from jobradar.llm.client import DEFAULT_FALLBACKS, step_config
 
-    out = screen_jobs(jobs, client, deadline=deadline)
     if client is not None:
-        return out
+        return screen_jobs(jobs, client, deadline=deadline)
     try:
-        fallbacks = list(step_config("screen").get("fallbacks") or [])
-    except LLMError:
-        return out
+        cfg = step_config("screen")
+        primary = LLMClient("screen")
+    except LLMError as exc:
+        log.warning("screen skipped: %s", exc)
+        return {}
+    try:
+        out = screen_jobs(jobs, primary, deadline=deadline)
+        used = primary.label
+    finally:
+        primary.close()
+    fallbacks = list(cfg.get("fallbacks") or DEFAULT_FALLBACKS.get(cfg.get("preset") or "", []))
     for name in fallbacks:
+        if str(name).lower() == used.lower():           # the primary's "auto" may already be this model
+            continue
         left = [j for j in jobs if j["job_id"] not in out]
         if not left or (deadline is not None and time.monotonic() >= deadline):
             break
