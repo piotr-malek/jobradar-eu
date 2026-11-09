@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 import uuid
 from collections import Counter
 from dataclasses import asdict, dataclass, field
@@ -32,7 +33,8 @@ ROUTE_FIELDS = ("source", "url", "apply_url", "ats_type", "ats_slug", "ats_job_i
 ATS_SOURCES = ("greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "smartrecruiters", "teamtailor",
                "bamboohr", "breezy", "jazzhr", "workday", "softgarden", "homerun", "join", "traffit")
 PER_COMPANY_CAP = 3
-DEFAULT_CAP = 150          # jobs per night (screen cap too)
+SCREEN_MINUTES = 8         # per night; at Gemini's free 10 requests a minute, ~800 jobs
+SCREEN_DAYS = 30           # older unscreened jobs have lost their description (store maintenance)
 LOW_FIT = 2                # screened fit at or below this is hidden (kept in state.db with hidden="low_fit")
 ACTED_ON = ("picked", "applied", "screening", "interview", "offer", "rejected")
 SAME_COMPANY_MAX = 3
@@ -232,7 +234,8 @@ def local_today(now: datetime | None = None) -> date:
 
 def build_shortlist(store: Any, *, kind: str = "daily", dry_run: bool = False, force: bool = False,
                     backlog_days: int | None = None, llm: Any = None, http: Any = None,
-                    now: datetime | None = None, engine: MatchEngine | None = None) -> dict[str, Any]:
+                    now: datetime | None = None, engine: MatchEngine | None = None,
+                    screen_deadline: float | None = None) -> dict[str, Any]:
     """Select → route → screen (when switched on) → shortlist rows + a nights row. One per night unless forced."""
     from jobradar.apply.route import resolve, route_for_members
     from jobradar.pipeline.daily import ensure_rule_version
@@ -245,8 +248,8 @@ def build_shortlist(store: Any, *, kind: str = "daily", dry_run: bool = False, f
     rematched = 0 if dry_run else ensure_rule_version(store, engine)
     window = backlog_days or int(os.environ.get("JR_LOOKBACK_DAYS") or 4)
     items, stats = select_items(store, engine, since=now - timedelta(days=window), now=now)
-    cap = int(os.environ.get("JR_SHORTLIST_CAP") or config.user_settings().get("shortlist_cap") or DEFAULT_CAP)
-    todo, deferred = items[:cap], items[cap:]
+    cap = int(os.environ.get("JR_SHORTLIST_CAP") or config.user_settings().get("shortlist_cap") or 0)
+    todo, deferred = (items[:cap], items[cap:]) if cap else (items, [])
     routes = {it.job_id: route_for_members(it.routes) for it in todo}
     base = {"night": night.isoformat(), "kind": kind, "rematched": rematched,
             **{k: v for k, v in stats.items() if k != "by_section"}, "by_section": stats.get("by_section")}
@@ -270,39 +273,84 @@ def build_shortlist(store: Any, *, kind: str = "daily", dry_run: bool = False, f
             if own:
                 http.close()
 
-    screened: dict[str, dict[str, Any]] = {}
-    if config.module_on("screen"):
-        from jobradar.apply.screen import screen_jobs
-
-        screened = screen_jobs([{"job_id": it.job_id, "title": it.title, "company": it.company,
-                                 "location": it.location_display, "description": it.description} for it in todo], llm)
     index = CompanyIndex(store)
     night_id = f"{night.isoformat()}-{kind}-{uuid.uuid4().hex[:6]}"
     rows = []
-    hidden = 0
     for it in todo:
-        sc = screened.get(it.job_id) or {}
         r = routes[it.job_id]
-        low = sc.get("fit") is not None and sc["fit"] <= int(config.user_settings().get("hide_fit_at_or_below", LOW_FIT))
-        hidden += low
         row = asdict(it)
         row.update({
             "night_id": night_id, "night": night, "description": clip(it.description, 20_000),
             "copies": json.dumps(it.copies, ensure_ascii=False), "routes": json.dumps(it.routes, ensure_ascii=False),
             "route_vendor": r.vendor, "route_url": r.url or it.url, "readable": r.readable, "effort_min": r.effort_min,
-            "fit": sc.get("fit"), "summary": sc.get("summary"), "watch_out": sc.get("watch_out") or [],
-            "instructions": sc.get("instructions") or [], "work_setup": sc.get("work_setup"),
-            "screen_salary": sc.get("salary"), "why": json.dumps(it.why, ensure_ascii=False),
-            "same_company": index.same_company(it.company, it.title), "hidden": "low_fit" if low else None,
+            "watch_out": [], "instructions": [], "why": json.dumps(it.why, ensure_ascii=False),
+            "same_company": index.same_company(it.company, it.title),
         })
         index.add(it.company, it.title, "new", it.job_id)
         rows.append(row)
     store.append("shortlist", rows)
+    sq: dict[str, Any] = {"screened": 0, "hidden_low_fit": 0, "screen_left": 0}
+    if config.module_on("screen"):
+        sq = screen_queue(store, llm=llm, deadline=screen_deadline, now=now)
+    hidden = sum(1 for r in store.query("SELECT hidden FROM shortlist WHERE night_id = ?", (night_id,))
+                 if r["hidden"] == "low_fit")
     status = "done"
     store.append("nights", [{"night_id": night_id, "night": night, "kind": kind, "status": status,
                              "finished_at": datetime.now(timezone.utc), "n_candidates": stats.get("candidates"),
-                             "n_items": len(rows), "n_screened": len(screened), "rule_version": engine.rule_version,
-                             "stats": json.dumps({**base, "hidden": hidden, "deferred": len(deferred)}, default=str)}])
+                             "n_items": len(rows), "n_screened": sq["screened"], "rule_version": engine.rule_version,
+                             "stats": json.dumps({**base, "hidden": hidden, "deferred": len(deferred), **sq},
+                                                 default=str)}])
     return {**base, "status": status, "shortlisted": len(rows) - hidden, "hidden_low_fit": hidden,
-            "screened": len(screened), "deferred": len(deferred),
+            "screened": sq["screened"], "screen_left": sq["screen_left"], "deferred": len(deferred),
             "by_route": dict(Counter(r.vendor for r in routes.values()))}
+
+
+def screen_minutes() -> float:
+    us = config.user_settings()
+    return float(os.environ.get("JR_SCREEN_MINUTES") or (us.get("budgets") or {}).get("screen_minutes")
+                 or SCREEN_MINUTES)
+
+
+def screen_queue(store: Any, *, llm: Any = None, deadline: float | None = None,
+                 now: datetime | None = None) -> dict[str, Any]:
+    """Screen shortlisted jobs that have no screen result yet, newest night first, until the provider chain's
+    quota or `deadline` runs out; the rest wait for the next night. Skipped jobs are left alone."""
+    from jobradar.apply.screen import screen_chain
+
+    now = now or datetime.now(timezone.utc)
+    if deadline is None:
+        deadline = time.monotonic() + screen_minutes() * 60
+    since = (now - timedelta(days=SCREEN_DAYS)).date()
+    rows = store.query(
+        """SELECT s.night_id, s.job_id, s.title, s.company, s.location_display, s.description
+           FROM shortlist s LEFT JOIN v_decisions_current d USING (job_id)
+           WHERE s.screened_at IS NULL AND s.night >= :since AND COALESCE(d.status, 'new') != 'skipped'
+           ORDER BY s.night DESC, s.rank""", {"since": since})
+    todo: dict[str, dict[str, Any]] = {}
+    for r in rows:
+        todo.setdefault(r["job_id"], r)
+    jobs = [{"job_id": r["job_id"], "title": r["title"], "company": r["company"],
+             "location": r["location_display"] or "", "description": r["description"] or ""} for r in todo.values()]
+    res = screen_chain(jobs, deadline=deadline, client=llm) if jobs else {}
+    hide_at = int(config.user_settings().get("hide_fit_at_or_below", LOW_FIT))
+    hidden = 0
+    for job_id, sc in res.items():
+        low = sc.get("fit") is not None and sc["fit"] <= hide_at
+        hidden += low
+        store.execute(
+            """UPDATE shortlist SET fit = :fit, summary = :summary, watch_out = :watch_out,
+                 instructions = :instructions, work_setup = :work_setup, screen_salary = :salary,
+                 languages_required = :languages_required, years_required = :years_required,
+                 contract = :contract, apply_deadline = :deadline, screen_model = :model, screened_at = :at,
+                 hidden = CASE WHEN :low THEN 'low_fit' ELSE hidden END
+               WHERE job_id = :job_id AND night_id = :night_id""",
+            {"fit": sc.get("fit"), "summary": sc.get("summary"),
+             "watch_out": json.dumps(sc.get("watch_out") or [], ensure_ascii=False),
+             "instructions": json.dumps(sc.get("instructions") or [], ensure_ascii=False),
+             "work_setup": sc.get("work_setup"), "salary": sc.get("salary"),
+             "languages_required": sc.get("languages_required"), "years_required": sc.get("years_required"),
+             "contract": sc.get("contract"), "deadline": sc.get("deadline"), "model": sc.get("model"),
+             "at": datetime.now(timezone.utc), "low": int(low), "job_id": job_id,
+             "night_id": todo[job_id]["night_id"]})
+    return {"screened": len(res), "hidden_low_fit": hidden, "screen_left": len(jobs) - len(res),
+            "screen_models": dict(Counter(sc.get("model") for sc in res.values()))}

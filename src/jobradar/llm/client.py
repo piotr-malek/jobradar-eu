@@ -40,15 +40,22 @@ log = logging.getLogger(__name__)
 # preset → (base_url, api key env var, default model, rpm, json mode: schema | object)
 PRESETS: dict[str, tuple[str, str | None, str, int, str]] = {
     "mistral": ("https://api.mistral.ai/v1", "MISTRAL_API_KEY", "ministral-14b-latest", 8, "schema"),
-    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY", "gemini-2.5-flash", 8,
-               "schema"),
+    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY", "auto", 8, "schema"),
     "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY", "llama-3.3-70b-versatile", 20, "object"),
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "mistralai/mistral-small-3.2-24b-instruct:free",
                    10, "schema"),
     "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY", "gpt-5-mini", 30, "schema"),
     "ollama": ("http://localhost:11434/v1", None, "qwen3:8b", 0, "schema"),
     "lmstudio": ("http://localhost:1234/v1", None, "local-model", 0, "schema"),
+    "cloudflare": ("https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1", "CLOUDFLARE_API_TOKEN",
+                   "@cf/qwen/qwen3-30b-a3b-fp8", 20, "object"),
 }
+# model "auto": the first of these the key can use (Google retires model ids without notice)
+AUTO_MODELS: dict[str, list[str]] = {
+    "gemini": ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"],
+}
+QUOTA_SPENT = re.compile(r"per ?day|perday|daily|per ?month|permonth|monthly|exceeded your current quota", re.I)
+RETRY_DELAY = re.compile(r'"?retry_?delay"?\s*:\s*"?(\d+(?:\.\d+)?)s', re.I)
 LOCAL_PRESETS = ("ollama", "lmstudio")
 ANTHROPIC_URL = "https://api.anthropic.com/v1"
 ANTHROPIC_DEFAULT_MODEL = "claude-haiku-5-5"
@@ -110,6 +117,7 @@ def step_config(step: str) -> dict[str, Any]:
         c.setdefault("json_mode", mode)
         if not c.get("base_url"):
             raise LLMError(f"step {step}: openai_compatible needs a preset or base_url")
+        c["base_url"] = _fill_env(c["base_url"])
     elif prov == "anthropic":
         c.setdefault("base_url", ANTHROPIC_URL)
         c.setdefault("api_key_env", "ANTHROPIC_API_KEY")
@@ -120,6 +128,16 @@ def step_config(step: str) -> dict[str, Any]:
     if _env("JR_LLM_RPM"):
         c["rpm"] = int(_env("JR_LLM_RPM") or 0)
     return c
+
+
+def _fill_env(url: str) -> str:
+    """``{NAME}`` in a base URL comes from the environment (Cloudflare's account id)."""
+    def sub(m: re.Match[str]) -> str:
+        v = _env(m.group(1))
+        if not v:
+            raise LLMError(f"{m.group(1)} is not set")
+        return v
+    return re.sub(r"\{([A-Z][A-Z0-9_]+)\}", sub, url)
 
 
 def step_provider(step: str) -> str:
@@ -241,6 +259,8 @@ class LLMClient:
         self.ledger = (StateLedger(state_db, name, budget) if on_actions() and ledger_dir is None and state_db.is_file()
                        else UsageLedger((ledger_dir or get_settings().cache_dir) / f"llm_usage_{name}.json", budget))
         self.requests = 0
+        self.free_tier: bool | None = None
+        self._retry_after = 0.0
         self.json_mode = c.get("json_mode") or "schema"
         self._http: httpx.Client | None = None
         if self.provider == "claude":
@@ -315,7 +335,48 @@ class LLMClient:
             return out["structured_output"]
         raise _Transient("claude returned no structured output")
 
+    def _check_quota(self, resp: httpx.Response) -> None:
+        """A 429 for a spent daily/monthly quota ends tonight's use of this provider; a per-minute one is retried
+        after the delay the server asks for."""
+        text = resp.text[:4000]
+        if "freetier" in text.lower().replace("_", "").replace("-", ""):
+            self.free_tier = True
+        if QUOTA_SPENT.search(text) and not re.search(r"per ?minute|perminute", text, re.I):
+            raise BudgetExhausted(f"{self.label} quota spent: {text[:200]}")
+        delay = resp.headers.get("retry-after") or (RETRY_DELAY.search(text) or [None, None])[1]
+        try:
+            self._retry_after = min(60.0, float(delay)) if delay else 0.0
+        except ValueError:
+            self._retry_after = 0.0
+
+    @property
+    def label(self) -> str:
+        return f"{self.preset or self.provider}:{self.model}"
+
+    def _resolve_model(self) -> None:
+        """Model "auto": ask the provider which models this key can use and take the first preferred one."""
+        prefs = AUTO_MODELS.get(self.preset) or []
+        if self.model != "auto" or not prefs:
+            return
+        self.model = prefs[0]
+        if self._http is None:
+            return
+        try:
+            resp = self._http.get("/models")
+            ids = {str(m.get("id") or "").removeprefix("models/") for m in (resp.json().get("data") or [])} \
+                if resp.status_code == 200 else set()
+        except (httpx.HTTPError, ValueError, AttributeError):
+            ids = set()
+        for want in prefs:
+            hit = want if want in ids else next((i for i in sorted(ids) if i.startswith(want + "-")), None)
+            if hit:
+                self.model = hit
+                return
+
     def _call(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if self.model == "auto":
+            self._resolve_model()
+        payload["model"] = self.model
         self.ledger.reserve()
         self._throttle()
         self.requests += 1
@@ -337,6 +398,8 @@ class LLMClient:
         if resp.status_code == 400 and self.json_mode == "schema" and "response_format" in resp.text:
             self.json_mode = "object"          # the server has no JSON-schema mode: ask for plain JSON instead
             raise _Transient("no json_schema support")
+        if resp.status_code == 429:
+            self._check_quota(resp)
         if resp.status_code == 429 or resp.status_code >= 500:
             raise _Transient(f"HTTP {resp.status_code}")
         if resp.status_code >= 400:
@@ -362,6 +425,8 @@ class LLMClient:
             resp = self._http.post("/messages", json=body)
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             raise _Transient(type(exc).__name__) from exc
+        if resp.status_code == 429:
+            self._check_quota(resp)
         if resp.status_code in (429, 529) or resp.status_code >= 500:
             raise _Transient(f"HTTP {resp.status_code}")
         if resp.status_code >= 400:
@@ -390,7 +455,8 @@ class LLMClient:
                 log.warning("llm %s retrying once: %s", self.provider, exc)
                 payload["temperature"] = 0.0
                 if self.sleep:
-                    time.sleep(2.0)
+                    time.sleep(max(2.0, self._retry_after))
+                self._retry_after = 0.0
         raise AssertionError("unreachable")
 
 
@@ -411,7 +477,7 @@ def step_config_for(provider: str) -> dict[str, Any]:
     prov = provider.lower()
     if prov in PRESETS:
         base, key_env, model, rpm, mode = PRESETS[prov]
-        return {"provider": "openai_compatible", "preset": prov, "base_url": base, "api_key_env": key_env,
+        return {"provider": "openai_compatible", "preset": prov, "base_url": _fill_env(base), "api_key_env": key_env,
                 "model": model, "rpm": rpm, "json_mode": mode}
     if prov == "anthropic":
         return {"provider": "anthropic", "base_url": ANTHROPIC_URL, "api_key_env": "ANTHROPIC_API_KEY",

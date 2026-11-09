@@ -6,8 +6,9 @@ whatever the model says, and remote work limited to one other EU country tops ou
 a place outside the candidate's area with no stated mode, and whose text never mentions remote work, counts as
 "elsewhere" too. Work-arrangement sentences past the text clip are added after it, so the model sees them.
 
-It never drops a job: a failed batch or a spent budget just means those jobs are shown unscreened.
-The screen runs only when switched on (Full mode, or `modules.screen` in user/settings.yaml) and an API LLM is set.
+It never drops a job: a failed batch, a spent quota or the time limit just means those jobs wait for the next night
+(`pipeline.shortlist.screen_queue`). The screen runs only when switched on (`modules.screen` in user/settings.yaml)
+and an API LLM is set.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 from typing import Any
 
 from jobradar.apply.profile import profile_text
@@ -24,7 +26,9 @@ from jobradar.normalize.text import clip, fold
 
 log = logging.getLogger(__name__)
 
-BATCH = 5
+BATCH = 10
+SMALL_BATCH = {"groq": 5}      # Groq's free tier allows 8K tokens a minute: 10 postings don't fit
+MAX_FAILED_IN_A_ROW = 3
 DESC_CHARS = 3500
 WORK_SETUPS = ("remote", "home", "elsewhere", "unclear")
 ONE_COUNTRY_MAX_FIT = 4
@@ -50,8 +54,13 @@ SCHEMA: dict[str, Any] = {
             "salary": {"type": "string"},
             "instructions": {"type": "array", "items": {"type": "string"}},
             "work_setup": {"type": "string", "enum": list(WORK_SETUPS)},
+            "languages_required": {"type": "string"},
+            "years_required": {"type": "string"},
+            "contract": {"type": "string"},
+            "deadline": {"type": "string"},
         },
-        "required": ["job_id", "fit", "summary", "watch_out", "salary", "instructions", "work_setup"],
+        "required": ["job_id", "fit", "summary", "watch_out", "salary", "instructions", "work_setup",
+                     "languages_required", "years_required", "contract", "deadline"],
         "additionalProperties": False,
     }}},
     "required": ["jobs"],
@@ -60,7 +69,7 @@ SCHEMA: dict[str, Any] = {
 
 SYSTEM_TEMPLATE = """You screen job postings for one candidate. Return one entry per job_id given, in JSON.
 Rules:
-- fit (1-5): 5 = a priority role + strong stack overlap + location/language work for the candidate;
+- fit (1-5): 5 = a priority role + strong overlap in skills and tools + location/language work for the candidate;
   4 = a priority role with minor gaps, or another target role; 3 = adjacent role or notable gaps; 2 = weak match;
   1 = clear mismatch.
   Don't lower fit for a hybrid or office setup: work_setup takes care of that.
@@ -70,12 +79,17 @@ Rules:
   elsewhere in the EU. Name it in watch_out and judge fit on the role.
   When the posting text is missing or only a short listing summary, judge fit on the title, company and location;
   missing details are not a mismatch, so don't lower fit for them (without the text, 4 is the top: the code caps it).
-- summary: at most 160 characters, what the company/team does and the core stack. No hype, no adjectives about the company.
+- summary: at most 160 characters, what the company/team does and the key skills or tools of the role. No hype, no
+  adjectives about the company.
 - watch_out: at most 3 short items, only concrete mismatches with the candidate (language, location/residency,
-  seniority, years required, stack far off). Empty list when there are none. Never invent problems.
+  seniority, years required, skills or tools far off). Empty list when there are none. Never invent problems.
   Seniority: the candidate's level is in the profile. A role one level above or below it never lowers fit and is not
   a watch-out. Flag seniority only when it is clearly far from the profile, or for people management.
 - salary: the salary exactly as stated in the posting (with currency and period), else "".
+- languages_required: the working languages the posting requires, with the level if stated ("English C1"), else "".
+- years_required: the years of experience asked for ("3+ years"), else "".
+- contract: the contract type(s) stated (employment, B2B, freelance, fixed-term, part-time...), else "".
+- deadline: the application deadline as stated, else "".
 - instructions: explicit instructions to applicants written in the posting text (e.g. "start your answer with the word X",
   "mention Y in your cover letter", "apply via e-mail with subject Z"). Quote them briefly. Requirements, skills or
   what to emphasise are NOT instructions, and neither is "apply on our website". Empty list when there are none,
@@ -176,6 +190,8 @@ def _clean(r: dict[str, Any], location: str = "", text_chars: int | None = None,
         "watch_out": [clip(str(w), 140) for w in (r.get("watch_out") or []) if str(w).strip()][:3],
         "salary": clip(str(r.get("salary") or "").strip(), 120),
         "instructions": [clip(str(i), 300) for i in (r.get("instructions") or []) if str(i).strip()][:5],
+        **{k: clip(" ".join(str(r.get(k) or "").split()), 120)
+           for k in ("languages_required", "years_required", "contract", "deadline")},
     }
 
 
@@ -185,8 +201,11 @@ def screen_off() -> bool:
     return step_provider("screen") in ("off", "")
 
 
-def screen_jobs(jobs: list[dict[str, Any]], client: LLMClient | None = None) -> dict[str, dict[str, Any]]:
-    """Return ``{job_id: result}`` for the jobs the LLM screened; missing ids were not screened."""
+def screen_jobs(jobs: list[dict[str, Any]], client: LLMClient | None = None, *,
+                deadline: float | None = None) -> dict[str, dict[str, Any]]:
+    """Return ``{job_id: result}`` for the jobs the LLM screened; missing ids were not screened. Each result names
+    the model that judged it. Stops at a spent quota, at ``deadline`` (time.monotonic) or after
+    MAX_FAILED_IN_A_ROW failed batches."""
     if not jobs or (client is None and screen_off()):
         return {}
     own = client is None
@@ -197,29 +216,67 @@ def screen_jobs(jobs: list[dict[str, Any]], client: LLMClient | None = None) -> 
         return {}
     profile = profile_text()
     system = system_prompt()
+    size = int(client.cfg.get("batch") or SMALL_BATCH.get(client.preset, BATCH))
     out: dict[str, dict[str, Any]] = {}
-    failed = 0
+    failed = in_a_row = 0
     try:
-        for i in range(0, len(jobs), BATCH):
-            batch = jobs[i:i + BATCH]
+        for i in range(0, len(jobs), size):
+            if deadline is not None and time.monotonic() >= deadline:
+                log.info("screen: time is up; %d jobs wait for the next night", len(jobs) - i)
+                break
+            batch = jobs[i:i + size]
             prompt = (f"Candidate profile:\n{profile}\n\nScreen these {len(batch)} postings:\n\n"
                       + "\n\n".join(_job_block(j) for j in batch))
             try:
-                res = client.json(prompt, SCHEMA, name="screen", system=system, max_tokens=400 * len(batch))
-            except BudgetExhausted:
-                log.warning("screen: LLM budget spent; %d jobs left unscreened", len(jobs) - i)
+                res = client.json(prompt, SCHEMA, name="screen", system=system, max_tokens=450 * len(batch))
+            except BudgetExhausted as exc:
+                log.warning("screen: %s; %d jobs left unscreened", exc, len(jobs) - i)
                 break
             except LLMError as exc:
                 failed += len(batch)
+                in_a_row += 1
                 log.warning("screen batch failed (%s); %d jobs unscreened", type(exc).__name__, len(batch))
+                if in_a_row >= MAX_FAILED_IN_A_ROW:
+                    log.warning("screen: %d failed batches in a row, stopping for tonight", in_a_row)
+                    break
                 continue
+            in_a_row = 0
             wanted = {j["job_id"]: (j.get("location") or "", len((j.get("description") or "").strip()),
                                     mentions_remote(j.get("description") or "")) for j in batch}
             for r in res.get("jobs") or []:
                 if isinstance(r, dict) and r.get("job_id") in wanted:
-                    out[r["job_id"]] = _clean(r, *wanted[r["job_id"]])
+                    out[r["job_id"]] = {**_clean(r, *wanted[r["job_id"]]), "model": client.label}
     finally:
         if own:
             client.close()
     log.info("screen: %d/%d screened, %d in failed batches", len(out), len(jobs), failed)
+    return out
+
+
+def screen_chain(jobs: list[dict[str, Any]], *, deadline: float | None = None,
+                 client: LLMClient | None = None) -> dict[str, dict[str, Any]]:
+    """Screen with the user's screen provider, then with each of its `fallbacks` (user/llm.yaml) for the jobs the
+    previous one left, e.g. when its free quota ran out."""
+    from jobradar.llm.client import step_config
+
+    out = screen_jobs(jobs, client, deadline=deadline)
+    if client is not None:
+        return out
+    try:
+        fallbacks = list(step_config("screen").get("fallbacks") or [])
+    except LLMError:
+        return out
+    for name in fallbacks:
+        left = [j for j in jobs if j["job_id"] not in out]
+        if not left or (deadline is not None and time.monotonic() >= deadline):
+            break
+        try:
+            fb = LLMClient("screen", provider=str(name))
+        except LLMError as exc:
+            log.warning("screen fallback %s skipped: %s", name, exc)
+            continue
+        try:
+            out.update(screen_jobs(left, fb, deadline=deadline))
+        finally:
+            fb.close()
     return out

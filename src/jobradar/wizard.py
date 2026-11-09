@@ -411,7 +411,7 @@ def save_llm(data: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"the test call failed: {res.get('error')}")
     if preset["env"]:
         set_env({preset["env"]: data.get("key") or os.environ.get(preset["env"])})
-    entry = {"provider": preset["id"], "model": res["model"]}
+    entry = {"provider": preset["id"], **({"model": data["model"]} if data.get("model") else {})}
     if data.get("base_url"):
         entry["base_url"] = data["base_url"]
     out: dict[str, Any] = {"default": entry}

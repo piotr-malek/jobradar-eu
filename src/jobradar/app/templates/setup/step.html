@@ -154,7 +154,7 @@
 </div>
 <button type="button" onclick="llmTest(this)">Test the key</button> <span id="llm-out" class="muted"></span>
 <p class="muted">The key is saved on this computer and, encrypted, in your private GitHub space. It is never shown to anyone.</p>
-{% if estimate and estimate.model %}<p class="muted">Cost: free within the free plan's limits. On a paid plan, at most about ${{ estimate.usd_per_month }} a month.</p>{% endif %}
+{% if estimate and estimate.free_tier %}<p class="muted">Cost: nothing. The free plan stops at its limit, it never charges. It reviews about {{ estimate.jobs_per_night }} jobs a night; a bigger first batch is finished over the next nights.</p>{% elif estimate and estimate.model %}<p class="muted">Cost: free within the free plan's limits. On a paid plan, at most about ${{ estimate.usd_per_month }} a month.</p>{% endif %}
 
 {% elif step == 'experience' %}
 <h1>Your experience</h1>

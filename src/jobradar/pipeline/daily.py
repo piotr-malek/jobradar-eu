@@ -27,6 +27,7 @@ from jobradar.sources.registry import load_specs
 
 log = logging.getLogger(__name__)
 DEFAULT_MINUTES = {"lite": 15, "full": 25}
+RUN_MINUTES = 30           # the workflow stops the job at 35 minutes; install and the state push take the rest
 
 
 def posting_from_row(r: dict[str, Any]) -> Posting:
@@ -115,7 +116,10 @@ def run_daily(store: Any, *, picks: Path | None = None, dry_run: bool = False, f
         out["sources"] = {"due": len(due), "ran": len(ran), "queued": len(due) - len(ran),
                           "failed": sum(s.status in ("failed", "blocked") for s in ran),
                           "fetched": sum(s.fetched for s in ran), "matched": sum(s.matched for s in ran)}
-    out["shortlist"] = build_shortlist(store, dry_run=dry_run, force=force, llm=llm)
+    from jobradar.pipeline.shortlist import screen_minutes
+
+    screen_deadline = min(time.monotonic() + screen_minutes() * 60, started + RUN_MINUTES * 60)
+    out["shortlist"] = build_shortlist(store, dry_run=dry_run, force=force, llm=llm, screen_deadline=screen_deadline)
     if not dry_run:
         out["upkeep"] = store.maintenance()
         if notify is None:

@@ -41,7 +41,8 @@ def user_dir() -> Path:
 
 
 # keys the overnight run needs: the wizard uploads these as Actions secrets, the workflow hands them over as JSON
-SECRET_NAMES = re.compile(r"(MISTRAL|GEMINI|GROQ|OPENROUTER|OPENAI|ANTHROPIC)_API_KEY|JOOBLE_[A-Z]{2}_API_KEY|"
+SECRET_NAMES = re.compile(r"(MISTRAL|GEMINI|GROQ|OPENROUTER|OPENAI|ANTHROPIC)_API_KEY|CLOUDFLARE_(?:API_TOKEN|ACCOUNT_ID)|"
+                          r"JOOBLE_[A-Z]{2}_API_KEY|"
                           r"ADZUNA_APP_(?:ID|KEY)|THEIR_STACK_API_KEY|ITJOBS_PT_API_KEY|JR_IMAP_\w+|SMTP_\w+|EMAIL_TO")
 
 
