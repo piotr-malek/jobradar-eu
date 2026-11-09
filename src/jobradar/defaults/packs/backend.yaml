@@ -80,6 +80,9 @@ prefer: ['backend|back-end|software-engineer|java-developer|python-developer|gol
          'software|developer|programista|engineer|java|python']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-back-end-programming-jobs, remote-programming-jobs]}
   nofluffjobs: {categories: [backend]}
 
 golden:

@@ -51,6 +51,9 @@ search_terms:
 prefer: ['ios|android|react-native|flutter|mobile-developer|mobile-engineer|swift|kotlin', 'mobile|-app-']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-programming-jobs]}
   nofluffjobs: {categories: [mobile]}
   justjoin: {categories: [mobile]}
 

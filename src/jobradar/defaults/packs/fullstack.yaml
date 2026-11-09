@@ -49,6 +49,9 @@ search_terms:
 prefer: ['full-stack|fullstack|full-stack-developer|mern|mean-stack', 'typescript|react|node|javascript']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-full-stack-programming-jobs, remote-programming-jobs]}
   nofluffjobs: {categories: [fullstack]}
 
 golden:

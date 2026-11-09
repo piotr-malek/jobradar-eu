@@ -68,6 +68,9 @@ search_terms:
 prefer: ['qa|sdet|test-automation|tester|quality-assurance|test-engineer', 'testing|automation-engineer|quality']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-programming-jobs]}
   nofluffjobs: {categories: [testing]}
   justjoin: {categories: [testing]}
 

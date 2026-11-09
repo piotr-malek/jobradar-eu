@@ -493,7 +493,8 @@ sources:
     rank: 45
     default_country: DE
     params:
-      feeds: [https://berlinstartupjobs.com/engineering/feed/]
+      feed_template: https://berlinstartupjobs.com/{category}/feed/
+      default_categories: [engineering]         # the packs name theirs: marketing, sales, hr-recruiting, finance, operations
       title_split: {seps: [" // "], company: right}
     politeness: {max_requests: 2, robots: true}
 

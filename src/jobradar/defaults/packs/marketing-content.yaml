@@ -82,6 +82,9 @@ prefer: ['marketing|seo|sem|ppc|social-media|content|copywriter|copywriting|bran
          'campaign|event|community|editor|writer|media']
 
 boards:
+  jobicy: {industries: [marketing, copywriting]}
+  berlinstartupjobs: {categories: [marketing]}
+  weworkremotely: {feeds: [remote-sales-and-marketing-jobs]}
   remotive: {categories: [marketing, writing]}
   themuse: {categories: [Marketing, Writing and Editing, Media, PR, and Communications]}
 

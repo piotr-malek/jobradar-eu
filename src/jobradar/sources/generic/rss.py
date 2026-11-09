@@ -6,7 +6,7 @@ entities (``&nbsp;``) or stray control characters that make strict parsers give 
 SwissDevJobs / GermanTechJobs ``/job_feed.xml``) is read the same way.
 
 Params:
-  feeds: [url | {url, workplace?, remote_scope?, category?}]   required
+  feeds: [url | {url, workplace?, remote_scope?, category?}]   or feed_template + the packs' boards.<id>.categories
   title_split: {seps: [" // ", " at "], company: right|left}  split "Title // Company" style titles;
                 the *last* occurrence is used when company is on the right (``rsplit``)
   company_field / location_field: [localname, ...]            item child elements (any namespace),
@@ -174,7 +174,13 @@ def rss_feed(ctx: FetchContext) -> Iterator[Posting]:
     refused: Blocked | None = None  # raised at the end if every feed was refused, so the run reads "blocked"
     any_feed = False
 
-    for feed in as_list(p.get("feeds")):
+    feeds = as_list(p.get("feeds"))
+    if not feeds and p.get("feed_template"):            # one feed per category the user's role packs name
+        from jobradar import config
+
+        cats = config.board_map(ctx.spec.id).get("categories") or as_list(p.get("default_categories"))
+        feeds = [p["feed_template"].format(category=c) for c in cats]
+    for feed in feeds:
         spec = feed if isinstance(feed, dict) else {"url": feed}
         url = spec["url"]
         try:

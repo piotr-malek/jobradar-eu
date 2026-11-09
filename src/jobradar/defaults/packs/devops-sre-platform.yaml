@@ -89,6 +89,9 @@ prefer: ['devops|sre|site-reliability|platform-engineer|cloud-engineer|infrastru
          'cloud|infrastructure|platform|sysadmin|system-administrator|terraform']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-devops-sysadmin-jobs]}
   nofluffjobs: {categories: [devops]}
   justjoin: {categories: [devops]}
 

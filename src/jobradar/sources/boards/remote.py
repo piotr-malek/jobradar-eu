@@ -79,8 +79,12 @@ def remotive(ctx: FetchContext) -> Iterator[Posting]:
 @adapter("jobicy")
 def jobicy(ctx: FetchContext) -> Iterator[Posting]:
     seen: set[str] = set()
+    from jobradar import config
+
+    industries = (ctx.params.get("industries") or config.board_map("jobicy").get("industries")
+                  or ["data-science", "engineering"])
     for geo in ctx.params.get("geos", ["europe", "emea"]):
-        for industry in ctx.params.get("industries", ["data-science", "engineering"]):
+        for industry in industries:
             data = ctx.http.get_json(
                 "https://jobicy.com/api/v2/remote-jobs",
                 params={"count": 100, "geo": geo, "industry": industry},
@@ -194,7 +198,9 @@ def _x(item: ET.Element, tag: str) -> str:
 @adapter("weworkremotely")
 def weworkremotely(ctx: FetchContext) -> Iterator[Posting]:
     seen: set[str] = set()
-    for slug in ctx.params.get("feeds", WWR_FEEDS):
+    from jobradar import config
+
+    for slug in ctx.params.get("feeds") or config.board_map("weworkremotely").get("feeds") or WWR_FEEDS:
         resp = ctx.http.get(f"https://weworkremotely.com/categories/{slug}.rss")
         if resp.status_code != 200:
             ctx.notes.append(f"{slug}: HTTP {resp.status_code}")

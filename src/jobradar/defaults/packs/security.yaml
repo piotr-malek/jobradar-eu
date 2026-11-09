@@ -72,6 +72,9 @@ prefer: ['security-engineer|appsec|application-security|pentest|penetration|soc-
          'security|cyber|infosec|-iam-|threat|vulnerability']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-devops-sysadmin-jobs, remote-programming-jobs]}
   nofluffjobs: {categories: [security]}
   justjoin: {categories: [security]}
 

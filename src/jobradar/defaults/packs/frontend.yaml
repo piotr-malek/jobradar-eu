@@ -66,6 +66,9 @@ search_terms:
 prefer: ['frontend|front-end|react|angular|vue|typescript|javascript', 'web-developer|ui-engineer|-ui-|-js-']
 
 boards:
+  jobicy: {industries: [engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-front-end-programming-jobs, remote-programming-jobs]}
   nofluffjobs: {categories: [frontend]}
 
 golden:

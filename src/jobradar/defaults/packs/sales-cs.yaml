@@ -88,6 +88,9 @@ prefer: ['account-executive|sales|business-development|sdr|bdr|account-manager|c
          'support|customer|client|partner']
 
 boards:
+  jobicy: {industries: [business]}
+  berlinstartupjobs: {categories: [sales, operations]}
+  weworkremotely: {feeds: [remote-sales-and-marketing-jobs, remote-customer-support-jobs]}
   remotive: {categories: [sales, customer-support]}
   themuse: {categories: [Sales, Customer Service, Account Management]}
 

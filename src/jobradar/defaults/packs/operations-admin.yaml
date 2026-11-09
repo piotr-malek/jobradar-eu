@@ -80,6 +80,9 @@ prefer: ['operations|office|admin|assistant|project|procurement|purchasing|buyer
          'coordinator|coordinat|specialist|specjalista']
 
 boards:
+  jobicy: {industries: [management, business]}
+  berlinstartupjobs: {categories: [operations]}
+  weworkremotely: {feeds: [remote-management-and-finance-jobs]}
   remotive: {categories: [project-management, all-others]}
   themuse: {categories: [Project Management, Administration and Office, Operations]}
 

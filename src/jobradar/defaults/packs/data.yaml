@@ -102,6 +102,9 @@ prefer: ['analytics-engineer|data-engineer|data-platform|dwh|etl|dbt|bigquery|sn
 
 # Board categories that list these roles.
 boards:
+  jobicy: {industries: [data-science, engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-back-end-programming-jobs, remote-programming-jobs, all-other-remote-jobs]}
   nofluffjobs:
     categories: [data, business-intelligence]
     # the server caps every listing at 100 offers (by last bump): city slices see every offer daily

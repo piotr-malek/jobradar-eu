@@ -84,6 +84,9 @@ prefer: ['account|finance|financial|fp-?a|controller|controlling|audit|tax|treas
          'billing|invoic|credit|payable|receivable|reporting']
 
 boards:
+  jobicy: {industries: [accounting-finance]}
+  berlinstartupjobs: {categories: [finance]}
+  weworkremotely: {feeds: [remote-management-and-finance-jobs]}
   remotive: {categories: [finance-legal]}
   themuse: {categories: [Accounting, Finance]}
 

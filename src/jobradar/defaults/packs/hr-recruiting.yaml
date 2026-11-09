@@ -78,6 +78,8 @@ prefer: ['recruit|talent|hr-|human-resources|people|payroll|rekrut|kadr|personal
          'sourcer|learning|training|compensation|benefits']
 
 boards:
+  jobicy: {industries: [hr]}
+  berlinstartupjobs: {categories: [hr-recruiting]}
   remotive: {categories: [hr]}
   themuse: {categories: [Human Resources and Recruitment]}
 

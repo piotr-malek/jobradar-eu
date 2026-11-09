@@ -80,6 +80,8 @@ prefer: ['product-manager|product-owner|technical-product|project-manager|progra
          'product|project-manager|delivery|scrum|agile']
 
 boards:
+  berlinstartupjobs: {categories: [engineering, operations]}
+  weworkremotely: {feeds: [all-other-remote-jobs]}
   nofluffjobs: {categories: [product-management, project-manager]}
   justjoin: {categories: [pm]}
 

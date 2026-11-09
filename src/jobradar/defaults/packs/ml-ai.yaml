@@ -68,6 +68,9 @@ search_terms:
 prefer: ['machine-learning|ml-engineer|mlops|ai-engineer|llm|data-scien', '-ai-|-ml-|artificial-intelligence']
 
 boards:
+  jobicy: {industries: [data-science, engineering]}
+  berlinstartupjobs: {categories: [engineering]}
+  weworkremotely: {feeds: [remote-programming-jobs, all-other-remote-jobs]}
   nofluffjobs: {categories: [artificial-intelligence]}
   justjoin: {categories: [ai]}
   remoterocketship: {roles: [machine-learning-engineer, data-scientist]}

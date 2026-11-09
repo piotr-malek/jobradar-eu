@@ -80,6 +80,9 @@ prefer: ['gtm|revops|revenue-operations|marketing-automation|crm|integration', '
 
 
 boards:
+  jobicy: {industries: [marketing, business]}
+  berlinstartupjobs: {categories: [marketing, sales]}
+  weworkremotely: {feeds: [remote-sales-and-marketing-jobs]}
   remoterocketship: {roles: [revenue-operations, marketing-operations, growth-engineer]}
 
 golden:
