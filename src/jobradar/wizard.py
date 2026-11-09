@@ -341,7 +341,29 @@ def countries_sources_view(countries: list[str], opt_in: list[str] | None = None
     on.sort(key=lambda r: (r["covers"] == "all of Europe / remote", r["needs_key"] or r["id"] == "email_alerts", r["label"].lower()))
     off.sort(key=lambda r: r["label"].lower())
     ready = sum(1 for r in on if r["checked"] and not r["needs_key"] and r["id"] != "email_alerts")
-    return {"on": on, "off": off, "ready": ready}
+    return {"on": on, "off": off, "ready": ready, "alerts": alert_boards(want)}
+
+
+ROLE_LABELS = {"general": "all kinds of jobs", "it": "IT jobs", "business": "office and business jobs"}
+
+
+def alert_boards(countries: list[str]) -> list[dict[str, Any]]:
+    """Big boards in these countries (and Europe-wide) that can't be searched overnight, so their job-alert e-mails
+    are the way in (defaults/alert_boards.yaml). `added`: its sender is already in the user's alert senders."""
+    from jobradar.settings import PACKAGE_DIR
+
+    data = config.read_yaml(PACKAGE_DIR / "alert_boards.yaml").get("countries") or {}
+    names = country_names()
+    have = " ".join(s.lower() for s in config.user_sources().get("alert_senders") or [])
+    out = []
+    for cc in [*[c.upper() for c in countries], "EU"]:
+        for b in data.get(cc) or []:
+            sender = str(b.get("sender") or "").strip().lower()
+            out.append({"id": b.get("id"), "name": b.get("name"), "country": "Europe-wide" if cc == "EU" else names.get(cc, cc),
+                        "url": b.get("alerts_url") or b.get("url"), "sender": sender,
+                        "roles": ROLE_LABELS.get(b.get("roles") or "general", b.get("roles")),
+                        "account": bool(b.get("account_needed")), "added": bool(sender) and sender in have})
+    return out
 
 
 def save_countries_sources(data: dict[str, Any]) -> dict[str, Any]:
@@ -350,6 +372,12 @@ def save_countries_sources(data: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("pick at least one country")
     out = {"countries": countries, "opt_in": [o for o in data.get("opt_in") or [] if o in ("polish_only", "purpose")],
            "disable": list(data.get("disable") or []), "enable": list(data.get("enable") or [])}
+    senders = list(config.user_sources().get("alert_senders") or [])   # set on the e-mail card: kept
+    for sender in data.get("alert_add") or []:
+        if sender and sender.strip().lower() not in (x.lower() for x in senders):
+            senders.append(sender.strip().lower())
+    if senders:
+        out["alert_senders"] = senders
     write_user_yaml("sources.yaml", out, merge=False)
     return out
 

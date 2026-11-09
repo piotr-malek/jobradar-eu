@@ -1,6 +1,7 @@
 # Role pack: DevOps, SRE, platform and cloud / infrastructure engineering.
 label: DevOps, SRE & platform engineering
 description: DevOps engineer, SRE, platform engineer, cloud engineer / architect, infrastructure engineer, Kubernetes, sysadmin.
+domain: it
 
 families:
   sre:

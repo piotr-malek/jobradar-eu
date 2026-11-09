@@ -37,6 +37,7 @@ class SourceSpec:
     label: str = ""  # shown in the wizard
     packs: list[str] = field(default_factory=list)  # role-specific board: runs only when one of these packs is active
     modes: list[str] = field(default_factory=list)  # lite | full: runs only in these modes (empty = both)
+    domains: list[str] = field(default_factory=list)  # it | business: runs only when an active pack is in one of them
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "SourceSpec":

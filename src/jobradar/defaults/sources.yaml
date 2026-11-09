@@ -65,6 +65,7 @@ sources:
     politeness: {max_requests: 2}
   - id: hn_whoishiring
     adapter: hn_whoishiring
+    domains: [it]
     label: Hacker News "Who is hiring"
     countries: [EU]
     every_days: 7
@@ -109,6 +110,7 @@ sources:
     politeness: {max_requests: 2, rps: 0.2}
   - id: itjobs_pt
     adapter: itjobs_pt
+    domains: [it]
     label: ITJobs.pt
     countries: [PT]
     langs: [pt]
@@ -123,6 +125,7 @@ sources:
   # theprotocol.it and Pracuj.pl are behind a Cloudflare managed challenge (not scraped; use their email alerts).
   - id: justjoin
     adapter: sitemap_jsonld
+    domains: [it]
     label: Just Join IT
     countries: [PL]
     every_days: 1
@@ -144,6 +147,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 160, browser: true, robots: true}
   - id: nofluffjobs
     adapter: nofluffjobs
+    domains: [it]
     label: No Fluff Jobs
     countries: [PL]
     every_days: 1
@@ -159,6 +163,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 60, browser: true, robots: true}
   - id: bulldogjob
     adapter: sitemap_jsonld
+    domains: [it]
     label: Bulldog Job
     countries: [PL]
     every_days: 1
@@ -178,6 +183,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 50, browser: true, robots: true}
   - id: solidjobs
     adapter: sitemap_jsonld
+    domains: [it]
     label: Solid.Jobs
     countries: [PL]
     every_days: 1
@@ -196,10 +202,10 @@ sources:
     politeness: {rps: 0.5, max_requests: 40, browser: true, robots: true}
   - id: rocketjobs
     adapter: sitemap_jsonld
+    domains: [business]
     label: Rocket Jobs (business roles)
     countries: [PL]
     langs: [pl]
-    opt_in: polish_only
     every_days: 2
     rank: 40
     default_country: PL
@@ -208,12 +214,12 @@ sources:
       url_include: ['/oferta-pracy/']
       slug_strip: ['-[0-9a-f]{8}$', '-bi-data$']
       group_strip: '-[0-9a-f]{8}$'
-      prefer: [$prefer, 'marketing|crm|automation|revops|analytics']
+      prefer: $prefer
       lastmod_days: 30
-      max_details: 60
+      max_details: 120
       enrich: justjoin_rsc
       default_currency: PLN
-    politeness: {rps: 0.5, max_requests: 70, browser: true, robots: true}
+    politeness: {rps: 0.5, max_requests: 135, browser: true, robots: true}
 
   - id: hays_pl
     adapter: sitemap_jsonld
@@ -312,6 +318,7 @@ sources:
     politeness: {max_requests: 10}
   - id: landingjobs
     adapter: landingjobs
+    domains: [it]
     label: Landing.jobs
     countries: [EU]
     every_days: 2
@@ -321,6 +328,7 @@ sources:
     politeness: {rps: 0.3, max_requests: 30, robots: true}
   - id: getonbrd
     adapter: getonbrd
+    domains: [it]
     label: Get on Board
     countries: [EU]
     every_days: 3
@@ -443,6 +451,7 @@ sources:
   # ------------------------------------------------------------ RSS / XML job feeds
   - id: swissdevjobs
     adapter: rss_feed
+    domains: [it]
     label: SwissDevJobs
     countries: [CH]
     every_days: 2
@@ -459,6 +468,7 @@ sources:
     politeness: {max_requests: 2, robots: true}
   - id: germantechjobs
     adapter: rss_feed
+    domains: [it]
     label: GermanTechJobs
     countries: [DE]
     every_days: 2
@@ -604,6 +614,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 45, robots: true}
   - id: sii_pl
     adapter: sitemap_jsonld
+    domains: [it]
     label: Sii Poland
     countries: [PL]
     langs: [pl]
@@ -625,6 +636,7 @@ sources:
     politeness: {rps: 0.3, max_requests: 35, robots: true}
   - id: experis_pl
     adapter: sitemap_jsonld
+    domains: [it]
     label: Experis Poland
     countries: [PL]
     langs: [pl]
@@ -657,6 +669,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 90, robots: true}
   - id: ictjob_be
     adapter: ictjob_be
+    domains: [it]
     label: ICTjob.be
     countries: [BE]
     every_days: 3
@@ -727,6 +740,7 @@ sources:
     politeness: {rps: 1, max_requests: 35, robots: true}
   - id: devbg
     adapter: sitemap_jsonld
+    domains: [it]
     label: DEV.BG
     countries: [BG]
     every_days: 2
@@ -762,6 +776,7 @@ sources:
     politeness: {rps: 1, max_requests: 45, robots: true}
   - id: engineeringjobs_be
     adapter: sitemap_jsonld
+    domains: [it]
     label: Engineering.jobs Belgium
     countries: [BE]
     every_days: 2
@@ -776,6 +791,7 @@ sources:
     politeness: {rps: 1, max_requests: 35, robots: true}
   - id: engineeringjobs_nl
     adapter: sitemap_jsonld
+    domains: [it]
     label: Engineering.jobs Netherlands
     countries: [NL]
     every_days: 2
@@ -792,6 +808,7 @@ sources:
     politeness: {rps: 1, max_requests: 40, robots: true}
   - id: ictjobs_ch
     adapter: sitemap_jsonld
+    domains: [it]
     label: ICTjobs.ch
     countries: [CH]
     every_days: 3
@@ -912,6 +929,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 100, robots: true}
   - id: teamlyzer
     adapter: teamlyzer
+    domains: [it]
     label: Teamlyzer
     countries: [PT]
     every_days: 2
@@ -922,6 +940,7 @@ sources:
     politeness: {rps: 0.5, max_requests: 100, robots: true}
   - id: tecnoempleo
     adapter: tecnoempleo
+    domains: [it]
     label: Tecnoempleo
     countries: [ES]
     langs: [es]

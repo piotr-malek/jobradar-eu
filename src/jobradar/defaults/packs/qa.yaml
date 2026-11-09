@@ -1,6 +1,7 @@
 # Role pack: software quality assurance and test automation.
 label: QA & test automation
 description: QA engineer, test automation engineer, SDET, software tester, QA analyst.
+domain: it
 
 families:
   qa:

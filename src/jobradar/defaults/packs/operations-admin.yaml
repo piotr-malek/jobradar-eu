@@ -1,0 +1,99 @@
+# Role pack: operations, office and administration, project / program management, procurement and supply chain
+# (office roles; warehouse and driving jobs stay out). Software / IT project management is product-pm.
+label: Operations, admin & project management
+description: Operations specialist and manager, office manager, administrative and executive assistant, project and program manager, PMO, procurement and purchasing, supply chain, logistics planning, customer service back office.
+domain: business
+
+families:
+  operations:
+    tier: core
+    priority: 30
+    label: Operations
+    manager_ok: true            # "Operations Manager" / "Office Manager" are often individual roles
+    any:
+      - (?:business |sales |commercial |marketing |people |finance |customer |service |e-?commerce |fulfil?ment |studio |clinic |program |programme |strategy and |strategy & )?operations (?:specialist|manager|coordinator|analyst|associate|lead|executive|officer|administrator|assistant|generalist|partner)
+      - (?:bizops|strategy (?:&|and) operations|chief of staff|business operations) ?(?:manager|associate|analyst|lead|specialist)?
+      - office (?:manager|administrator|coordinator|assistant|lead)|administrative (?:assistant|coordinator|officer|specialist|manager)|admin (?:assistant|coordinator|specialist)
+      - (?:executive|personal|team|management|board|legal|project|sales|virtual) assistant|ea to|pa to|receptionist|front desk (?:coordinator|officer)
+      - specjalist\w* (?:ds\.? )?(?:administracji|administracyjn\w*|operacyjn\w*|zakupow|logistyki|obslugi biura|planowania|lancucha dostaw)\w*|asystent\w* (?:zarzadu|biura|dyrektora|ds\.? administracyjnych)|office manager|koordynator\w* (?:biura|projektow|operacyjn\w*)|pracownik biurowy
+      - (?:office|team|projekt)assistent\w*|assistenz (?:der |der geschaftsfuhrung)?\w*|sachbearbeiter\w* (?:administration|verwaltung|einkauf|logistik|disposition)|kaufmann fur buromanagement|kauffrau fur buromanagement|kaufmannisch\w* (?:mitarbeiter|angestellte)\w*|buromanager\w*|disponent\w*
+      - (?:administrativ\w*|auxiliar administrativ\w*|asistente de direccion|recepcionista|tecnico de compras|responsable de operaciones|coordinador\w* de operaciones)
+      - (?:assistente administrativ\w*|assistente executiv\w*|analista de operacoes|rececionista|tecnico administrativ\w*)
+      - assistant\w* (?:de direction|administrati\w*|commercial\w*)|charge\w* (?:des operations|d.administration)|gestionnaire administrati\w*|office manager
+      - impiegat\w* amministrativ\w*|assistente di direzione|office medewerker|managementassistent|officemanager|kontorist|administrativ assistent
+  projects_supply:
+    tier: core
+    priority: 29
+    label: Projects, procurement & supply chain
+    manager_ok: true
+    any:
+      - (?<!it )(?<!software )(?<!technical )project (?:manager|coordinator|officer|lead|specialist|administrator|assistant|controller)|programme? (?:manager|coordinator|officer)|pmo (?:analyst|specialist|lead|manager|officer|coordinator)?|portfolio (?:manager|analyst) pmo
+      - (?:procurement|purchasing|sourcing|vendor|supplier|category|contract|supply chain|demand|inventory|logistics|transport|import|export|customs|shipping|freight|fleet) (?:specialist|manager|analyst|coordinator|officer|planner|buyer|lead|associate|administrator|agent|executive|clerk)
+      - buyer|strategic buyer|demand planner|supply planner|production planner|s&op (?:analyst|manager|planner)|logistics planner|dispatcher
+      - kierownik\w* projektu|koordynator\w* projektu|project manager|kupiec|specjalist\w* (?:ds\.? )?(?:zakupow|zaopatrzenia|logistyki|spedycji|planowania produkcji|lancucha dostaw)\w*|spedytor\w*|planist\w*
+      - projektmanager\w*|projektleiter\w*|projektkoordinator\w*|einkaufer\w*|strategischer einkauf\w*|supply[- ]chain[- ]manager\w*|logistik(?:er|planer|koordinator|referent)\w*|bedarfsplaner\w*|exportsachbearbeiter\w*
+      - jefe de proyecto|gestor\w* de proyectos|tecnico de (?:compras|logistica)|comprador\w*|responsable de compras|planificador\w*|gestor\w* de projetos|comprador|tecnico de logistica
+      - chef de projet(?! (?:informatique|it|technique|digital))|charge\w* de projet|acheteu[rs]\w*|approvisionneu[rs]\w*|gestionnaire (?:logistique|supply chain|approvisionnement)|planificat(?:eur|rice)\w*
+      - project manager|projectleider|inkoper|projektledare|inkopare|logistikplanerare|buyer (?:h/f|m/w/d)
+
+family_exclude: ['warehouse', 'forklift', 'driver', 'courier', 'picker', 'packer', 'cleaner', 'security guard',
+                 'store', 'retail', 'cashier', 'construction site', 'site manager', 'building', 'electrical', 'mechanical',
+                 'medical', 'nurse', 'dental', 'veterinary', 'restaurant', 'kitchen', 'hotel', 'housekeeping',
+                 'software', 'it project', 'scrum master', 'agile']
+family_exclude_ok: []
+
+stack:
+  weights: {excel: 2, sap: 2, erp: 2, ms project: 2, jira: 1, asana: 1, monday: 1, prince2: 2, pmp: 2, lean: 1,
+            six sigma: 1, sap mm: 2, wms: 1, incoterms: 1, power bi: 1, salesforce: 1, notion: 1, english: 1}
+  patterns:
+    excel: '\bexcel\b'
+    sap: '\bsap\b'
+    erp: '\berp\b'
+    ms project: 'ms project|microsoft project'
+    jira: '\bjira\b'
+    asana: '\basana\b'
+    monday: 'monday\.com'
+    prince2: 'prince ?2'
+    pmp: '\bpmp\b'
+    lean: '\blean\b'
+    six sigma: 'six sigma'
+    sap mm: 'sap mm|sap ariba|\bariba\b|coupa'
+    wms: '\bwms\b'
+    incoterms: 'incoterms'
+    power bi: 'power ?bi'
+    salesforce: 'salesforce'
+    notion: '\bnotion\b'
+    english: 'fluent english|english c1|business english'
+
+search_terms:
+  en: [operations specialist, operations manager, office manager, executive assistant, project manager, procurement specialist, buyer, supply chain planner, logistics coordinator]
+  pl: [specjalista ds. administracji, asystentka zarządu, office manager, kierownik projektu, specjalista ds. zakupów, specjalista ds. logistyki]
+  de: [Projektmanager, Office Manager, Assistenz der Geschäftsführung, Einkäufer, Sachbearbeiter, Supply Chain]
+  es: [administrativo, asistente de dirección, jefe de proyecto, técnico de compras, operaciones]
+  pt: [assistente administrativo, gestor de projetos, comprador, operações]
+  fr: [assistant de direction, chef de projet, acheteur, office manager, gestionnaire administratif]
+  sv: [projektledare, inköpare, kontorsassistent, logistikplanerare]
+  nl: [projectleider, office manager, inkoper, managementassistent]
+  it: [impiegato amministrativo, project manager, buyer, assistente di direzione]
+
+prefer: ['operations|office|admin|assistant|project|procurement|purchasing|buyer|supply-chain|logistics|planner|zakup|logistyk|administrac|asystent|einkauf|projekt|compras|achat',
+         'coordinator|coordinat|specialist|specjalista']
+
+boards:
+  remotive: {categories: [project-management, all-others]}
+  themuse: {categories: [Project Management, Administration and Office, Operations]}
+
+golden:
+  keep: [Operations Specialist, Operations Manager, Business Operations Analyst, Sales Operations Coordinator,
+         Office Manager, Office Administrator, Administrative Assistant, Executive Assistant, Personal Assistant,
+         Receptionist, Project Manager, Project Coordinator, Programme Manager, PMO Analyst, Procurement Specialist,
+         Purchasing Manager, Buyer, Strategic Buyer, Category Manager, Supply Chain Planner, Demand Planner,
+         Logistics Coordinator, Import Export Specialist, Customs Specialist,
+         Specjalista ds. Administracji, Asystentka Zarządu, Kierownik Projektu, Specjalista ds. Zakupów,
+         Specjalistka ds. Logistyki, Spedytor, Projektmanager (m/w/d), Assistenz der Geschäftsführung (m/w/d),
+         Einkäufer (m/w/d), Sachbearbeiter Einkauf (m/w/d), Administrativo, Asistente de Dirección, Jefe de Proyecto,
+         Técnico de Compras, Assistente Administrativo, Gestor de Projetos, Assistant de direction, Chef de projet,
+         Acheteur, Projectleider, Inkoper, Projektledare]
+  drop: [Backend Developer, Data Engineer, IT Project Manager, Software Project Manager, Scrum Master, Warehouse Worker,
+         Forklift Driver, Delivery Driver, Picker Packer, Construction Site Manager, Store Manager, Retail Assistant,
+         Nurse, Head of Operations, Operations Director, COO, Office Intern, Marketing Manager, Accountant]

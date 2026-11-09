@@ -1,6 +1,7 @@
 # Role pack: sales and customer success at software / tech companies (not retail or field sales).
 label: Sales & customer success
 description: Account executive, SDR / BDR, business development, account manager, customer success manager, customer support, onboarding and implementation.
+domain: business
 
 # the base config skips these as "not IT"; this pack wants them
 allow_disciplines: ['customer success', 'customer support', 'sales (?:executive|representative)', 'account executive',

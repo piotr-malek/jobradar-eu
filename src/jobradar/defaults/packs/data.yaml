@@ -2,6 +2,7 @@
 # Families are tried in order across all active packs; the first pattern that matches the title wins.
 label: Data & analytics engineering
 description: Analytics engineer, data engineer, BI / ETL / data-warehouse developer, data architect, database developer.
+domain: it
 
 families:
   data:

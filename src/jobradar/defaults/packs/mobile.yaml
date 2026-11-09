@@ -1,6 +1,7 @@
 # Role pack: mobile engineering (iOS, Android, React Native, Flutter, cross-platform).
 label: Mobile engineering
 description: iOS, Android, React Native, Flutter and cross-platform mobile developer / engineer.
+domain: it
 
 families:
   mobile:

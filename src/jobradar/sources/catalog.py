@@ -23,7 +23,7 @@ Which of these run for you depends on your setup (`jr sources` lists them with o
   runs when that country is in your `profile.yaml` (home or work countries).
 - **Needs**: `key` sources stay off until the named environment variables exist (repository secrets on GitHub).
   `opt-in` sources run only when you switch that track on in `user/sources.yaml`. `packs` sources run only when
-  one of those role packs is active.
+  one of those role packs is active; "IT roles only" / "business roles only" sources need an active pack of that kind.
 - **Runs on**: `github` runs in your config repo's nightly workflow. `local` boards block GitHub's IP addresses,
   so they run only from your own computer (`jr run --runner local`). `any` runs in both places.
 - **Every**: how many days between runs.
@@ -64,6 +64,8 @@ def _needs(e: dict[str, Any]) -> str:
         out.append("packs: " + ", ".join(e["packs"]))
     if e.get("modes"):
         out.append(" / ".join(m.capitalize() for m in e["modes"]) + " mode only")
+    if e.get("domains"):
+        out.append(" or ".join({"it": "IT", "business": "business"}.get(d, d) for d in e["domains"]) + " roles only")
     if e.get("enabled") is False:
         out.append("**off by default**")
     return "; ".join(out)

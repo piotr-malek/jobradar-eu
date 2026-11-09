@@ -71,7 +71,7 @@ def test_sitemap_prefer_tiers_and_boards():
         tiers = specs[sid].params["prefer"]
         assert any("analytics-engineer" in t for t in tiers), sid
     assert any(t.startswith("-data") for t in specs["justjoin"].params["prefer"])
-    assert specs["rocketjobs"].params["prefer"][-1] == "marketing|crm|automation|revops|analytics"
+    assert any("analytics" in t for t in specs["rocketjobs"].params["prefer"])       # from the active packs
     assert "https://www.michaelpage.pl/jobs/analytics-engineer" in specs["michaelpage_pl"].params["listing_urls"]
     roles = specs["remoterocketship"].params["roles"]
     assert "data-engineer" in roles and "revenue-operations" in roles and "machine-learning-engineer" in roles
@@ -155,3 +155,17 @@ def test_adzuna_runs_in_full_mode_only(monkeypatch):
     monkeypatch.setattr(config, "mode", lambda: "full")
     assert selected(spec, {"countries": ["PL"]}) and not selected(spec, {"countries": ["BG"]})
     assert "adzuna" in {c["id"] for c in key_cards(["PL"], "full")}
+
+
+def test_domain_gate_it_boards_for_tech_packs_rocketjobs_for_business(monkeypatch):
+    from jobradar import config
+    from jobradar.sources.registry import load_specs, selected
+
+    specs = load_specs(all_sources=True)
+    user = {"countries": ["PL"], "opt_in": []}
+    for packs, it_on, biz_on in ((["data"], True, False), (["marketing-content"], False, True),
+                                 (["data", "hr-recruiting"], True, True)):
+        monkeypatch.setattr(config, "active_pack_names", lambda p=packs: p)
+        assert selected(specs["justjoin"], user) is it_on, packs
+        assert selected(specs["rocketjobs"], user) is biz_on, packs
+        assert selected(specs["arbeitnow"], user)                 # general boards run for everyone

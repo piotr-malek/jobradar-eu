@@ -1,6 +1,7 @@
 # Role pack: go-to-market engineering, RevOps, marketing/sales systems, business automation and integrations.
 label: GTM engineering, RevOps & automation
 description: GTM engineer, RevOps, marketing/sales systems, CRM developer, automation and integration engineer.
+domain: it
 
 families:
   gtm:

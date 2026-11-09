@@ -9,7 +9,7 @@ Which of these run for you depends on your setup (`jr sources` lists them with o
   runs when that country is in your `profile.yaml` (home or work countries).
 - **Needs**: `key` sources stay off until the named environment variables exist (repository secrets on GitHub).
   `opt-in` sources run only when you switch that track on in `user/sources.yaml`. `packs` sources run only when
-  one of those role packs is active.
+  one of those role packs is active; "IT roles only" / "business roles only" sources need an active pack of that kind.
 - **Runs on**: `github` runs in your config repo's nightly workflow. `local` boards block GitHub's IP addresses,
   so they run only from your own computer (`jr run --runner local`). `any` runs in both places.
 - **Every**: how many days between runs.
@@ -31,14 +31,14 @@ and others) are not listed here: Full mode polls the boards in `defaults/ats_reg
 | Escape the City (`escapethecity`) | EU | Generic Algolia search adapter (public search-only keys embedded in the boards' own frontends). | 3d | github |  |  |
 | EURES (`eures`) | EU | EURES job-vacancy search (the portal's own public JSON backend, no key). | 2d | github |  |  |
 | GetDataEngineeringJobs (`getdataengineeringjobs`) | EU | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github | packs: data | getdataengineeringjobs.com: data-engineering jobs only, aggregated from ATS boards and job boards; listing filters (EU countries, remote open to the home country, last 7 days) -> JobPosting JSON-LD + facts list (work mode, remote eligibility); links are the board's page (robots disallow its /apply/ redirect) |
-| Get on Board (`getonbrd`) | EU | Get on Board public API (LATAM-centric tech board, no key). | 3d | github |  | LATAM-centric; kept for fully-remote roles |
+| Get on Board (`getonbrd`) | EU | Get on Board public API (LATAM-centric tech board, no key). | 3d | github | IT roles only | LATAM-centric; kept for fully-remote roles |
 | Getro VC portfolio boards (`getro`) | EU | Getro-hosted VC portfolio job boards (Atomico, Point Nine, Creandum, Speedinvest, Earlybird, MMC, OpenOcean, firstminute, byFounders, Techstars, Accel …) — company jobs from the boards' own public pages. | 1d | github |  |  |
 | Himalayas (`himalayas`) | EU | Remote-job boards with free public JSON/RSS feeds. | 1d | github |  |  |
-| Hacker News "Who is hiring" (`hn_whoishiring`) | EU | Remote-job boards with free public JSON/RSS feeds. | 7d | github |  |  |
+| Hacker News "Who is hiring" (`hn_whoishiring`) | EU | Remote-job boards with free public JSON/RSS feeds. | 7d | github | IT roles only |  |
 | Jobgether (`jobgether`) | EU | Jobgether's public API for agents (remote-friendly jobs by country). | 2d | github |  | official agents API (robots allows /astroapi/ai/jobs.json, crawl-delay 2); title-only rows |
 | Jobicy (`jobicy`) | EU | Remote-job boards with free public JSON/RSS feeds. | 1d | github |  |  |
 | Indeed (JobSpy) (`jobspy_indeed`) | EU | Indeed via python-jobspy (optional dependency: `pip install jobradar-eu[jobspy]`). | 2d | local | **off by default** |  |
-| Landing.jobs (`landingjobs`) | EU | Landing.jobs (PT/EU tech board). | 2d | local |  |  |
+| Landing.jobs (`landingjobs`) | EU | Landing.jobs (PT/EU tech board). | 2d | local | IT roles only |  |
 | LinkedIn (Apify) (`linkedin_apify`) | EU | Sources that need the user's API keys: TheirStack, Apify (LinkedIn), ITJobs.pt. | 2d | github | key: `APIFY_API_KEY`; **off by default** | LinkedIn via Apify actor curious_coder/linkedin-jobs-scraper; $0.002/result on the free plan; ~100 results/run (5 searches × 20) every 2 days |
 | LinkedIn (guest search) (`linkedin_guest`) | EU | LinkedIn's logged-out job search pages. | 1d | github | **off by default** |  |
 | Open Jobs Data (`open_jobs_data`) | EU | ConorsCode/open-jobs-data: a daily GitHub-Actions snapshot of ~38k postings from ~9 ATS platforms (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, ...). | 1d | github |  | ConorsCode/open-jobs-data daily snapshot (new-jobs.json); titles/locations only, no descriptions |
@@ -60,44 +60,44 @@ and others) are not listed here: Full mode polls the boards in `defaults/ats_reg
 | Jooble (`jooble_<cc>`) | AT, BE, BG, HR, CZ, DK, FI, FR, DE, GR, HU, IE, IT, NL, PL, PT, RO, SK, ES, SE, NO, CH | Jooble REST API (free key on request). | 1d | github | key: `JOOBLE_{CC}_API_KEY` | {cc}.jooble.org: republishes national boards we can't fetch (Cloudflare) and company pages |
 | Adzuna (`adzuna`) | AT, BE, DE, ES, FR, IT, NL, PL, CH | Adzuna search API (developer.adzuna.com; free key: ADZUNA_APP_ID + ADZUNA_APP_KEY). | 1d | github | key: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`; Full mode only | free key (developer.adzuna.com); job links must be Adzuna's redirect_url (their terms); ~500-character snippets |
 | karriere.at (`karriere_at`) | AT | karriere.at (Austria) — the site's own JSON search endpoint + schema.org JobPosting on detail pages. | 3d | github |  |  |
-| Engineering.jobs Belgium (`engineeringjobs_be`) | BE | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | be.engineering.jobs: IT + engineering, English; apply needs a board login |
-| ICTjob.be (`ictjob_be`) | BE | ICTjob.be — Belgian IT job board (server-rendered HTML with schema.org microdata). | 3d | github |  |  |
-| DEV.BG (`devbg`) | BG | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | dev.bg: Bulgaria's main IT board (~1.3k live jobs), WordPress job_listing sitemap with lastmod, JobPosting JSON-LD; English slugs |
-| ICTjobs.ch (`ictjobs_ch`) | CH | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 3d | github |  | ictjobs.ch: IT-only Swiss board (~180 jobs), some English; apply on company sites |
+| Engineering.jobs Belgium (`engineeringjobs_be`) | BE | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | IT roles only | be.engineering.jobs: IT + engineering, English; apply needs a board login |
+| ICTjob.be (`ictjob_be`) | BE | ICTjob.be — Belgian IT job board (server-rendered HTML with schema.org microdata). | 3d | github | IT roles only |  |
+| DEV.BG (`devbg`) | BG | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | IT roles only | dev.bg: Bulgaria's main IT board (~1.3k live jobs), WordPress job_listing sitemap with lastmod, JobPosting JSON-LD; English slugs |
+| ICTjobs.ch (`ictjobs_ch`) | CH | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 3d | github | IT roles only | ictjobs.ch: IT-only Swiss board (~180 jobs), some English; apply on company sites |
 | jobs.ch (`jobsch`) | CH | jobs.ch (Switzerland) — server-rendered search pages + schema.org JobPosting JSON-LD. | 3d | github |  |  |
 | jobup.ch (`jobup_ch`) | CH | jobs.ch (Switzerland) — server-rendered search pages + schema.org JobPosting JSON-LD. | 3d | github |  | jobup.ch, the French-speaking JobCloud site (same markup as jobs.ch); ~half English titles, little overlap with jobs.ch |
-| SwissDevJobs (`swissdevjobs`) | CH | Generic RSS / Atom job-feed adapter (WordPress, WP Job Manager, Hugo, custom feeds). | 2d | local |  |  |
+| SwissDevJobs (`swissdevjobs`) | CH | Generic RSS / Atom job-feed adapter (WordPress, WP Job Manager, Hugo, custom feeds). | 2d | local | IT roles only |  |
 | CyprusJobs (`cyprusjobs`) | CY | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | cyprusjobs.com: English, gaming/fintech tech jobs, work format Remote/Hybrid in the page; board apply form |
 | StartupJobs.cz (`startupjobs_cz`) | CZ | StartupJobs.cz (Czechia/Slovakia startups) via the API Platform backend its Nuxt frontend calls. | 3d | github |  |  |
 | Bundesagentur für Arbeit (`arbeitsagentur`) | DE | Bundesagentur für Arbeit Jobsuche (official, public client id). | 2d | github |  |  |
 | Berlin Startup Jobs (`berlinstartupjobs`) | DE | Generic RSS / Atom job-feed adapter (WordPress, WP Job Manager, Hugo, custom feeds). | 1d | github |  |  |
-| GermanTechJobs (`germantechjobs`) | DE | Generic RSS / Atom job-feed adapter (WordPress, WP Job Manager, Hugo, custom feeds). | 2d | github |  |  |
+| GermanTechJobs (`germantechjobs`) | DE | Generic RSS / Atom job-feed adapter (WordPress, WP Job Manager, Hugo, custom feeds). | 2d | github | IT roles only |  |
 | The Hub (Nordics) (`thehub`) | DK, SE, NO, FI | The Hub (thehub.io) — Nordic/European startup jobs via the public JSON API its Nuxt frontend uses. | 2d | github |  |  |
 | Jobindex (`jobindex`) | DK | Jobindex.dk (Denmark) — public RSS search feed. | 3d | github |  |  |
 | CV.ee (`cv_ee`) | EE | CV-Online platform — cv.ee (Estonia), cv.lv (Latvia) and cvonline.lt (Lithuania): one adapter, one entry per site. | 2d | github |  |  |
 | BarcelonaJobs (`barcelonajobs`) | ES | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | barcelonajobs.com (Job Boardly): English, multinationals in Barcelona; apply links go to the company ATS |
 | JobFluent (`jobfluent`) | ES | Jobfluent (Spain; English-friendly startup/tech jobs) — city sitemaps + server-rendered detail pages. | 2d | github |  |  |
-| Tecnoempleo (`tecnoempleo`) | ES | Tecnoempleo (Spain, largest IT board) — search result pages + schema.org JobPosting detail pages. | 2d | github |  |  |
+| Tecnoempleo (`tecnoempleo`) | ES | Tecnoempleo (Spain, largest IT board) — search result pages + schema.org JobPosting detail pages. | 2d | github | IT roles only |  |
 | Welcome to the Jungle (`wttj`) | FR | Welcome to the Jungle (welcometothejungle.com) via the public Algolia search index its frontend uses. | 1d | github |  |  |
 | CV.lt (`cv_lt`) | LT | cv.lt — Lithuanian job board (server-rendered HTML, no JSON-LD). | 2d | github |  |  |
 | CVonline.lt (`cvonline_lt`) | LT | CV-Online platform — cv.ee (Estonia), cv.lv (Latvia) and cvonline.lt (Lithuania): one adapter, one entry per site. | 2d | github |  |  |
 | Unicorns.lt (`unicorns_lt`) | LT | Unicorns Lithuania (unicorns.lt) — job board of the Lithuanian startup association. | 2d | github |  |  |
 | CV.lv (`cv_lv`) | LV | CV-Online platform — cv.ee (Estonia), cv.lv (Latvia) and cvonline.lt (Lithuania): one adapter, one entry per site. | 2d | github |  |  |
 | JobsInMalta (`jobsinmalta`) | MT | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | jobsinmalta.com: English, iGaming/fintech/IT; apply needs a board login |
-| Engineering.jobs Netherlands (`engineeringjobs_nl`) | NL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | nl.engineering.jobs: IT + engineering; ~40% English (the matcher's language rule drops Dutch-required); apply needs a board login |
+| Engineering.jobs Netherlands (`engineeringjobs_nl`) | NL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | IT roles only | nl.engineering.jobs: IT + engineering; ~40% English (the matcher's language rule drops Dutch-required); apply needs a board login |
 | Magnet.me (`magnet_me`) | NL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github |  | magnet.me (NL): English sitemap (~4.8k), JobPosting JSON-LD; robots disallow only /applyExternally, /page/, ?query= |
 | NAV (Norway) (`nav_no`) | NO | NAV Job Vacancy Feed (pam-stilling-feed): a change feed, not a search API. | 1d | github |  | change feed; public rotating token unless NAV_FEED_TOKEN is set (free on request) |
-| Bulldog Job (`bulldogjob`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github |  |  |
-| Experis Poland (`experis_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only | Experis PL (agency flag via matching.yaml); sitemap lists /en/ and /pl/ copies of every job -> only /en/ is fetched |
+| Bulldog Job (`bulldogjob`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github | IT roles only |  |
+| Experis Poland (`experis_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only; IT roles only | Experis PL (agency flag via matching.yaml); sitemap lists /en/ and /pl/ copies of every job -> only /en/ is fetched |
 | Hays Poland (`hays_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only | recruitment agency (agency flag via matching.yaml); hiringOrganization is always Hays; JSON-LD salary unit can be wrong (DAY vs PLN/h) |
-| Just Join IT (`justjoin`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github |  |  |
+| Just Join IT (`justjoin`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github | IT roles only |  |
 | Michael Page Poland (`michaelpage_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only | Michael Page PL (agency flag via matching.yaml); keyword listings (all results on one page, no paging) -> job-detail JSON-LD |
-| No Fluff Jobs (`nofluffjobs`) | PL | NoFluffJobs: server-rendered listing pages → (title gate) → offer pages' JSON-LD. | 1d | github |  |  |
-| Rocket Jobs (business roles) (`rocketjobs`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only |  |
-| Sii Poland (`sii_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only | Sii Polska (agency flag via matching.yaml); robots disallow only /oferty-pracy/all/all/* and /*/feed/ |
-| Solid.Jobs (`solidjobs`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github |  |  |
-| ITJobs.pt (`itjobs_pt`) | PT | Sources that need the user's API keys: TheirStack, Apify (LinkedIn), ITJobs.pt. | 2d | github | key: `ITJOBS_PT_API_KEY` |  |
-| Teamlyzer (`teamlyzer`) | PT | Teamlyzer (Portugal, IT-only) — list pages + schema.org JobPosting detail pages. | 2d | github |  |  |
+| No Fluff Jobs (`nofluffjobs`) | PL | NoFluffJobs: server-rendered listing pages → (title gate) → offer pages' JSON-LD. | 1d | github | IT roles only |  |
+| Rocket Jobs (business roles) (`rocketjobs`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | business roles only |  |
+| Sii Poland (`sii_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only; IT roles only | Sii Polska (agency flag via matching.yaml); robots disallow only /oferty-pracy/all/all/* and /*/feed/ |
+| Solid.Jobs (`solidjobs`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github | IT roles only |  |
+| ITJobs.pt (`itjobs_pt`) | PT | Sources that need the user's API keys: TheirStack, Apify (LinkedIn), ITJobs.pt. | 2d | github | key: `ITJOBS_PT_API_KEY`; IT roles only |  |
+| Teamlyzer (`teamlyzer`) | PT | Teamlyzer (Portugal, IT-only) — list pages + schema.org JobPosting detail pages. | 2d | github | IT roles only |  |
 | Arbetsförmedlingen (JobTech) (`jobtech_se`) | SE | Arbetsförmedlingen / JobTech JobSearch (open, no key): GET /search?q=&limit<=100&offset=. | 3d | github |  |  |
 
 ## Purpose-driven employers (opt-in)

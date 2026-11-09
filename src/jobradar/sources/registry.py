@@ -163,6 +163,8 @@ def selected(spec: SourceSpec, user: dict[str, Any] | None = None) -> bool:
         return False
     if spec.modes and config.mode() not in spec.modes:
         return False
+    if spec.domains and not set(spec.domains) & config.active_domains():
+        return False
     wanted = {c.upper() for c in user.get("countries") or []}
     covers = {c.upper() for c in spec.countries or ["EU"]}
     if not wanted:

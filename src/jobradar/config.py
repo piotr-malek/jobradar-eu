@@ -113,6 +113,14 @@ def active_pack_names() -> list[str]:
     return list(names) if names else sorted(available_packs())
 
 
+def active_domains() -> set[str]:
+    """The domains (it, business) of the active packs; a pack with no `domain` (a user's own) counts as both."""
+    out: set[str] = set()
+    for pack in load_packs(active_pack_names()):
+        out |= {pack["domain"]} if pack.get("domain") else {"it", "business"}
+    return out
+
+
 def user_packs() -> dict[str, dict[str, Any]]:
     custom = user_dir() / "packs"
     return {p.stem: read_yaml(p) for p in sorted(custom.glob("*.yaml"))} if custom.is_dir() else {}

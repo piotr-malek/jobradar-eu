@@ -3,6 +3,7 @@
 # (the base rules would otherwise drop any title containing "manager").
 label: Product & project management (IT)
 description: Product manager, product owner, technical product manager, IT project / program manager, delivery manager, scrum master.
+domain: it
 
 families:
   product:

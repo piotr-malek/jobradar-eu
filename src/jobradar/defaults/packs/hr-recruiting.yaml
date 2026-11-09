@@ -1,0 +1,96 @@
+# Role pack: HR, people operations and recruiting (any employer).
+label: HR & recruiting
+description: Recruiter, talent acquisition, sourcer, HR business partner, HR generalist, people operations, payroll, compensation and benefits, learning and development, employer branding.
+domain: business
+
+# the base config skips these as "not IT"; this pack wants them
+allow_disciplines: ['recruiter', 'talent acquisition']
+
+families:
+  recruiting:
+    tier: core
+    priority: 30
+    label: Recruiting
+    manager_ok: true            # "Talent Acquisition Manager" is often an individual role
+    any:
+      - recruiter|recruiting (?:manager|specialist|coordinator|partner|lead|consultant|associate)|recruitment (?:consultant|specialist|manager|partner|coordinator|advisor|officer|lead|associate)
+      - 'talent acquisition(?: (?:specialist|partner|manager|lead|coordinator|advisor|consultant|associate))?|talent (?:partner|sourcer|scout|advisor)'
+      - (?:technical|tech|it|executive|senior|lead) (?:recruiter|sourcer)|sourcer|sourcing (?:specialist|partner)
+      - employer brand\w* (?:manager|specialist|lead)|recruitment marketing
+      - rekruter\w*|specjalist\w* (?:ds\.? )?(?:rekrutacji|pozyskiwania talentow)|talent acquisition specialist
+      - recruiter\w* \(m/w/d\)|personalberater\w*|personalreferent\w* (?:recruiting|rekrutierung)|recruiting[- ]?(?:spezialist|manager|partner)\w*|talent[- ]?acquisition[- ]?\w*
+      - (?:tecnico|especialista|responsable|consultor\w*) (?:de |en )?(?:seleccion|reclutamiento)|reclutador\w*|recrutador\w*|(?:analista|especialista) de (?:recrutamento|selecao)
+      - charge\w* de recrutement|recruteu[rs]\w*|talent acquisition (?:partner|specialist)|recruiter (?:h/f|f/h)|rekryterare|rekryteringskonsult|wervings?\w*adviseur
+  hr:
+    tier: core
+    priority: 29
+    label: HR & people
+    manager_ok: true            # "HR Manager" / "People Partner" at small companies are individual roles
+    any:
+      - (?:hr|human resources?|people|personnel) (?:business partner|bp|generalist|specialist|manager|coordinator|advisor|administrator|assistant|officer|associate|consultant|partner|analyst|lead|operations)
+      - hrbp|people (?:ops|operations|experience|partner|and culture|& culture)|employee (?:experience|relations|engagement) (?:manager|specialist|partner|lead)
+      - (?:payroll|compensation|benefits|reward|total rewards|c&b|comp & ben|hris|hr systems|hr operations|workforce) (?:specialist|manager|analyst|administrator|coordinator|lead|partner|advisor|officer|accountant|consultant)
+      - (?:learning (?:and|&) development|l&d|training|onboarding|talent development|talent management|organizational development|culture) (?:specialist|manager|partner|coordinator|lead|consultant|advisor)
+      - specjalist\w* (?:ds\.? )?(?:kadr|plac|hr|personalnych|szkolen|rozwoju pracownikow|wynagrodzen)\w*|kadrow\w*|hr business partner|starsz\w* specjalist\w* ds\.? (?:kadr|hr)|kierownik\w* (?:ds\.? )?(?:hr|kadr|personalny)
+      - personalreferent\w*|personalsachbearbeiter\w*|personalmanager\w*|hr[- ]?(?:manager|generalist|referent|spezialist|business partner)\w*|lohnbuchhalter\w*|entgeltabrechner\w*|personalentwickler\w*
+      - (?:tecnico|especialista|responsable|administrativ\w*|generalista) (?:de )?(?:rrhh|recursos humanos|nominas|personas)|hr business partner
+      - (?:analista|especialista|gestor\w*|tecnico) (?:de )?(?:rh|recursos humanos|pessoas|folha de pagamento|departamento pessoal)
+      - charge\w* (?:de )?(?:ressources humaines|rh|paie|formation|developpement rh)|gestionnaire (?:rh|paie)|responsable (?:rh|ressources humaines|paie|formation)
+      - hr adviseur|hr medewerker|salarisadministrateur|hr-specialist|personalvetare|hr-generalist|hr generalist
+
+family_exclude: ['nurse', 'care worker', 'warehouse', 'driver', 'cleaner', 'security guard', 'temp worker',
+                 'sales recruiter (?:commission|1099)']
+family_exclude_ok: []
+
+stack:
+  weights: {workday: 3, successfactors: 3, greenhouse: 2, lever: 1, ashby: 2, bamboohr: 2, personio: 2, hibob: 2,
+            "linkedin recruiter": 2, sourcing: 1, hris: 2, ats: 1, sap hr: 2, payroll: 1, excel: 1, labour law: 1}
+  patterns:
+    workday: '\bworkday\b'
+    successfactors: 'successfactors'
+    greenhouse: '\bgreenhouse\b'
+    lever: '\blever\b'
+    ashby: '\bashby\b'
+    bamboohr: 'bamboo ?hr'
+    personio: 'personio'
+    hibob: 'hibob|\bbob\b hr'
+    linkedin recruiter: 'linkedin recruiter'
+    sourcing: '\bsourcing\b|boolean search'
+    hris: '\bhris\b|\bhcm\b'
+    ats: '\bats\b|applicant tracking'
+    sap hr: 'sap (?:hr|hcm)'
+    payroll: 'payroll|kadry i place|lohnabrechnung|nominas'
+    excel: '\bexcel\b'
+    labour law: 'labou?r law|kodeks pracy|arbeitsrecht|derecho laboral'
+
+search_terms:
+  en: [recruiter, talent acquisition, HR business partner, HR generalist, people operations, payroll specialist, learning and development]
+  pl: [rekruter, specjalista ds. rekrutacji, specjalista ds. kadr i płac, HR business partner, specjalista HR]
+  de: [Recruiter, Personalreferent, HR Business Partner, Talent Acquisition, Personalsachbearbeiter, Lohnbuchhalter]
+  es: [reclutador, técnico de selección, recursos humanos, HR business partner, técnico de nóminas]
+  pt: [recrutador, recursos humanos, analista de RH, HR business partner]
+  fr: [chargé de recrutement, chargé RH, gestionnaire paie, HR business partner, talent acquisition]
+  sv: [rekryterare, HR-specialist, personalvetare, lönespecialist]
+  nl: [recruiter, HR adviseur, HR business partner, salarisadministrateur]
+  it: [recruiter, HR specialist, addetto risorse umane, HR business partner]
+
+prefer: ['recruit|talent|hr-|human-resources|people|payroll|rekrut|kadr|personal|rrhh|recursos-humanos|ressources-humaines',
+         'sourcer|learning|training|compensation|benefits']
+
+boards:
+  remotive: {categories: [hr]}
+  themuse: {categories: [Human Resources and Recruitment]}
+
+golden:
+  keep: [Recruiter, Senior Recruiter, Technical Recruiter, IT Recruiter, Talent Acquisition Specialist,
+         Talent Acquisition Partner, Talent Acquisition Manager, Recruitment Consultant, Sourcer, Talent Sourcer,
+         Recruiting Coordinator, Employer Branding Specialist, HR Business Partner, HRBP, HR Generalist, HR Specialist,
+         HR Manager, People Partner, People Operations Specialist, HR Coordinator, HR Administrator, Payroll Specialist,
+         Compensation and Benefits Specialist, HRIS Analyst, Learning and Development Specialist, L&D Manager,
+         Rekruter, Specjalista ds. Rekrutacji, Specjalistka ds. Kadr i Płac, Starszy Specjalista ds. HR,
+         Recruiter (m/w/d), Personalreferent (m/w/d), HR Generalist (m/w/d), Lohnbuchhalter (m/w/d),
+         Técnico de Selección, Reclutador IT, Técnico de RRHH, Analista de RH, Chargé de recrutement,
+         Gestionnaire paie, Chargée RH, HR Adviseur, Rekryterare]
+  drop: [Backend Developer, Data Engineer, Account Executive, Marketing Manager, Nurse, Warehouse Worker, Truck Driver,
+         Accountant, Head of People, HR Director, Chief People Officer, HR Intern, Software Engineer, Office Manager,
+         Customer Success Manager]

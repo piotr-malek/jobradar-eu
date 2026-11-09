@@ -1,0 +1,102 @@
+# Role pack: finance, accounting, controlling, audit and tax (any employer).
+label: Finance & accounting
+description: Accountant, bookkeeper, AP / AR, general ledger, controller, FP&A and financial analyst, audit, tax, treasury, credit control, billing and payroll accounting.
+domain: business
+
+families:
+  accounting:
+    tier: core
+    priority: 30
+    label: Accounting
+    manager_ok: true            # "Accounting Manager" / "Finance Manager" are often individual roles in small teams
+    any:
+      - (?:staff |senior |junior |chartered |certified |management |financial |cost |project |fund |group |general ledger |gl |tax |payroll |property |technical |statutory )?accountant
+      - bookkeeper|book-?keeping (?:specialist|assistant)|accounting (?:specialist|manager|assistant|associate|clerk|officer|analyst|lead|coordinator)
+      - (?:accounts payable|accounts receivable|ap|ar|ap/ar|general ledger|gl|billing|invoicing|credit control|collections?|order to cash|o2c|procure to pay|p2p|record to report|r2r|reconciliation|fixed assets?|intercompany) (?:specialist|accountant|clerk|analyst|associate|officer|lead|manager|assistant|team lead|controller)
+      - credit controller|payroll accountant|financial accountant|statutory reporting (?:specialist|accountant|manager)
+      - ksiegow\w*|specjalist\w* (?:ds\.? )?(?:ksiegowosci|rozliczen|naleznosci|zobowiazan|fakturowania|windykacji|ksiegi glownej)\w*|starsz\w* ksiegow\w*|glown\w* ksiegow\w*|samodzieln\w* ksiegow\w*
+      - buchhalter\w*|finanzbuchhalter\w*|bilanzbuchhalter\w*|lohnbuchhalter\w*|kreditorenbuchhalter\w*|debitorenbuchhalter\w*|sachbearbeiter\w* (?:buchhaltung|rechnungswesen|finanzbuchhaltung)
+      - contab\w*|(?:tecnico|administrativ\w*|auxiliar|asistente|analista) (?:de )?(?:contabilidad|contable|cuentas a pagar|cuentas a cobrar|facturacion)|contador\w*|tecnico oficial de contas|assistente contabil
+      - comptable\w*|aide[- ]comptable|gestionnaire (?:comptable|de paie)|charge\w* de (?:comptabilite|recouvrement)
+      - contabile|impiegat\w* amministrativ\w* contabile|boekhouder|financieel medewerker|redovisningsekonom|ekonomiassistent|bokforare
+  finance:
+    tier: core
+    priority: 29
+    label: Finance & controlling
+    manager_ok: true
+    any:
+      - (?:financial|finance|fp&a|fpa|business|commercial|investment|credit|pricing|budget|treasury|risk|revenue|cost) analyst
+      - (?:fp&a|fpa|financial planning|finance business partner|finance|treasury|tax|audit|internal audit|financial reporting|consolidation|group reporting|billing|credit|revenue|payroll) (?:manager|specialist|partner|lead|associate|officer|advisor|consultant|analyst|coordinator)
+      - (?:financial |finance |business |plant |project |group |sales |cost |commercial )?controller|controlling (?:specialist|manager|analyst)
+      - (?:internal |external |it |financial |senior |junior )?auditor|audit (?:associate|senior|assistant)|tax (?:advisor|adviser|consultant|associate|accountant|specialist)
+      - finance business partner|fbp|treasur(?:er|y specialist)|cash management (?:specialist|analyst)|finance (?:officer|assistant|associate|generalist)
+      - analityk\w* finansow\w*|kontroler\w* finansow\w*|specjalist\w* (?:ds\.? )?(?:controllingu|kontrolingu|finansow|podatkow|raportowania|budzetowania|skarbu)\w*|kontroling\w*|controlling\w*|audytor\w*|doradc\w* podatkow\w*
+      - controller\w* \(m/w/d\)|finanzanalyst\w*|finanzcontroller\w*|referent\w* (?:finanzen|controlling|rechnungswesen)|steuerberater\w*|steuerfachangestellte\w*|wirtschaftsprufer\w*|treasury[- ]?manager\w*
+      - controller\w*|analista financier\w*|(?:tecnico|responsable|especialista) (?:de )?(?:control de gestion|finanzas|tesoreria|fiscal|impuestos)|auditor\w*|asesor\w* fiscal
+      - analista financeir\w*|(?:especialista|analista|gestor\w*) (?:de )?(?:controladoria|tesouraria|fiscal|planejamento financeiro)
+      - controleur de gestion|analyste financier|auditeur\w*|fiscaliste|tresorier|charge\w* de (?:controle de gestion|tresorerie|reporting financier)
+      - analista finanziari\w*|controller di gestione|financial controller|financieel analist|business controller|controller
+
+family_exclude: ['bank teller', 'cashier', 'insurance (?:agent|sales)', 'financial advisor', 'mortgage advisor',
+                 'loan officer', 'sales', 'store', 'retail', 'call cent\w*', 'debt collector', 'air traffic controller',
+                 'game controller', 'flight controller', 'quality controller', 'qc controller', 'production controller',
+                 'stock controller', 'traffic controller', 'controller firmware']
+family_exclude_ok: []
+
+stack:
+  weights: {sap: 3, oracle: 2, netsuite: 2, xero: 2, quickbooks: 1, datev: 2, excel: 2, power bi: 2, ifrs: 3, us gaap: 2,
+            acca: 2, cima: 2, cpa: 2, consolidation: 1, sql: 1, anaplan: 2, hyperion: 2, optima: 1, symfonia: 1,
+            comarch: 1}
+  patterns:
+    sap: '\bsap\b|s/?4 ?hana|sap fi(?:/co)?'
+    oracle: 'oracle (?:financials|fusion|ebs|netsuite)'
+    netsuite: 'netsuite'
+    xero: '\bxero\b'
+    quickbooks: 'quickbooks'
+    datev: '\bdatev\b'
+    excel: '\bexcel\b'
+    power bi: 'power ?bi'
+    ifrs: '\bifrs\b|\bmsr\b'
+    us gaap: 'us ?gaap'
+    acca: '\bacca\b'
+    cima: '\bcima\b'
+    cpa: '\bcpa\b'
+    consolidation: 'consolidation|konsolidac'
+    sql: '\bsql\b'
+    anaplan: 'anaplan'
+    hyperion: 'hyperion|onestream|tagetik|board international'
+    optima: 'comarch optima|\boptima\b'
+    symfonia: 'symfonia'
+    comarch: 'comarch'
+
+search_terms:
+  en: [accountant, financial analyst, FP&A analyst, financial controller, accounts payable specialist, accounts receivable, auditor, tax specialist, bookkeeper]
+  pl: [księgowa, specjalista ds. księgowości, analityk finansowy, controller, specjalista ds. rozliczeń, audytor]
+  de: [Buchhalter, Finanzbuchhalter, Controller, Finanzanalyst, Bilanzbuchhalter, Steuerfachangestellter]
+  es: [contable, analista financiero, controller, auditor, técnico de contabilidad, asesor fiscal]
+  pt: [contabilista, analista financeiro, controller, auditor, técnico oficial de contas]
+  fr: [comptable, contrôleur de gestion, analyste financier, auditeur, fiscaliste]
+  sv: [redovisningsekonom, controller, ekonomiassistent, finansanalytiker]
+  nl: [boekhouder, financieel medewerker, controller, financieel analist]
+  it: [contabile, controller, analista finanziario, auditor]
+
+prefer: ['account|finance|financial|fp-?a|controller|controlling|audit|tax|treasury|payroll|bookkeep|ksiegow|finans|buchhalt|contab|comptab|boekhoud|redovisning',
+         'billing|invoic|credit|payable|receivable|reporting']
+
+boards:
+  remotive: {categories: [finance-legal]}
+  themuse: {categories: [Accounting, Finance]}
+
+golden:
+  keep: [Accountant, Senior Accountant, Management Accountant, Chartered Accountant, Bookkeeper,
+         Accounts Payable Specialist, Accounts Receivable Specialist, AP/AR Specialist, General Ledger Accountant,
+         Billing Specialist, Credit Controller, Accounting Manager, Financial Analyst, FP&A Analyst, Senior FP&A Analyst,
+         Financial Controller, Finance Business Partner, Business Controller, Treasury Analyst, Tax Advisor,
+         Tax Specialist, Internal Auditor, Audit Associate, Finance Manager, Payroll Accountant, Revenue Accountant,
+         Księgowa, Samodzielna Księgowa, Specjalista ds. Księgowości, Analityk Finansowy, Specjalista ds. Controllingu,
+         Controller Finansowy, Buchhalter (m/w/d), Finanzbuchhalter (m/w/d), Controller (m/w/d), Bilanzbuchhalter,
+         Contable, Analista Financiero, Técnico de Contabilidad, Comptable, Contrôleur de gestion, Analyste financier,
+         Contabilista, Analista Financeiro, Boekhouder, Redovisningsekonom]
+  drop: [Backend Developer, Data Engineer, Bank Teller, Insurance Sales Agent, Financial Advisor, Mortgage Advisor,
+         Cashier, Air Traffic Controller, Quality Controller, Stock Controller, CFO, Finance Director, Head of Finance,
+         Accounting Intern, Marketing Manager, Recruiter, Nurse, Software Engineer]

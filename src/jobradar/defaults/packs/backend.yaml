@@ -5,6 +5,7 @@
 # can read them as adjacent matches. Full-stack titles are the fullstack pack's, frontend ones the frontend pack's.
 label: Backend & software engineering
 description: Backend engineer / developer, Java / Python / Go / .NET / PHP / Node developer, generic software engineer and programista.
+domain: it
 
 families:
   backend:

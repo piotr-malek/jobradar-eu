@@ -1,6 +1,7 @@
 # Role pack: full-stack engineering. Backend and frontend packs deliberately leave full-stack titles to this one.
 label: Full-stack engineering
 description: Full-stack developer / engineer (full stack, full-stack or fullstack), MEAN / MERN stack developer.
+domain: it
 
 families:
   fullstack:

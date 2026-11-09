@@ -1,0 +1,101 @@
+# Role pack: marketing, communications and content (any employer). Marketing ops / automation engineering is gtm-revops.
+label: Marketing & content
+description: Digital, performance and growth marketing, SEO / SEM / paid ads, social media, brand, PR and communications, events, copywriting, content and editing.
+domain: business
+
+families:
+  marketing:
+    tier: core
+    priority: 30
+    label: Marketing
+    manager_ok: true            # "Marketing Manager" is usually an individual role
+    any:
+      - marketing (?:manager|specialist|executive|coordinator|associate|lead|consultant|strategist|analyst|assistant|officer|generalist|partner|expert)
+      - '(?:digital|online|performance|growth|product|brand|content|social media|e-?mail|crm|lifecycle|retention|field|event|partner|channel|b2b|b2c|demand generation|influencer|affiliate|community|seo|search|ppc|paid|inbound|account[- ]based|abm|customer|marketplace|app|mobile) marketing(?: (?:manager|specialist|executive|coordinator|associate|lead|consultant|strategist|analyst|assistant|officer|expert))?'
+      - marketer|marketeer
+      - (?:growth|demand generation|acquisition|user acquisition|lifecycle|retention) (?:manager|specialist|lead|marketer|strategist)
+      - (?:brand|communications?|comms|corporate communications|internal communications|pr|public relations|media relations|campaign|campaigns|events?|community|social media|influencer|partnerships?) (?:manager|specialist|executive|coordinator|lead|officer|strategist|associate|consultant)
+      - (?:seo|sem|ppc|paid (?:search|social|media|ads)|performance|programmatic|google ads|ads|media buying|aso) (?:specialist|manager|lead|analyst|consultant|expert|strategist|executive|buyer|marketer)
+      - media (?:buyer|planner)|community manager|social media (?:editor|creator)|spokesperson|press officer
+      - specjalist\w* (?:ds\.? )?(?:marketingu|seo|sem|ppc|komunikacji|pr|social media|e-?commerce|kampanii|reklamy)\w*|marketingowiec|kierownik\w* (?:ds\.? )?marketingu|menedzer\w* (?:ds\.? )?marketingu|mlodszy specjalista ds\.? marketingu
+      - (?:online[- ]?)?marketing[- ]?(?:manager|referent\w*|spezialist\w*|koordinator\w*|mitarbeiter\w*)|marketingreferent\w*|referent\w* (?:fur |im )?marketing|kommunikations(?:manager|referent)\w*|pressesprecher\w*|social[- ]media[- ]manager\w*|performance[- ]marketing\w*
+      - (?:especialista|tecnico|responsable|gestor\w*|coordinador\w*|ejecutiv\w*) (?:de |en )?(?:marketing|comunicacion|redes sociales|seo|sem)\w*
+      - (?:especialista|analista|gestor\w*|coordenador\w*|assistente) (?:de |em )?(?:marketing|comunicacao|redes sociais|seo)\w*
+      - charge\w* (?:de )?(?:marketing|communication|relations presse)|responsable (?:marketing|communication|acquisition|seo)|chef de projet (?:marketing|communication|digital)
+      - (?:specialista|responsabile|addett\w*) (?:marketing|comunicazione|seo)|online marketeer|marketing medewerker|marknadsforare|marknadskoordinator
+  content:
+    tier: core
+    priority: 29
+    label: Content & copywriting
+    manager_ok: true
+    any:
+      - copywriter|copy ?writer|content (?:writer|creator|marketer|manager|strategist|editor|specialist|lead|producer|designer|coordinator|marketing manager)
+      - (?:technical|ux|creative|proposal|grant|medical|seo|freelance) writer|ghostwriter|proofreader|copy ?editor|managing editor|sub-?editor
+      - '(?:senior |junior )?editor(?! in chief)(?: \(m/w/d\))?|editorial (?:manager|assistant|lead|coordinator)'
+      - redaktor\w*|teksciarz|tekstopisarz|texter\w*|redacteur\w*|redactor\w*|redator\w*|redattore|copywriter\w*|tekstschrijver
+      - (?:social media|video|podcast) (?:producer|creator|editor)|content creator|ugc creator|storyteller
+
+family_exclude: ['telemarketing', 'network marketing', 'multi[- ]level', 'mlm', 'door[- ]to[- ]door', 'promoter',
+                 'brand ambassador', 'store', 'shop assistant', 'retail', 'merchandis\w*', 'cashier', 'call cent\w*',
+                 'video editor', 'film editor', 'photo editor', 'sales representative', 'field sales']
+family_exclude_ok: []
+
+stack:
+  weights: {google ads: 3, meta ads: 3, google analytics: 3, seo: 2, semrush: 2, ahrefs: 2, hubspot: 2, marketo: 2,
+            salesforce: 1, mailchimp: 1, klaviyo: 2, wordpress: 1, canva: 1, figma: 1, linkedin ads: 2, tiktok: 1,
+            looker studio: 1, tag manager: 2, b2b: 1, saas: 1, copywriting: 1}
+  patterns:
+    google ads: 'google ads|adwords'
+    meta ads: 'meta ads|facebook ads|instagram ads|meta business'
+    google analytics: '\bga4\b|google analytics'
+    seo: '\bseo\b'
+    semrush: 'semrush'
+    ahrefs: 'ahrefs'
+    hubspot: 'hubspot'
+    marketo: 'marketo'
+    salesforce: 'salesforce'
+    mailchimp: 'mailchimp'
+    klaviyo: 'klaviyo'
+    wordpress: 'wordpress'
+    canva: '\bcanva\b'
+    figma: 'figma'
+    linkedin ads: 'linkedin ads|linkedin campaign manager'
+    tiktok: 'tiktok'
+    looker studio: 'looker studio|data studio'
+    tag manager: 'tag manager|\bgtm\b'
+    b2b: '\bb2b\b'
+    saas: '\bsaas\b'
+    copywriting: 'copywriting'
+
+search_terms:
+  en: [marketing manager, digital marketing, performance marketing, SEO specialist, social media manager, content marketing, copywriter, communications manager, PR manager, brand manager]
+  pl: [specjalista ds. marketingu, marketing, specjalista SEO, social media, copywriter, specjalista ds. komunikacji, PR]
+  de: [Marketing Manager, Online Marketing, Social Media Manager, Texter, Kommunikation, Content Manager]
+  es: [marketing digital, especialista SEO, community manager, redactor, comunicación, responsable de marketing]
+  pt: [marketing digital, especialista SEO, gestor de redes sociais, redator, comunicação]
+  fr: [chargé de marketing, marketing digital, community manager, rédacteur, chargé de communication, responsable SEO]
+  sv: [marknadsförare, marknadskoordinator, kommunikatör, copywriter]
+  nl: [marketeer, online marketeer, content marketeer, communicatieadviseur, copywriter]
+  it: [marketing, specialista SEO, social media manager, copywriter, comunicazione]
+
+prefer: ['marketing|seo|sem|ppc|social-media|content|copywriter|copywriting|brand|communication|komunikac|pr-|growth|performance|redaktor|texter|redacteur|redactor|redator',
+         'campaign|event|community|editor|writer|media']
+
+boards:
+  remotive: {categories: [marketing, writing]}
+  themuse: {categories: [Marketing, Writing and Editing, Media, PR, and Communications]}
+
+golden:
+  keep: [Marketing Manager, Digital Marketing Specialist, Performance Marketing Manager, Growth Marketing Manager,
+         Product Marketing Manager, Content Marketing Manager, SEO Specialist, SEM Specialist, PPC Specialist,
+         Paid Social Specialist, Google Ads Specialist, Social Media Manager, Community Manager, Brand Manager,
+         Communications Manager, PR Specialist, Event Manager, Email Marketing Specialist, CRM Marketing Manager,
+         Lifecycle Marketing Manager, Demand Generation Manager, Marketing Coordinator, Marketing Associate, Media Buyer,
+         Copywriter, Senior Copywriter, Content Writer, Content Editor, Technical Writer, UX Writer, Editor,
+         Specjalista ds. Marketingu, Specjalista ds. SEO, Specjalistka ds. Komunikacji, Redaktor, Copywriter (m/w/d),
+         Online Marketing Manager (m/w/d), Social Media Manager (m/w/d), Texter (m/w/d), Marketingreferent (m/w/d),
+         Especialista en Marketing Digital, Redactor SEO, Responsable de Marketing, Analista de Marketing,
+         Chargé de communication, Chargée de marketing digital, Rédacteur web, Online Marketeer, Marknadsförare]
+  drop: [Backend Developer, Data Engineer, Account Executive, Telemarketing Agent, Network Marketing Consultant,
+         Brand Ambassador, Retail Store Manager, Video Editor, Sales Representative, Marketing Director, Head of Marketing,
+         CMO, Marketing Intern, Nurse, Accountant, Recruiter, Truck Driver, Software Engineer]

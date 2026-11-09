@@ -1,6 +1,7 @@
 # Role pack: information / application / cloud security engineering.
 label: Security engineering
 description: Security engineer, application security (AppSec), penetration tester, SOC analyst, cloud security, IAM, threat and incident response.
+domain: it
 
 families:
   security:

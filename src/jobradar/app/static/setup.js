@@ -132,6 +132,13 @@ async function sourcesFor() {
   document.getElementById("sources-off").innerHTML = v.off.map(s => `<tr><td>${esc(s.label)}</td><td class="muted">${esc(s.covers)}</td>
     <td class="muted">${esc(s.why)}</td></tr>`).join("");
   document.getElementById("boards-off").hidden = !v.off.length;
+  const kept = new Set([...WIZ.querySelectorAll("input[name='alert_add[]']:checked")].map(c => c.value));
+  const alerts = v.alerts || [];
+  document.getElementById("alert-boards").hidden = !alerts.length;
+  document.getElementById("alert-list").innerHTML = alerts.map(b => `<tr>
+    <td>${b.sender ? `<input type="checkbox" name="alert_add[]" value="${esc(b.sender)}" ${b.added || kept.has(b.sender) ? "checked" : ""}>` : ""}</td>
+    <td><a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.name)}</a>${b.account ? ' <span class="muted">(free account)</span>' : ""}</td>
+    <td class="muted">${esc(b.country)}</td><td class="muted">${esc(b.roles)}</td></tr>`).join("");
 }
 
 async function ghInstall(btn) {
