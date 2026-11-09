@@ -26,7 +26,10 @@ function formData() {
     }
     if ((d.work_setups || []).includes("remote_country") && d.residency_elsewhere) d.work_setups.push("remote_eu");
   }
-  if (STEP === "roles") for (const k of ["never", "must_have", "extra_titles"]) d[k] = lines(d[k]);
+  if (STEP === "roles") {
+    for (const k of ["never", "must_have", "extra_titles"]) d[k] = lines(d[k]);
+    d.pos_all = [...f.querySelectorAll("input[name='pos_keep[]']")].map(c => c.value);
+  }
   if (STEP === "experience") for (const k of ["priority_roles", "target_roles", "strong_stack", "nice_stack", "highlights"]) d[k] = lines(d[k]);
   if (STEP === "countries_sources") d.disable = [...f.querySelectorAll("input.src")].filter(c => !c.checked).map(c => c.value);
   if (STEP === "answer_bank") {
@@ -105,6 +108,23 @@ function rolesPreview() {
     document.getElementById("preview").innerHTML = `<div class="grid"><div><h4>Kept (${r.kept.length})</h4><ul>${li(r.kept, "good")}</ul></div>
       <div><h4>Dropped (${r.dropped.length})</h4><ul>${li(r.dropped.slice(0, 60), "muted")}</ul></div></div>`;
   }, 300);
+}
+
+async function positionsFind(btn) {
+  busy(btn, true, "Asking the AI…");
+  try {
+    const r = await post("/setup/api/positions", {positions: WIZ.elements.positions.value});
+    if (!r.ok) { toast(r.error, true); return; }
+    for (const name of r.packs) {
+      const box = WIZ.querySelector(`input[name="packs[]"][value="${CSS.escape(name)}"]`);
+      if (box) box.checked = true;
+    }
+    const box = (t, name, on) => `<li><label class="inline"><input type="checkbox" name="${name}" value="${esc(t)}" ${on ? "checked" : ""} onchange="rolesPreview()"> ${esc(t)}</label></li>`;
+    document.getElementById("positions-out").innerHTML = r.positions.map(g =>
+      `<h4>${esc(g.position)}</h4><ul class="titles">${g.titles.map(t => box(t, "pos_keep[]", true)).join("")}</ul>`).join("")
+      + (r.avoid.length ? `<h4>Usually a different job: skipped unless you untick them</h4><ul class="titles">${r.avoid.map(t => box(t, "pos_avoid[]", true)).join("")}</ul>` : "");
+    rolesPreview();
+  } finally { busy(btn, false); }
 }
 
 async function packDraft(btn) {

@@ -238,9 +238,85 @@ def save_roles(data: dict[str, Any]) -> dict[str, Any]:
            "seniority": {"min": data.get("min") or "junior", "max": data.get("max") or "senior"},
            "never": [w for w in data.get("never") or [] if w.strip()],
            "must_have": [w for w in data.get("must_have") or [] if w.strip()],
-           "extra_titles": [w for w in data.get("extra_titles") or [] if w.strip()]}
-    write_user_yaml("roles.yaml", out, merge=False)
+           "extra_titles": [w for w in data.get("extra_titles") or [] if w.strip()],
+           **position_choice(data)}
+    write_user_yaml("roles.yaml", {k: v for k, v in out.items() if v not in ("", [], None)} | {"packs": packs},
+                    merge=False)
     return out
+
+
+def position_choice(data: dict[str, Any]) -> dict[str, Any]:
+    """The positions box: the text typed, the titles kept (ticked) and the ones to skip (unticked or 'nearby')."""
+    keep = [t.strip() for t in data.get("pos_keep") or [] if t.strip()]
+    skip = [t.strip() for t in data.get("pos_all") or [] if t.strip() and t.strip() not in keep]
+    skip += [t.strip() for t in data.get("pos_avoid") or [] if t.strip() and t.strip() not in keep + skip]
+    return {"positions": (data.get("positions") or "").strip(), "position_titles": keep, "position_skip": skip}
+
+
+POSITIONS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "packs": {"type": "array", "items": {"type": "string"}},
+        "positions": {"type": "array", "items": {"type": "object", "properties": {
+            "position": {"type": "string"}, "titles": {"type": "array", "items": {"type": "string"}}},
+            "required": ["position", "titles"], "additionalProperties": False}},
+        "avoid": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["packs", "positions", "avoid"],
+    "additionalProperties": False,
+}
+POSITIONS_SYSTEM = """A job seeker lists the positions they want. Help a job-title filter find them on job boards.
+Return:
+- packs: the role packs from this list that cover these positions (names exactly as given, often one or two, or none):
+  {packs}
+- positions: for each position the user listed, 6-12 job titles real job ads use for it, in English and in these
+  languages: {langs}. Plain titles only: no seniority words (junior, senior), no gender markers like (m/w/d), no
+  company names. Include common variants and synonyms.
+- avoid: 5-10 titles that look close but are usually a different job (e.g. "SEO developer" for an SEO specialist)."""
+
+
+def expand_positions(text: str, client: Any = None) -> dict[str, Any]:
+    """One AI call: the user's positions → matching packs, title variants per position and nearby titles to skip."""
+    from jobradar.llm.client import LLMClient, LLMError
+    from jobradar.normalize.location import COUNTRY_LANGS
+
+    text = (text or "").strip()
+    if not text:
+        raise ValueError("type the positions you want, separated by commas")
+    packs = {**config.available_packs(), **config.user_packs()}
+    p = config.profile()
+    langs = {config.LANG_NAMES.get(c, c) for c, lv in config.language_levels(p).items() if lv >= 3}
+    for cc in config.user_sources().get("countries") or []:
+        langs |= {config.LANG_NAMES.get(c, c) for c in COUNTRY_LANGS.get(str(cc).upper(), [])}
+    system = POSITIONS_SYSTEM.format(
+        packs="; ".join(f"{k} ({v.get('label') or k})" for k, v in packs.items()),
+        langs=", ".join(sorted(langs - {"English"})) or "English only")
+    own = client is None
+    try:
+        client = client or LLMClient("onboarding")
+        res = client.json(f"Positions wanted: {text}", POSITIONS_SCHEMA, name="positions", system=system,
+                          max_tokens=2500)
+    except LLMError as exc:
+        raise ValueError(f"the AI call failed: {exc}") from exc
+    finally:
+        if own and client is not None:
+            client.close()
+    seen: set[str] = set()
+
+    def clean(titles: list[Any]) -> list[str]:
+        out = []
+        for t in titles or []:
+            t = " ".join(str(t).split())[:80]
+            key = config.fold_title(t)
+            if t and key and key not in seen and config.safe_regex(config.title_pattern(t)):
+                seen.add(key)
+                out.append(t)
+        return out
+
+    groups = [{"position": str(g.get("position") or "").strip(), "titles": clean(g.get("titles"))}
+              for g in res.get("positions") or [] if isinstance(g, dict)]
+    return {"packs": [k for k in res.get("packs") or [] if k in packs], "positions": [g for g in groups if g["titles"]],
+            "avoid": clean(res.get("avoid"))}
 
 
 def roles_preview(data: dict[str, Any], titles: list[str] | None = None) -> dict[str, Any]:
@@ -252,9 +328,10 @@ def roles_preview(data: dict[str, Any], titles: list[str] | None = None) -> dict
         return {"kept": [], "dropped": []}
     r = {"packs": packs, "seniority": {"min": data.get("min") or "junior", "max": data.get("max") or "senior"},
          "never": [w for w in data.get("never") or [] if config.safe_regex(w)],
-         "extra_titles": [w for w in data.get("extra_titles") or [] if config.safe_regex(w)]}
+         "extra_titles": [w for w in data.get("extra_titles") or [] if config.safe_regex(w)],
+         **position_choice(data)}
     engine = MatchEngine.from_config(config.matching_config(r=r, packs=packs))
-    sample = titles or sample_titles()
+    sample = titles or list(dict.fromkeys([*r["position_titles"], *r["position_skip"], *sample_titles()]))
     kept, dropped = [], []
     for t in sample:
         v = engine.title_verdict(t)

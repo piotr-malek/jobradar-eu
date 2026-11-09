@@ -417,3 +417,34 @@ def test_roles_step_groups_business_and_tech_packs(wiz):
     biz, tech = html.index("Business and office roles"), html.index("Tech roles")
     assert biz < html.index('value="marketing-content"') < tech < html.index('value="backend"')
     assert biz < html.index('value="sales-cs"') < tech
+
+
+def test_positions_become_titles_to_keep_and_titles_to_skip(wiz, tmp_path):
+    from fakes import FakeLLM
+    from jobradar import config, wizard
+    from jobradar.llm.client import LLMClient
+    from jobradar.match.engine import MatchEngine
+
+    reply = {"packs": ["marketing-content", "not-a-pack"],
+             "positions": [{"position": "SEO specialist", "titles": ["SEO Specialist", "Specjalista ds. SEO", "SEO Manager",
+                                                                     "SEO Specialist (m/w/d)"]},
+                           {"position": "recruiter", "titles": ["Recruiter", "Tech Sourcer"]}],
+             "avoid": ["SEO Developer"]}
+    fake = FakeLLM(lambda p: reply)
+    llm = LLMClient("onboarding", provider="mistral", transport=fake.transport(), sleep=False, ledger_dir=tmp_path)
+    out = wizard.expand_positions("SEO specialist, recruiter", client=llm)
+    assert out["packs"] == ["marketing-content"]
+    assert out["positions"][0]["titles"] == ["SEO Specialist", "Specjalista ds. SEO", "SEO Manager"]   # (m/w/d) dup gone
+    assert "English only" in fake.payloads[0]["messages"][0]["content"]          # empty profile: no other languages
+    saved = wizard.save_roles({"packs": ["data"], "positions": "SEO specialist, recruiter",
+                               "pos_keep": ["SEO Specialist", "Specjalista ds. SEO", "SEO Manager", "Recruiter"],
+                               "pos_all": ["SEO Specialist", "Specjalista ds. SEO", "SEO Manager", "Recruiter", "Tech Sourcer"],
+                               "pos_avoid": ["SEO Developer"]})
+    assert saved["position_skip"] == ["Tech Sourcer", "SEO Developer"]
+    assert config.roles()["position_titles"][-1] == "Recruiter"
+    engine = MatchEngine.from_config(config.matching_config())
+    kept = lambda t: engine.title_verdict(t).tier != "excluded"  # noqa: E731
+    assert kept("SEO Manager (m/w/d)") and kept("Specjalista ds. SEO") and kept("Recruiter")   # manager / not-IT lifted
+    assert not kept("Tech Sourcer") and not kept("Senior SEO Developer")
+    preview = wizard.roles_preview({"packs": ["data"], "pos_keep": ["SEO Specialist"], "pos_all": ["SEO Specialist"]})
+    assert "SEO Specialist" in {x["title"] for x in preview["kept"]}

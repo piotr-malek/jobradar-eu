@@ -173,6 +173,15 @@ def pack_draft() -> Any:
     return jsonify(res)
 
 
+@bp.post("/api/positions")
+def positions() -> Any:
+    d = request.get_json(force=True) or {}
+    try:
+        return jsonify({"ok": True, **wizard.expand_positions(d.get("positions") or "")})
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)})
+
+
 @bp.post("/api/sources")
 def sources_for() -> Any:
     d = request.get_json(force=True) or {}

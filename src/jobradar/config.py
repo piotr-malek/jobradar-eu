@@ -119,6 +119,19 @@ def active_pack_names() -> list[str]:
     return list(names) if names else sorted(available_packs())
 
 
+def fold_title(title: str) -> str:
+    from jobradar.normalize.text import fold
+
+    t = fold(title or "")
+    t = re.sub(r"\((?:m|w|f|d|h|x|k|all genders?|[mwfdhxk]/[mwfdhxk](?:/[mwfdhxk])?)\)", " ", t)
+    return " ".join(t.split())
+
+
+def title_pattern(title: str) -> str:
+    """A job title the user typed or ticked → a matcher pattern: folded, gender suffix dropped, spaces flexible."""
+    return r"\s+".join(re.escape(w) for w in fold_title(title).split())
+
+
 def active_domains() -> set[str]:
     """The domains (it, business) of the active packs; a pack with no `domain` (a user's own) counts as both."""
     out: set[str] = set()
@@ -287,10 +300,17 @@ def matching_config(*, p: dict[str, Any] | None = None, r: dict[str, Any] | None
         "keep": r.get("keep_titles") or [],
         "must_have": r.get("must_have") or [],
     }
-    if r.get("extra_titles"):
-        cfg["title"]["families"] = {"custom": {"tier": "core", "any": r["extra_titles"], "priority": 40,
-                                                "label": "", "pack": "custom"}, **cfg["title"]["families"]}
+    extra = list(r.get("extra_titles") or []) + [title_pattern(t) for t in r.get("position_titles") or []]
+    cfg["user_titles"]["never"] = list(cfg["user_titles"]["never"]) + [
+        title_pattern(t) for t in r.get("position_skip") or [] if title_pattern(t) not in extra]
+    if extra:
+        cfg["title"]["families"] = {"custom": {"tier": "core", "any": extra, "priority": 40, "label": "",
+                                               "pack": "custom", "manager_ok": True}, **cfg["title"]["families"]}
         cfg["priority"]["family"]["custom"] = 40
+        hard = cfg["title"]["exclude"].get("discipline_hard") or []     # a title the user asked for is never "not IT"
+        cfg["title"]["exclude"]["discipline_hard"] = [
+            d for d in hard if not any(re.search(rf"(?<![a-z0-9])(?:{d})(?![a-z0-9])", fold_title(t))
+                                       for t in r.get("position_titles") or [])]
     cfg["location"] = {**cfg.get("location", {}), **location_rules(p)}
     cfg["language"] = {**cfg.get("language", {}), **language_rules(p)}
     cfg = deep_merge(cfg, read_yaml(user_dir() / "matching.yaml"))

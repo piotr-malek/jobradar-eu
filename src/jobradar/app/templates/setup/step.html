@@ -93,6 +93,13 @@
 {% elif step == 'roles' %}
 <h1>Roles</h1>
 <p>Tick the kinds of jobs you want (one or more). The preview below shows real job titles we'd keep or skip.</p>
+<section class="recommended"><h3>Positions you want <span class="muted">(optional, uses your AI model)</span></h3>
+  <p class="muted">Type the positions you're after; the AI lists the titles job ads use for them in your languages and
+    ticks the matching groups below. Untick any title that isn't for you: it will be skipped.</p>
+  <textarea name="positions" rows="2" placeholder="e.g. content marketing manager, SEO specialist, copywriter">{{ roles.positions or '' }}</textarea>
+  <button type="button" class="small" onclick="positionsFind(this)">Find the titles</button>
+  <div id="positions-out">{% if roles.position_titles or roles.position_skip %}<ul class="titles">{% for t in roles.position_titles or [] %}<li><label class="inline"><input type="checkbox" name="pos_keep[]" value="{{ t }}" checked onchange="rolesPreview()"> {{ t }}</label></li>{% endfor %}{% for t in roles.position_skip or [] %}<li><label class="inline"><input type="checkbox" name="pos_keep[]" value="{{ t }}" onchange="rolesPreview()"> {{ t }}</label></li>{% endfor %}</ul>{% endif %}</div>
+</section>
 {% for dom, heading in (('business', 'Business and office roles'), ('it', 'Tech roles'), ('', 'Your own')) %}
 {% set group = packs.items()|selectattr('1.domain', 'equalto', dom or none)|list if dom else packs.items()|rejectattr('1.domain')|list %}
 {% if group %}<h3 class="group">{{ heading }}</h3>
