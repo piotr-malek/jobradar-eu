@@ -123,9 +123,66 @@ def event_line(e: dict[str, Any]) -> str:
     return json.dumps({k: v for k, v in d.items() if v not in (None, "", [])}, ensure_ascii=False)
 
 
+def push_notion(db: Any, client: Any = None) -> dict[str, Any]:
+    """Set the Notion Status of each job with unpushed decisions (its latest one); a job with no page yet (added
+    by hand in the app) gets one."""
+    from jobradar.notion.client import DECISION_TO_STATUS, NotionClient
+
+    events = db.unpushed()
+    if not events:
+        return {"pushed": 0, "to": "notion"}
+    latest = {e["job_id"]: e for e in events}
+    own = client is None
+    client = client or NotionClient()
+    try:
+        for job_id, e in latest.items():
+            values: dict[str, Any] = {"Status": DECISION_TO_STATUS.get(e["status"], "New")}
+            if e["status"] == "applied":
+                values["Applied on"] = str(e.get("at") or "")[:10]
+            if e.get("note"):
+                values["Notes"] = e["note"]
+            page = client.job_page(job_id)
+            if page:
+                client.set_values(page["_id"], values)
+            else:
+                client.create_job({"job_id": job_id, "title": e.get("title") or "", "company": e.get("company") or "",
+                                   "family": e.get("family"), "sources": [e["source"]] if e.get("source") else []})
+                created = client.job_page(job_id)
+                if created:
+                    client.set_values(created["_id"], values)
+        db.mark_pushed([e["id"] for e in events])
+    finally:
+        if own:
+            client.close()
+    return {"pushed": len(events), "jobs": len(latest), "to": "notion"}
+
+
+def pull_notion(db: Any, client: Any = None, *, days: int = 30) -> dict[str, Any]:
+    """Status changes made in Notion (the phone, another computer) → local.db events."""
+    from datetime import datetime, timedelta, timezone
+
+    from jobradar.notion.client import NOT_RELEVANT, STATUS_TO_DECISION, NotionClient
+
+    own = client is None
+    client = client or NotionClient()
+    try:
+        pages = client.changed_since(datetime.now(timezone.utc) - timedelta(days=days))
+    finally:
+        if own:
+            client.close()
+    rows = [{"job_id": p["Job ID"], "status": STATUS_TO_DECISION[p["Status"]], "at": p.get("_edited"),
+             "company": p.get("Company"), "note": "not_relevant" if p.get("Status") == NOT_RELEVANT else None}
+            for p in pages if p.get("Job ID") and p.get("Status") in STATUS_TO_DECISION]
+    return {"imported": db.import_events(rows), "pages": len(pages), "from": "notion"}
+
+
 def push_picks(db: Any, repo: str | None = None, *, retries: int = 4) -> dict[str, Any]:
     """Append unpushed decisions to picks.jsonl (one commit). On a conflict (another computer pushed first) the
-    file is read again and the append retried."""
+    file is read again and the append retried. With Notion set up, the decisions go to Notion instead."""
+    from jobradar.pipeline.notion_sync import configured
+
+    if configured():
+        return push_notion(db)
     events = db.unpushed()
     if not events:
         return {"pushed": 0}
@@ -153,7 +210,11 @@ def push_picks(db: Any, repo: str | None = None, *, retries: int = 4) -> dict[st
 
 
 def pull_picks(db: Any, repo: str | None = None) -> dict[str, Any]:
-    """Import decisions made elsewhere (another computer) into local.db."""
+    """Import decisions made elsewhere (another computer, or Notion when it is set up) into local.db."""
+    from jobradar.pipeline.notion_sync import configured
+
+    if configured():
+        return pull_notion(db)
     text, _ = _get_picks(repo or config_repo())
     rows = []
     for line in text.splitlines():

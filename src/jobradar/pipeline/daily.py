@@ -21,6 +21,7 @@ from typing import Any
 from jobradar import config
 from jobradar.match.engine import MatchEngine
 from jobradar.models import Posting, utcnow
+from jobradar.pipeline import notion_sync
 from jobradar.pipeline.run import match_row
 from jobradar.sources.base import parse_date
 from jobradar.sources.registry import load_specs
@@ -28,6 +29,7 @@ from jobradar.sources.registry import load_specs
 log = logging.getLogger(__name__)
 DEFAULT_MINUTES = {"lite": 15, "full": 25}
 RUN_MINUTES = 30           # the workflow stops the job at 35 minutes; install and the state push take the rest
+NOTION_RESERVE_MINUTES = 4 # the screen stops this early so the night's pages still go out
 
 
 def posting_from_row(r: dict[str, Any]) -> Posting:
@@ -107,6 +109,12 @@ def run_daily(store: Any, *, picks: Path | None = None, dry_run: bool = False, f
     out: dict[str, Any] = {"mode": config.mode(), "budget_minutes": minutes}
     if picks and not dry_run:
         out["decisions_imported"] = store.import_decisions(read_picks(picks))
+    if not dry_run and notion_sync.configured():
+        try:
+            out["notion_pull"] = notion_sync.run_pull(store)
+        except Exception as exc:  # noqa: BLE001 - Notion down: tonight's run goes on, statuses come next night
+            log.warning("notion pull failed: %s", exc)
+            out["notion_pull"] = {"status": "failed", "error": str(exc)[:200]}
     if not skip_fetch:
         runner = runner or get_settings().runner
         due = plan_sources(store, runner=runner, only=only)
@@ -118,8 +126,18 @@ def run_daily(store: Any, *, picks: Path | None = None, dry_run: bool = False, f
                           "fetched": sum(s.fetched for s in ran), "matched": sum(s.matched for s in ran)}
     from jobradar.pipeline.shortlist import screen_minutes
 
-    screen_deadline = min(time.monotonic() + screen_minutes() * 60, started + RUN_MINUTES * 60)
+    notion_on = not dry_run and notion_sync.configured()
+    end = started + RUN_MINUTES * 60
+    screen_deadline = min(time.monotonic() + screen_minutes() * 60,
+                          end - (NOTION_RESERVE_MINUTES * 60 if notion_on else 0))
     out["shortlist"] = build_shortlist(store, dry_run=dry_run, force=force, llm=llm, screen_deadline=screen_deadline)
+    if notion_on:
+        try:
+            out["notion"] = notion_sync.run_push(
+                store, deadline=min(time.monotonic() + notion_sync.notion_minutes() * 60, end))
+        except Exception as exc:  # noqa: BLE001 - pages left now go out the next night
+            log.warning("notion push failed: %s", exc)
+            out["notion"] = {"status": "failed", "error": str(exc)[:200]}
     if not dry_run:
         out["upkeep"] = store.maintenance()
         if notify is None:

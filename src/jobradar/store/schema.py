@@ -86,6 +86,7 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], str | None, list[str], int |
             ("hidden", S, "NULLABLE"), ("languages_required", S, "NULLABLE"), ("years_required", S, "NULLABLE"),
             ("contract", S, "NULLABLE"), ("apply_deadline", S, "NULLABLE"), ("screen_model", S, "NULLABLE"),
             ("screened_at", T, "NULLABLE"),
+            ("notion_page_id", S, "NULLABLE"), ("notion_synced_at", T, "NULLABLE"),
         ],
         "night", ["job_id"], None,
     ),

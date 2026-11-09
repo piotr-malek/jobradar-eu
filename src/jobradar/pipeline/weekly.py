@@ -1,5 +1,6 @@
 """`jr weekly`: applications per week and reply rates by source, family and route, from the user's decisions
-(the `picks` branch, imported into state.db). Also compacts state.db (VACUUM). Shown in the app; optionally e-mailed.
+(Notion statuses or the `picks` branch, imported into state.db). Also compacts state.db (VACUUM). Written as a page
+next to the Notion Jobs database; shown in the app; optionally e-mailed.
 """
 
 from __future__ import annotations
@@ -63,7 +64,16 @@ def weekly_stats(store: Any, *, weeks: int = 12, now: datetime | None = None) ->
 
 
 def run_weekly(store: Any, *, dry_run: bool = False, email: bool | None = None) -> dict[str, Any]:
+    from jobradar.pipeline import notion_sync
+
+    notion_on = not dry_run and notion_sync.configured()
+    if notion_on:
+        stats_pull = _safe(lambda: notion_sync.run_pull(store))
     stats = weekly_stats(store)
+    if notion_on:
+        stats["notion_pull"] = stats_pull
+        stats["notion_page"] = _safe(lambda: notion_sync.post_weekly(_week(datetime.now(timezone.utc)),
+                                                                     weekly_text(stats)))
     if not dry_run:
         stats["upkeep"] = store.maintenance(vacuum=True)
         if email is None:
@@ -71,6 +81,13 @@ def run_weekly(store: Any, *, dry_run: bool = False, email: bool | None = None) 
         if email:
             stats["emailed"] = send_weekly(stats)
     return stats
+
+
+def _safe(fn: Any) -> Any:
+    try:
+        return fn()
+    except Exception as exc:  # noqa: BLE001 - Notion down: the stats still run
+        return {"status": "failed", "error": str(exc)[:200]}
 
 
 def weekly_text(stats: dict[str, Any]) -> str:

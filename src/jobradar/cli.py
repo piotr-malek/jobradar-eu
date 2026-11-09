@@ -153,6 +153,24 @@ def cmd_picks(a) -> int:
     return 0
 
 
+def cmd_notion(a) -> int:
+    from jobradar.notion.client import VIEWS_HELP, NotionClient, page_id_from
+    from jobradar.wizard import set_env
+
+    if a.action == "views":
+        print(VIEWS_HELP)
+        return 0
+    if not a.page:
+        print("jr notion init <link to the Notion page you shared with the integration>")
+        return 2
+    with NotionClient(jobs_ds="") as client:
+        out = client.init_jobs(a.page)
+    set_env({"NOTION_JOBS_DB": out["data_source"], "NOTION_PARENT_PAGE": page_id_from(a.page)})
+    _print({**out, "next": "the setup wizard's repo step uploads NOTION_TOKEN and NOTION_JOBS_DB as secrets"})
+    print(VIEWS_HELP)
+    return 0
+
+
 # ---------------------------------------------------------------- debugging
 def cmd_run(a) -> int:
     from jobradar.pipeline.run import plan_sources, run_source
@@ -415,6 +433,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("picks", help="picks push|pull: sync your decisions with the config repo")
     sp.add_argument("action", choices=["push", "pull"])
     sp.set_defaults(fn=cmd_picks)
+
+    sp = sub.add_parser("notion", help="notion init <page link>: create the Jobs database; notion views: how to "
+                                       "set up its views")
+    sp.add_argument("action", choices=["init", "views"])
+    sp.add_argument("page", nargs="?")
+    sp.set_defaults(fn=cmd_notion)
 
     sp = sub.add_parser("run", help="run sources (default: those due now)")
     db_arg(sp)
