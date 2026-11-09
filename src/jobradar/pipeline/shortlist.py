@@ -35,6 +35,7 @@ ATS_SOURCES = ("greenhouse", "lever", "ashby", "workable", "recruitee", "personi
 PER_COMPANY_CAP = 3
 SCREEN_MINUTES = 8         # per night; at Gemini's free 10 requests a minute, ~800 jobs
 SCREEN_DAYS = 30           # older unscreened jobs have lost their description (store maintenance)
+DESCRIBE_MINUTES = 4       # the description finder's share of the night
 LOW_FIT = 2                # screened fit at or below this is hidden (kept in state.db with hidden="low_fit")
 ACTED_ON = ("picked", "applied", "screening", "interview", "offer", "rejected")
 SAME_COMPANY_MAX = 3
@@ -273,6 +274,9 @@ def build_shortlist(store: Any, *, kind: str = "daily", dry_run: bool = False, f
             if own:
                 http.close()
 
+    from jobradar.pipeline.describe import describe
+
+    base["descriptions"] = describe(store, todo, routes, deadline=time.monotonic() + DESCRIBE_MINUTES * 60)
     index = CompanyIndex(store)
     night_id = f"{night.isoformat()}-{kind}-{uuid.uuid4().hex[:6]}"
     rows = []

@@ -47,6 +47,7 @@ def _isolated(monkeypatch, tmp_path):
                 "JR_STATE_DB", "JR_LOCAL_DB", "JR_CACHE_DIR", "JR_OUT_DIR", "GITHUB_ACTIONS"):
             monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("JR_RESOLVE_CAP", "0")          # no route look-ups over the network in tests
+    monkeypatch.setenv("JR_DESCRIBE_CAP", "0")         # nor posting pages
     home = tmp_path / "jr_home"
     home.mkdir()
     for f in ("experience.md", "draft_style.md", "cv.yaml"):     # the example persona's local-only files
