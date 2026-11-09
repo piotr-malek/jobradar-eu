@@ -55,6 +55,10 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], str | None, list[str], int |
         [("posting_key", S, "REQUIRED"), ("cluster_id", S, "REQUIRED"), ("refined_at", T, "REQUIRED")],
         None, ["cluster_id"], None,
     ),
+    "llm_usage": (            # LLM requests per provider and run, so the daily budget holds across the day's runs
+        [("provider", S, "REQUIRED"), ("day", D, "REQUIRED"), ("requests", I, "REQUIRED"), ("at", T, "REQUIRED")],
+        "day", ["provider"], None,
+    ),
     "nights": (               # one row per overnight shortlist (the "one shortlist per night" guard)
         [
             ("night_id", S, "REQUIRED"), ("night", D, "REQUIRED"), ("kind", S, "NULLABLE"),

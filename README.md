@@ -58,7 +58,7 @@ jr setup
 | LLM screen: fit score, summary, watch-outs, salary | optional | ✓ |
 | Answer bank, prepared application forms, drafts, CV and cover-letter PDFs | | ✓ |
 | Auto-fill in your own Chrome (you always click Submit) | | ✓ |
-| Weekly stats: applications, replies by source and role | | ✓ |
+| Weekly stats: applications, replies by source and role | ✓ | ✓ |
 | GitHub Actions minutes per month (2,000 free) | about 300-450 | about 1,400 |
 
 You can switch from Lite to Full later with `jr setup --upgrade`. Your jobs and decisions are kept.

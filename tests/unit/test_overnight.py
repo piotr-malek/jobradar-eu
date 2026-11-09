@@ -33,6 +33,37 @@ def test_llm_json_strips_think_and_retries_bad_json_once(tmp_path):
     assert fake.payloads[0]["response_format"]["json_schema"]["strict"] is True
 
 
+
+def test_llm_budget_on_actions_holds_across_runs_in_state_db(tmp_path, monkeypatch):
+    from jobradar.settings import get_settings
+    from jobradar.store.sqlite import SQLiteStore
+
+    db = tmp_path / "state.db"
+    store = SQLiteStore(db)
+    store.read("nights")                         # opens the file and creates the tables
+    store.close()
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("JR_STATE_DB", str(db))
+    monkeypatch.setenv("JR_LLM_DAILY_BUDGET", "3")
+    monkeypatch.setenv("MISTRAL_API_KEY", "k")
+    get_settings.cache_clear()
+    try:
+        for expect_ok in (2, 1):                   # two runs on the same day (e.g. ats, then daily)
+            fake = FakeLLM(lambda p: "{}")
+            with LLMClient("screen", provider="mistral", transport=fake.transport(), sleep=False) as c:
+                ok = 0
+                for _ in range(2):
+                    try:
+                        c.json("q", {})
+                        ok += 1
+                    except BudgetExhausted:
+                        pass
+            assert ok == expect_ok
+    finally:
+        get_settings.cache_clear()
+    rows = SQLiteStore(db).query("SELECT provider, requests FROM llm_usage", table="llm_usage")
+    assert sorted(r["requests"] for r in rows) == [1, 2] and {r["provider"] for r in rows} == {"mistral"}
+
 def test_llm_gives_up_after_one_retry_and_never_retries_4xx(tmp_path):
     c, fake = _llm(lambda p: httpx.Response(503), tmp_path)
     with pytest.raises(LLMError):

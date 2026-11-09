@@ -13,8 +13,8 @@ Steps: ``screen`` (overnight on Actions: API providers only), ``prep`` (map form
 ``draft`` (per-job drafts), ``onboarding`` (wizard: CV import, custom role pack). A step with no setting of its own
 uses ``default``.
 
-Guardrails: requests-per-minute throttle, a daily request budget per provider persisted in the cache folder
-(``BudgetExhausted`` when spent), one retry on 429/5xx/timeout/bad JSON, ``<think>`` blocks stripped.
+Guardrails: requests-per-minute throttle, a daily request budget per provider persisted in the cache folder, or in
+state.db on Actions (``BudgetExhausted`` when spent), one retry on 429/5xx/timeout/bad JSON, ``<think>`` blocks stripped.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ import shutil
 import subprocess
 import threading
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -177,6 +177,44 @@ class UsageLedger:
                 pass
 
 
+class StateLedger(UsageLedger):
+    """The same counter kept in state.db (`llm_usage`): on Actions it is the only file that outlives a run."""
+
+    def __init__(self, db_path: Path, provider: str, budget: int):
+        import sqlite3
+
+        self.db_path, self.provider, self.budget = db_path, provider, budget
+        self._lock = threading.Lock()
+        self.day, self.count, self.own = date.today().isoformat(), 0, 0
+        try:
+            with sqlite3.connect(db_path) as c:
+                row = c.execute("SELECT SUM(requests) FROM llm_usage WHERE provider = ? AND day = ?",
+                                (provider, self.day)).fetchone()
+            self.count = int(row[0] or 0) if row else 0
+        except sqlite3.Error:
+            pass
+
+    def reserve(self) -> None:
+        with self._lock:
+            if self.budget > 0 and self.count >= self.budget:
+                raise BudgetExhausted(f"daily LLM budget of {self.budget} requests is spent")
+            self.count += 1
+            self.own += 1
+
+    def flush(self) -> None:
+        if not self.own:
+            return
+        from jobradar.store.sqlite import SQLiteStore
+
+        store = SQLiteStore(self.db_path)
+        try:
+            store.append("llm_usage", [{"provider": self.provider, "day": self.day, "requests": self.own,
+                                        "at": datetime.now(timezone.utc)}])
+            self.own = 0
+        finally:
+            store.close()
+
+
 class LLMClient:
     def __init__(self, purpose: str = "screen", *, provider: str | None = None, model: str | None = None,
                  transport: httpx.BaseTransport | None = None, sleep: bool = True, ledger_dir: Path | None = None,
@@ -198,8 +236,10 @@ class LLMClient:
         self.sleep = sleep
         self._next_ok = 0.0
         name = self.preset or self.provider
-        self.ledger = UsageLedger((ledger_dir or get_settings().cache_dir) / f"llm_usage_{name}.json",
-                                  int(_env("JR_LLM_DAILY_BUDGET") or c.get("daily_budget") or 400))
+        budget = int(_env("JR_LLM_DAILY_BUDGET") or c.get("daily_budget") or 400)
+        state_db = get_settings().state_db
+        self.ledger = (StateLedger(state_db, name, budget) if on_actions() and ledger_dir is None and state_db.is_file()
+                       else UsageLedger((ledger_dir or get_settings().cache_dir) / f"llm_usage_{name}.json", budget))
         self.requests = 0
         self.json_mode = c.get("json_mode") or "schema"
         self._http: httpx.Client | None = None
@@ -222,6 +262,8 @@ class LLMClient:
                                   transport=transport)
 
     def close(self) -> None:
+        if isinstance(self.ledger, StateLedger):
+            self.ledger.flush()
         if self._http is not None:
             self._http.close()
 

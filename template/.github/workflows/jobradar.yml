@@ -34,27 +34,7 @@ jobs:
     env:
       JR_USER_DIR: ${{ github.workspace }}/user
       JR_RUNNER: github
-      # LLM (only the ones you set are used)
-      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      # optional free source keys
-      JOOBLE_PL_API_KEY: ${{ secrets.JOOBLE_PL_API_KEY }}
-      JOOBLE_DE_API_KEY: ${{ secrets.JOOBLE_DE_API_KEY }}
-      JOOBLE_ES_API_KEY: ${{ secrets.JOOBLE_ES_API_KEY }}
-      JOOBLE_PT_API_KEY: ${{ secrets.JOOBLE_PT_API_KEY }}
-      JOOBLE_NL_API_KEY: ${{ secrets.JOOBLE_NL_API_KEY }}
-      THEIR_STACK_API_KEY: ${{ secrets.THEIR_STACK_API_KEY }}
-      ITJOBS_PT_API_KEY: ${{ secrets.ITJOBS_PT_API_KEY }}
-      # job-alert e-mails (IMAP) and the morning e-mail (SMTP)
-      JR_IMAP_USER: ${{ secrets.JR_IMAP_USER }}
-      JR_IMAP_PASSWORD: ${{ secrets.JR_IMAP_PASSWORD }}
-      SMTP_USER: ${{ secrets.SMTP_USER }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      JR_SECRETS_JSON: ${{ toJSON(secrets) }}   # your keys; Job Radar loads the ones it knows
     steps:
       - name: Paths
         shell: bash

@@ -13,7 +13,9 @@ Three places hold configuration, read in this order of precedence (highest first
 
 from __future__ import annotations
 
+import json
 import os
+import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -38,9 +40,22 @@ def user_dir() -> Path:
     return Path(_env("JR_USER_DIR", str(local_dir() / "user"))).expanduser()
 
 
+# keys the overnight run needs: the wizard uploads these as Actions secrets, the workflow hands them over as JSON
+SECRET_NAMES = re.compile(r"(MISTRAL|GEMINI|GROQ|OPENROUTER|OPENAI|ANTHROPIC)_API_KEY|JOOBLE_[A-Z]{2}_API_KEY|"
+                          r"ADZUNA_APP_(?:ID|KEY)|THEIR_STACK_API_KEY|ITJOBS_PT_API_KEY|JR_IMAP_\w+|SMTP_\w+|EMAIL_TO")
+
+
 def load_env() -> None:
-    """Load ``~/.job-radar/.env`` (keys typed into the wizard). Real environment variables win."""
+    """Load ``~/.job-radar/.env`` (keys typed into the wizard) and, on Actions, the repo secrets the workflow passes as
+    ``JR_SECRETS_JSON``. Real environment variables win."""
     load_dotenv(local_dir() / ".env", override=False)
+    try:
+        secrets = json.loads(os.environ.get("JR_SECRETS_JSON") or "{}")
+    except ValueError:
+        secrets = {}
+    for name, value in (secrets if isinstance(secrets, dict) else {}).items():
+        if SECRET_NAMES.fullmatch(name) and isinstance(value, str) and value and not os.environ.get(name):
+            os.environ[name] = value
 
 
 load_env()

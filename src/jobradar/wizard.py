@@ -841,10 +841,10 @@ def workflow_with_package(text: str, version: str | None = None, spec: str | Non
 
 def secrets_to_set() -> dict[str, str]:
     """Keys from ~/.job-radar/.env that the overnight run needs (LLM keys, source keys, IMAP/SMTP)."""
+    from jobradar.settings import SECRET_NAMES
+
     env = read_env()
-    names = [k for k in env if re.fullmatch(r"(MISTRAL|GEMINI|GROQ|OPENROUTER|OPENAI|ANTHROPIC)_API_KEY|JOOBLE_[A-Z]{2}_API_KEY|ADZUNA_APP_(?:ID|KEY)|"
-                                            r"THEIR_STACK_API_KEY|ITJOBS_PT_API_KEY|JR_IMAP_\w+|SMTP_\w+|EMAIL_TO", k)]
-    return {k: env[k] for k in names if env[k]}
+    return {k: v for k, v in env.items() if v and SECRET_NAMES.fullmatch(k)}
 
 
 def _put_file(repo: str, path: str, content: bytes, message: str, branch: str | None = None) -> None:
