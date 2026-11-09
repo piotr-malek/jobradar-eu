@@ -87,11 +87,15 @@ def run_daily(store: Any, *, dry_run: bool = False, force: bool = False,
     from jobradar.pipeline.shortlist import build_shortlist
     from jobradar.settings import get_settings
 
+    from jobradar.pipeline import minutes as governor
+
     started = time.monotonic()
-    minutes = minutes if minutes is not None else budget_minutes("daily")
+    out: dict[str, Any] = {"mode": config.mode()}
+    if minutes is None:
+        minutes, out["actions_minutes"] = governor.scale(store, "daily", budget_minutes("daily"))
+    out["budget_minutes"] = round(minutes, 1)
     # leave room for the shortlist, screen and the state push after fetching
     fetch_deadline = started + max(1.0, minutes * 0.7) * 60
-    out: dict[str, Any] = {"mode": config.mode(), "budget_minutes": minutes}
     if not dry_run and notion_sync.configured():
         try:
             out["notion_pull"] = notion_sync.run_pull(store)
@@ -110,7 +114,7 @@ def run_daily(store: Any, *, dry_run: bool = False, force: bool = False,
     from jobradar.pipeline.shortlist import screen_minutes
 
     notion_on = not dry_run and notion_sync.configured()
-    end = started + RUN_MINUTES * 60
+    end = started + float(os.environ.get("JR_RUN_MINUTES") or RUN_MINUTES) * 60
     screen_deadline = min(time.monotonic() + screen_minutes() * 60,
                           end - (NOTION_RESERVE_MINUTES * 60 if notion_on else 0))
     out["shortlist"] = build_shortlist(store, dry_run=dry_run, force=force, llm=llm, screen_deadline=screen_deadline)
@@ -133,6 +137,8 @@ def run_daily(store: Any, *, dry_run: bool = False, force: bool = False,
         if notify and out["shortlist"].get("status") == "done" and out["shortlist"].get("shortlisted"):
             out["emailed"] = send_ready_mail(out["shortlist"])
     out["minutes"] = round((time.monotonic() - started) / 60, 1)
+    if not dry_run and get_settings().runner == "github":
+        governor.record(store, "daily", (time.monotonic() - started) / 60)
     return out
 
 

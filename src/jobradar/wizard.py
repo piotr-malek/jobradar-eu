@@ -1158,7 +1158,7 @@ def start_first_run() -> dict[str, Any]:
     repo = st.get("repo") or config.user_settings().get("config_repo")
     if not repo:
         raise ValueError("create the config repo first")
-    gh(["workflow", "run", "jobradar.yml", "-R", repo, "-f", "job=daily"])
+    gh(["workflow", "run", "jobradar.yml", "-R", repo, "-f", "job=first"])
     return {"repo": repo, "actions": f"https://github.com/{repo}/actions"}
 
 

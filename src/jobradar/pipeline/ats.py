@@ -397,9 +397,15 @@ def run_ats(store: Any, *, dry_run: bool = False, minutes: float | None = None, 
     lite = not full and config.module_on("ats_lite_tier_a")
     if not full and not lite:
         return {"status": "off"}
+    from jobradar.pipeline import minutes as governor
+
     started = time.monotonic()
-    minutes = minutes if minutes is not None else budget_minutes("ats")
-    out: dict[str, Any] = {"status": "done", "lite": lite}
+    out: dict[str, Any] = {"status": "done"}
+    if minutes is None:
+        minutes, out["actions_minutes"] = governor.scale(store, "ats", budget_minutes("ats"))
+        if out["actions_minutes"]["tight"] and full:
+            full, lite = False, True                   # over the monthly projection: the smaller slice only
+    out["lite"] = lite
     if not dry_run:
         out["registry"] = ensure_registry(store)
         extra = config.read_yaml(user_dir() / "companies.yaml")
@@ -414,4 +420,6 @@ def run_ats(store: Any, *, dry_run: bool = False, minutes: float | None = None, 
     if full and not dry_run and time.monotonic() < started + minutes * 60 - 120:
         out["resolve"] = resolve_from_boards(store, limit=resolve_limit)
     out["minutes"] = round((time.monotonic() - started) / 60, 1)
+    if not dry_run and get_settings().runner == "github":
+        governor.record(store, "ats", out["minutes"])
     return out

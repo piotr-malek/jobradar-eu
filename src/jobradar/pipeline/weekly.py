@@ -76,7 +76,16 @@ def run_weekly(store: Any, *, dry_run: bool = False, email: bool | None = None) 
         stats["notion_page"] = _safe(lambda: notion_sync.post_weekly(_week(datetime.now(timezone.utc)),
                                                                      weekly_text(stats)))
     if not dry_run:
+        import time
+
+        from jobradar.pipeline import minutes as governor
+        from jobradar.settings import get_settings
+
+        t0 = time.monotonic()
         stats["upkeep"] = store.maintenance(vacuum=True)
+        stats["actions_minutes"] = governor.projection(store)
+        if get_settings().runner == "github":
+            governor.record(store, "weekly", (time.monotonic() - t0) / 60)
         if email is None:
             email = bool(config.user_settings().get("weekly_email"))
         if email:

@@ -13,7 +13,7 @@ on:
       job:
         description: Which job to run
         type: choice
-        options: [daily, ats, weekly]
+        options: [daily, ats, weekly, first]
         default: daily
 
 # one run at a time: the state branch has a single writer
@@ -31,7 +31,7 @@ env:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: ${{ inputs.job == 'first' && 60 || 35 }}   # first: the setup's first run, a bigger backlog
     env:
       JR_USER_DIR: ${{ github.workspace }}/user
       JR_RUNNER: github
@@ -87,6 +87,7 @@ jobs:
           case "${{ steps.which.outputs.job }}" in
             ats)    jr ats ;;
             weekly) jr weekly ;;
+            first)  JR_LOOKBACK_DAYS=30 JR_SCREEN_MINUTES=20 JR_NOTION_MINUTES=15 JR_RUN_MINUTES=55 jr daily ;;
             *)      jr daily ;;
           esac
       - name: Save the filters you ticked in Notion (user/learned.yaml)

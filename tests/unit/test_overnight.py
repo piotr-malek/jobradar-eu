@@ -499,3 +499,30 @@ def test_weekly_names_alert_senders_that_sent_nothing(tmp_path, monkeypatch):
     assert silent_senders(store) == ["stepstone", "indeed.com"]
     stats = {**weekly_stats(store), "silent_senders": ["stepstone"]}
     assert "No job-alert e-mails in the last 7 days from: stepstone" in weekly_text(stats)
+
+
+def test_minutes_governor_shrinks_ats_first_never_below_a_floor(tmp_path):
+    from datetime import datetime, timezone
+
+    from jobradar.pipeline import minutes as governor
+    from jobradar.store.sqlite import SQLiteStore
+
+    store = SQLiteStore(tmp_path / "state.db")
+    day10 = datetime(2026, 11, 10, 12, tzinfo=timezone.utc)
+    store.append("run_minutes", [{"kind": "daily", "at": datetime(2026, 11, d, 3, tzinfo=timezone.utc),
+                                  "minutes": 30} for d in range(1, 10)])
+    p = governor.projection(store, now=day10)
+    assert p["used"] == 270 and not p["tight"]                           # ~850 a month: fine
+    store.append("run_minutes", [{"kind": "ats", "at": datetime(2026, 11, d, 1, tzinfo=timezone.utc),
+                                  "minutes": 40} for d in range(1, 10)])
+    p = governor.projection(store, now=day10)
+    assert p["tight"] and p["projected"] > 1800
+    import jobradar.pipeline.minutes as m
+    orig = m.projection
+    m.projection = lambda s: p
+    try:
+        ats, _ = governor.scale(store, "ats", 20)
+        daily, _ = governor.scale(store, "daily", 25)
+    finally:
+        m.projection = orig
+    assert ats < daily < 25 and ats >= 5 and daily >= 8

@@ -65,6 +65,10 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], str | None, list[str], int |
          ("created_at", T, "REQUIRED"), ("closed_at", T, "NULLABLE")],
         "created_at", [], None,
     ),
+    "run_minutes": (          # each overnight job's length, for the Actions minutes governor (pipeline/minutes.py)
+        [("kind", S, "REQUIRED"), ("at", T, "REQUIRED"), ("minutes", F, "REQUIRED")],
+        "at", [], None,
+    ),
     "nights": (               # one row per overnight shortlist (the "one shortlist per night" guard)
         [
             ("night_id", S, "REQUIRED"), ("night", D, "REQUIRED"), ("kind", S, "NULLABLE"),
