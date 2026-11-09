@@ -93,9 +93,13 @@
 {% elif step == 'roles' %}
 <h1>Roles</h1>
 <p>Tick the kinds of jobs you want (one or more). The preview below shows real job titles we'd keep or skip.</p>
-<div class="cards packs">{% for name, p in packs.items() %}
+{% for dom, heading in (('business', 'Business and office roles'), ('it', 'Tech roles'), ('', 'Your own')) %}
+{% set group = packs.items()|selectattr('1.domain', 'equalto', dom or none)|list if dom else packs.items()|rejectattr('1.domain')|list %}
+{% if group %}<h3 class="group">{{ heading }}</h3>
+<div class="cards packs">{% for name, p in group %}
   <label class="card"><input type="checkbox" name="packs[]" value="{{ name }}" {{ 'checked' if name in (roles.packs or []) }} onchange="rolesPreview()">
-    <h3>{{ p.label or name }}</h3><p class="muted">{{ p.description or '' }}</p></label>{% endfor %}</div>
+    <h3>{{ p.label or name }}</h3><p class="muted">{{ p.description or '' }}</p></label>{% endfor %}</div>{% endif %}
+{% endfor %}
 <div class="grid">
   {% set sen = roles.seniority or {} %}
   <label>From level <select name="min" onchange="rolesPreview()">{% for l in seniority %}<option {{ 'selected' if l == (sen.min or 'junior') }}>{{ l }}</option>{% endfor %}</select></label>

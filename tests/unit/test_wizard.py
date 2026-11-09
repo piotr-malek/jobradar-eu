@@ -409,3 +409,11 @@ def test_unconfirmed_alert_senders_match_on_the_brand_word():
     assert sender_keyword("jobalerts-noreply@linkedin.com") == "jobalerts-noreply@linkedin.com"
     de = {b["name"]: b["senders"] for b in alert_boards(["DE"])}
     assert de["StepStone Germany"] == ["stepstone"] and de["Indeed Germany"][0] == "indeed.com"
+
+
+def test_roles_step_groups_business_and_tech_packs(wiz):
+    client, _ = wiz
+    html = client.get("/setup/roles").data.decode()
+    biz, tech = html.index("Business and office roles"), html.index("Tech roles")
+    assert biz < html.index('value="marketing-content"') < tech < html.index('value="backend"')
+    assert biz < html.index('value="sales-cs"') < tech

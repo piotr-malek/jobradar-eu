@@ -23,8 +23,9 @@ SCHEMA: dict[str, Any] = {
         "search_terms": {"type": "array", "items": {"type": "string"}},
         "keep": {"type": "array", "items": {"type": "string"}},
         "drop": {"type": "array", "items": {"type": "string"}},
+        "allow_disciplines": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["label", "patterns", "search_terms", "keep", "drop"],
+    "required": ["label", "patterns", "search_terms", "keep", "drop", "allow_disciplines"],
     "additionalProperties": False,
 }
 SYSTEM = """You write a role pack for a job-title matcher. The matcher lowercases titles and strips accents
@@ -34,7 +35,10 @@ SYSTEM = """You write a role pack for a job-title matcher. The matcher lowercase
   words, no ^ or $; use (?:...) groups, not capturing groups)
 - search_terms: 4-8 short job-board search phrases in English
 - keep: 15 realistic job titles the patterns must match (some in Polish, German, Spanish, Portuguese or French)
-- drop: 8 realistic titles of nearby roles they must NOT match."""
+- drop: 8 realistic titles of nearby roles they must NOT match.
+- allow_disciplines: the matcher drops every title containing one of these patterns as "not an office/IT role":
+  {blocked}. List, copied exactly, only the ones these roles need (e.g. "recruiter" for recruiting roles); usually
+  none."""
 
 
 def _alt(p: str) -> re.Pattern[str] | None:
@@ -44,9 +48,18 @@ def _alt(p: str) -> re.Pattern[str] | None:
         return None
 
 
+def blocked_disciplines() -> list[str]:
+    from jobradar.settings import PACKAGE_DIR
+
+    base = config.read_yaml(PACKAGE_DIR / "matching.yaml")
+    return list(((base.get("title") or {}).get("exclude") or {}).get("discipline_hard") or [])
+
+
 def build_pack(name: str, d: dict[str, Any]) -> dict[str, Any]:
     patterns = [p for p in d.get("patterns") or [] if _alt(p)]
+    allow = [a for a in d.get("allow_disciplines") or [] if a in blocked_disciplines()]
     return {"label": d.get("label") or name, "description": d.get("label") or name,
+            **({"allow_disciplines": allow} if allow else {}),
             "families": {name.replace("-", "_"): {"tier": "core", "priority": 35, "label": d.get("label") or "",
                                                   "any": patterns}},
             "search_terms": {"en": list(d.get("search_terms") or [])[:8]},
@@ -60,6 +73,8 @@ def preview(pack: dict[str, Any], titles: list[str] | None = None) -> dict[str, 
     name = next(iter(pack["families"]))
     cfg = config.matching_config(r={"packs": []}, packs=[next(iter(config.available_packs()))])
     cfg["title"]["families"] = pack["families"]
+    cfg["title"]["exclude"]["discipline_hard"] = [x for x in cfg["title"]["exclude"].get("discipline_hard", [])
+                                                  if x not in (pack.get("allow_disciplines") or [])]
     cfg["family_labels"] = {name: pack["families"][name].get("label", "")}
     cfg["user_titles"] = {"never": [], "never_unless": [], "keep": [], "must_have": []}
     cfg["seniority_range"] = {"min": "junior", "max": "senior"}
@@ -81,7 +96,8 @@ def draft_pack(description: str, *, name: str = "custom", client: Any = None) ->
     own = client is None
     try:
         client = client or LLMClient("onboarding")
-        d = client.json(f"Roles wanted: {description}", SCHEMA, name="role_pack", system=SYSTEM, max_tokens=1500)
+        system = SYSTEM.replace("{blocked}", ", ".join(f'"{x}"' for x in blocked_disciplines()))
+        d = client.json(f"Roles wanted: {description}", SCHEMA, name="role_pack", system=system, max_tokens=1500)
     except LLMError as exc:
         return {"ok": False, "error": str(exc)}
     finally:
