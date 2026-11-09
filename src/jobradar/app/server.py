@@ -2,10 +2,10 @@
 the answer bank, weekly stats and the setup wizard (/setup).
 
 Data: the overnight results come from state.db (pulled from the config repo's `state` branch, opened read-only);
-everything the user does lives in ~/.job-radar/local.db and decisions are pushed to the `picks` branch in small
+everything the user does lives in ~/.job-radar/local.db and decisions go to the Notion Jobs database in small
 batches (after a few seconds of quiet, on "Sync" and when the page closes).
 
-Full mode adds prep (read the form, match the answer bank, per-job drafts), CV/cover-letter PDFs and auto-fill through
+The app is part of Radar + Apply (`modules.app`); in Radar `jr app` points to Notion. It adds prep (read the form, match the answer bank, per-job drafts), CV/cover-letter PDFs and auto-fill through
 the Chrome extension (``extension/``; it never submits). Slow actions run as background tasks polled at /task/<key>.
 
 Local only (binds 127.0.0.1). Every POST must carry the ``X-JR: 1`` header, so a web page in another tab can't drive it.
@@ -406,7 +406,7 @@ def create_app(db: LocalDB | None = None, *, state_path: Path | None = None, llm
     app.jinja_env.tests["startswith"] = lambda s, prefix: str(s).startswith(prefix)
     app.jinja_env.filters["flag_text"] = flag_text
     app.jinja_env.globals.update(prep_label=lambda v: PREP_LABEL.get(v, v), badge=STATUS_BADGE, tabs=TABS,
-                                 section_label=SECTION_LABEL, stages=STAGES, full=lambda: config.mode() == "full",
+                                 section_label=SECTION_LABEL, stages=STAGES, full=lambda: config.module_on("screen"),
                                  module_on=config.module_on)
     state = AppState(db or open_local(), state_path=state_path, llm_factory=llm_factory, http_factory=http_factory,
                      syncer=syncer)

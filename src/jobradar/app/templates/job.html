@@ -41,7 +41,7 @@
   {% if job.description %}<details><summary>Posting text</summary><div class="answer">{{ job.description[:6000] }}</div></details>{% endif %}
 </section>
 {% if not can_prep %}
-<p class="muted">Lite mode: open the posting, apply there, then mark it applied here. Full mode (<a href="{{ url_for('setup.index') }}">Setup → upgrade</a>) adds form prep from your answer bank, drafts and auto-fill.</p>
+<p class="muted">Open the posting, apply there, then mark it applied here. The answer bank (<a href="{{ url_for('setup.index') }}">Setup</a>) adds form prep, drafts and auto-fill.</p>
 {% else %}
 
 {% set vendor = p.route.vendor if p else guess.vendor %}

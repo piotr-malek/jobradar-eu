@@ -59,18 +59,24 @@ def deep_merge(base: dict[str, Any], over: dict[str, Any]) -> dict[str, Any]:
 @lru_cache(maxsize=1)
 def user_settings() -> dict[str, Any]:
     s = read_yaml(user_dir() / "settings.yaml")
-    s.setdefault("mode", "lite")
+    s["mode"] = MODE_ALIASES.get(s.get("mode") or "radar", s.get("mode") or "radar")
     mods = s.setdefault("modules", {})
-    full = s["mode"] == "full"
-    mods.setdefault("ats", full)
-    mods.setdefault("screen", full)
-    mods.setdefault("bank", full)
+    apply_tier = s["mode"] == "apply"
+    for name in ("ats", "screen", "notion", "weekly"):          # Radar: fetch, review, Notion, stats
+        mods.setdefault(name, True)
+    mods.setdefault("bank", apply_tier)                          # Radar + Apply: the app and its apply kit
+    mods.setdefault("app", apply_tier)
     mods.setdefault("ats_lite_tier_a", False)
     return s
 
 
+MODE_ALIASES = {"lite": "radar", "full": "apply"}               # names before the 2026-11 tier rework
+MODE_LABELS = {"radar": "Radar", "apply": "Radar + Apply"}
+
+
 def mode() -> str:
-    return user_settings().get("mode", "lite")
+    """radar (fetch → AI review → Notion) or apply (adds the local app, answer bank, prep and auto-fill)."""
+    return user_settings()["mode"]
 
 
 def module_on(name: str) -> bool:

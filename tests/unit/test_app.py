@@ -160,11 +160,11 @@ def test_stages_after_applying_and_stats(app_env):
     assert "<b>1</b> applied" in stats and "<b>1</b> interviews" in stats and "arbeitnow" in stats
 
 
-def test_lite_job_page_has_no_prep(app_env, monkeypatch):
+def test_job_page_without_the_bank_has_no_prep(app_env, monkeypatch):
     client, _, _, _ = app_env
     monkeypatch.setattr("jobradar.config.module_on", lambda name: False)
     html = client.get("/job/JR-GITLAB").data.decode()
-    assert "Lite mode: open the posting" in html and "prepOne" not in html and "GitLab builds things." in html
+    assert "Open the posting, apply there" in html and "prepOne" not in html and "GitLab builds things." in html
 
 
 def test_extension_ping_is_recorded(app_env):

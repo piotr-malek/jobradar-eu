@@ -97,7 +97,7 @@ def _llm() -> Check:
     except LLMError as exc:
         return Check("llm", "LLM", False, str(exc), "llm", optional=not need)
     if c["provider"] == "off":
-        return Check("llm", "LLM", not need, "none set" + (" (Full mode needs one)" if need else " (Lite works without)"),
+        return Check("llm", "LLM", not need, "none set" + (" (the overnight review needs one)" if need else ""),
                      "llm", optional=not need)
     key_env = c.get("api_key_env")
     if key_env and not get_settings().secret(key_env):
@@ -154,15 +154,15 @@ def _minutes() -> Check:
 
 
 def _cv() -> Check:
-    full = config.mode() == "full"
+    full = config.mode() == "apply"
     has = (local_dir() / "cv.yaml").is_file()
     return Check("cv", "CV source", has or not full, "~/.job-radar/cv.yaml" if has else "none yet", "experience",
                  optional=not full)
 
 
 def _playwright() -> Check:
-    if config.mode() != "full":
-        return Check("playwright", "PDF renderer", True, "not needed in Lite", optional=True)
+    if config.mode() != "apply":
+        return Check("playwright", "PDF renderer", True, "not needed in Radar", optional=True)
     from jobradar.wizard import chromium_status
 
     st = chromium_status()
@@ -176,8 +176,8 @@ def _playwright() -> Check:
 
 
 def _extension() -> Check:
-    if config.mode() != "full":
-        return Check("extension", "Chrome extension", True, "not used in Lite", optional=True)
+    if config.mode() != "apply":
+        return Check("extension", "Chrome extension", True, "not used in Radar", optional=True)
     from jobradar.local.db import open_local
 
     seen = open_local().get_meta("extension_seen")
@@ -196,9 +196,32 @@ def _bank() -> Check:
                  optional=True)
 
 
-CHECKS: list[Callable[[], Check]] = [_profile, _roles, _sources, _gh, _repo, _llm, _smtp, _cv, _bank, _playwright,
-                                     _extension, _state, _minutes]
-OFFLINE = {"_gh", "_repo", "_minutes", "_state"}
+def _notion() -> Check:
+    from jobradar.pipeline.notion_sync import configured
+
+    if not configured():
+        return Check("notion", "Notion", not config.module_on("notion"), "not connected", "notion",
+                     optional=not config.module_on("notion"))
+    return Check("notion", "Notion", True, "Jobs database connected")
+
+
+def _notion_live() -> Check:
+    from jobradar.notion.client import NotionClient, NotionError
+    from jobradar.pipeline.notion_sync import configured
+
+    if not configured():
+        return Check("notion_live", "Notion reachable", True, "not connected", optional=True)
+    try:
+        with NotionClient() as client:
+            client.request("GET", f"/data_sources/{client.need_jobs()}")
+    except (NotionError, OSError) as exc:
+        return Check("notion_live", "Notion reachable", False, f"{exc}"[:200], "notion")
+    return Check("notion_live", "Notion reachable", True, "the integration can write to the Jobs database")
+
+
+CHECKS: list[Callable[[], Check]] = [_profile, _roles, _sources, _gh, _repo, _llm, _notion, _notion_live, _smtp, _cv,
+                                     _bank, _playwright, _extension, _state, _minutes]
+OFFLINE = {"_gh", "_repo", "_minutes", "_state", "_notion_live"}
 
 
 def run_checks(*, offline: bool = False) -> list[Check]:

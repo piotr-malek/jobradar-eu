@@ -6,20 +6,23 @@
 
 {% if step == 'welcome' %}
 <h1>Welcome to Job Radar</h1>
-<p>Every night Job Radar looks through job boards across Europe and keeps the jobs that fit you. In the morning you
-  open this page, see the best matches first, and pick the ones worth applying to. The searching happens on GitHub's
-  computers, free, so your computer doesn't need to stay on.</p>
-<p>Setup takes about 10 minutes. Choose how much help you want; you can change it later.</p>
+<p>Every night Job Radar searches job boards, company career pages and your job-alert e-mails across Europe, keeps the
+  jobs that fit what you're looking for, and has an AI read each one: how well it fits you, a short summary and what
+  to watch out for. In the morning the reviewed jobs are waiting in Notion, best first. It runs on GitHub's computers,
+  free, so your computer doesn't need to stay on.</p>
+<p>Setup takes about 10 minutes. Choose how much help you want; you can add the rest later.</p>
 <div class="cards">
-  <label class="card"><input type="radio" name="mode" value="lite" {{ 'checked' if st.mode != 'full' }}>
-    <h3>Lite</h3><p>Job boards for your countries, matched to the jobs you want. You apply on each company's site.</p>
-    <p class="muted">You need: a free GitHub account. Optional: a free AI key for a fit score and summary on each job.</p>
-    <p class="muted">Cost: free.</p></label>
-  <label class="card"><input type="radio" name="mode" value="full" {{ 'checked' if st.mode == 'full' }}>
-    <h3>Full</h3><p>Everything in Lite, plus thousands of company career pages, an AI that reads every job for you,
-    saved answers to common application questions, tailored CV and cover-letter PDFs, and form filling in Chrome
-    (you always press Submit yourself).</p>
-    <p class="muted">You need: a free GitHub account and a free AI key (the setup shows you how to get one).</p>
+  <label class="card"><input type="radio" name="mode" value="radar" {{ 'checked' if st.mode != 'apply' }}>
+    <h3>Radar</h3><p>Jobs from boards, company career pages and job-alert e-mails, each one read and ranked by an AI,
+    delivered to Notion every morning, plus a weekly summary. You apply on each company's site.</p>
+    <p class="muted">You need: free GitHub, Notion and Google AI Studio accounts. Optional: a Gmail app password to
+    read your job-alert e-mails.</p>
+    <p class="muted">Cost: free. The free AI plan stops at its limit, it never charges.</p></label>
+  <label class="card"><input type="radio" name="mode" value="apply" {{ 'checked' if st.mode == 'apply' }}>
+    <h3>Radar + Apply</h3><p>Everything in Radar, plus an app on your computer that helps you apply: saved answers to
+    common application questions, forms read and filled in Chrome (you always press Submit yourself), tailored CV and
+    cover-letter PDFs, and AI drafts. Also more job sources that need extra free keys.</p>
+    <p class="muted">You need: the same accounts, plus a few more free keys (optional).</p>
     <p class="muted">Cost: free with the free AI plans.</p></label>
 </div>
 
@@ -115,9 +118,9 @@
 <h1>Countries and job boards</h1>
 <p>Tick the countries you want jobs in. Job boards for those countries are added, and boards that cover all of Europe
   or remote work are always included. Few local boards? Job-alert e-mails (LinkedIn or any board, under Free extras)
-  fill the gap{{ ', and company career pages hiring there are searched too' if st.mode == 'full' }}.</p>
+  fill the gap, and company career pages hiring there are searched too.</p>
 <fieldset><legend>Countries</legend>
-  <div class="countries">{% for c in country_options %}<label class="inline"><input type="checkbox" name="countries[]" value="{{ c.code }}" {{ 'checked' if c.code in countries }} onchange="sourcesFor()"> {{ c.name }}{% if c.boards or (st.mode == 'full' and c.companies) %} <span class="muted">{% if c.boards %}· {{ c.boards }} local board{{ 's' if c.boards > 1 }}{% endif %}{% if st.mode == 'full' and c.companies %} · {{ c.companies }} companies hiring{% endif %}</span>{% endif %}</label>{% endfor %}</div>
+  <div class="countries">{% for c in country_options %}<label class="inline"><input type="checkbox" name="countries[]" value="{{ c.code }}" {{ 'checked' if c.code in countries }} onchange="sourcesFor()"> {{ c.name }}{% if c.boards or c.companies %} <span class="muted">{% if c.boards %}· {{ c.boards }} local board{{ 's' if c.boards > 1 }}{% endif %}{% if c.companies %} · {{ c.companies }} companies hiring{% endif %}</span>{% endif %}</label>{% endfor %}</div>
 </fieldset>
 <fieldset><legend>Optional</legend>
   <label><input type="checkbox" name="opt_in[]" value="purpose" {{ 'checked' if 'purpose' in (us.opt_in or []) }} onchange="sourcesFor()"> UN, EU institutions and NGOs</label>
@@ -134,15 +137,36 @@
     it here: every job in those e-mails then lands in your list.</p>
   <table class="queue"><tbody id="alert-list"></tbody></table></section>
 
+{% elif step == 'notion' %}
+<h1>Notion: where your jobs land</h1>
+<p>Every morning the reviewed jobs are waiting in a Notion database: fit, a short summary, what to watch out for and
+  the full posting. Set a job's Status (Apply, Skip, Not relevant, Applied…) there, on your laptop or phone; the next
+  night's run reads it. A free Notion account is enough.</p>
+{% if notion_connected %}<p class="ok">Connected{% if notion_url %}: <a href="{{ notion_url }}" target="_blank" rel="noopener">open your Jobs database</a>{% endif %}. Save to keep it, or paste another page to start a new database.</p>{% endif %}
+<ol>
+  <li>Open <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener">notion.so → Integrations</a>,
+    click <b>New integration</b>, name it “Job Radar”, pick your workspace, type <b>Internal</b>. Copy the
+    <b>Internal Integration Secret</b>.</li>
+  <li>In Notion, create an empty page (for example “Job search”). On that page: <b>•••</b> → <b>Connections</b> →
+    add <b>Job Radar</b>.</li>
+  <li>Copy the page's link (<b>Share</b> → <b>Copy link</b>) and paste both below.</li>
+</ol>
+<label>Internal Integration Secret <input type="password" name="token" autocomplete="off" placeholder="{{ 'saved' if notion_connected else 'ntn_…' }}"></label>
+<label>Link to the page <input type="url" name="page" placeholder="https://www.notion.so/…"></label>
+<p class="muted">Job Radar creates a “Jobs” database on that page. Then add a view sorted by Fit (Notion can't create
+  views for it): filter Status = New, sort Fit descending.</p>
+
 {% elif step == 'llm' %}
-<h1>AI model</h1>
-<p>{% if st.mode == 'full' %}Full mode asks an AI to read every new job overnight: how well it fits you (1-5), a short summary and
-  anything to watch out for. It runs on GitHub, so it needs an online AI service.{% else %}Optional. With an AI each job
-  gets a fit score (1-5), a short summary and anything to watch out for. You can skip this and add it later.{% endif %}</p>
+<h1>AI review</h1>
+<p>Each night an AI reads every new job and tells you how well it fits you (1-5), what the job is about, which
+  languages and how much experience it asks for, and anything to watch out for. It runs on GitHub, so it needs an
+  online AI service. Google's free plan is enough and never charges: it just stops at its daily limit, and the rest
+  is reviewed the next night.</p>
 {% set cur = (llm.default or {}) %}
 <section class="recommended"><h3>Easiest: Google Gemini (free)</h3>
   <ol><li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio ↗</a> and sign in with your Google account.</li>
-    <li>Click <b>Create API key</b>, then copy the key.</li>
+    <li>Click <b>Create API key</b> and choose <b>Create API key in new project</b>, then copy the key. Don't click
+      “Set up billing”: without it the key can't cost anything.</li>
     <li>Paste it below and click <b>Test the key</b>.</li></ol>
   <label class="inline"><input type="radio" name="provider" value="gemini" {{ 'checked' if llm_choice == 'gemini' }}> Use Google Gemini</label>
 </section>
@@ -152,7 +176,7 @@
     <b>{{ p.label }}</b> <a href="{{ p.signup }}" target="_blank" rel="noopener">{{ 'get a key' if p.env else 'download' }} ↗</a>
     {% if not p.actions %}<span class="muted">runs on this computer, so not overnight</span>{% endif %}</label>{% endfor %}
 </div></details>
-{% if st.mode != 'full' %}<label class="inline"><input type="radio" name="provider" value="off" {{ 'checked' if llm_choice == 'off' }}> No AI for now</label>{% endif %}
+
 <div class="grid">
   <label>Your key <input name="key" type="password" autocomplete="off" placeholder="paste the key here"></label>
   <label>Model <span class="muted">(leave empty for the recommended one)</span><input name="model" value="{{ cur.model or '' }}"></label>
@@ -177,9 +201,9 @@
   <label>Nice to have<textarea name="nice_stack" rows="3">{{ (profile.nice_stack or [])|join('\n') }}</textarea></label>
 </div>
 <label>Highlights <span class="muted">(one per line; used for drafts)</span><textarea name="highlights" rows="4">{{ (profile.highlights or [])|join('\n') }}</textarea></label>
-<details {{ 'open' if st.mode == 'full' }}><summary>Projects for drafts (experience.md, local only)</summary>
+<details {{ 'open' if st.mode == 'apply' }}><summary>Projects for drafts (experience.md, local only)</summary>
   <textarea name="experience_md" rows="8" placeholder="## Main projects&#10;- …"></textarea></details>
-{% if st.mode == 'full' %}
+{% if st.mode == 'apply' %}
 <section><h3>PDF renderer</h3>
   <p>CV and cover-letter PDFs are made with Chromium (a one-time download of about 150 MB).
     Saving this step also creates <code>cv.yaml</code> and <code>draft_style.md</code> in {{ local_dir }} if they don't exist yet.</p>
@@ -245,7 +269,7 @@
 <p>First a quick test on this computer: a few fast boards, matched with your settings. If the list looks wrong, go back to Roles or Where you work.</p>
 <button type="button" onclick="dryRun(this)">Run a quick test</button>
 <div id="dry-out"></div>
-<p>Then start the first real run on GitHub. It takes {{ '20-30' if st.mode == 'full' else '10-15' }} minutes; this page follows it.</p>
+<p>Then start the first real run on GitHub. It takes 20-40 minutes; this page follows it.</p>
 <button type="button" class="primary" onclick="firstRun(this)">Start the first overnight run now</button>
 <div id="run-out"></div>
 

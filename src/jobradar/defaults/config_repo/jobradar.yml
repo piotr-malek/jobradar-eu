@@ -1,10 +1,11 @@
 # Job Radar overnight run. `jr setup` writes the cron times from your time zone (the lines tagged jobradar:*).
-# Results go to the `state` branch (one commit, replaced each run); your decisions come from the `picks` branch.
+# Results go to your Notion Jobs database and the `state` branch (one commit, replaced each run); the statuses you
+# set in Notion are read back at the start of each run.
 name: jobradar
 
 on:
   schedule:
-    - cron: "0 1 * * *"   # jobradar:ats    (Full: company ATS boards)
+    - cron: "0 1 * * *"   # jobradar:ats    (company career pages)
     - cron: "0 2 * * *"   # jobradar:daily  (job boards + shortlist)
     - cron: "0 4 * * 0"   # jobradar:weekly (stats + clean-up)
   workflow_dispatch:
@@ -71,7 +72,7 @@ jobs:
       - name: Install Job Radar
         if: steps.which.outputs.job != 'none'
         run: pip install "${JOBRADAR_SPEC:-jobradar-eu==${JOBRADAR_VERSION}}"
-      - name: Restore state and picks
+      - name: Restore state
         if: steps.which.outputs.job != 'none'
         shell: bash
         run: |
@@ -79,18 +80,14 @@ jobs:
           if git fetch --depth=1 origin state 2>/dev/null; then
             git show FETCH_HEAD:state.db.gz | gunzip > "$JR_STATE_DB"
           fi
-          if git fetch --depth=1 origin picks 2>/dev/null; then
-            git show FETCH_HEAD:picks.jsonl > "$RUNNER_TEMP/picks.jsonl" || true
-          fi
-          touch "$RUNNER_TEMP/picks.jsonl"
       - name: Run (${{ steps.which.outputs.job }})
         if: steps.which.outputs.job != 'none'
         shell: bash
         run: |
           case "${{ steps.which.outputs.job }}" in
             ats)    jr ats ;;
-            weekly) jr weekly --picks "$RUNNER_TEMP/picks.jsonl" ;;
-            *)      jr daily --picks "$RUNNER_TEMP/picks.jsonl" ;;
+            weekly) jr weekly ;;
+            *)      jr daily ;;
           esac
       - name: Save state (one commit on the state branch)
         if: always() && steps.which.outputs.job != 'none'

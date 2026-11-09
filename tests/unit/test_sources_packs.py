@@ -143,18 +143,35 @@ def test_country_placeholders_follow_the_user(monkeypatch):
         registry.load_specs.cache_clear()
 
 
-def test_adzuna_runs_in_full_mode_only(monkeypatch):
+def test_adzuna_runs_in_radar_plus_apply_only(monkeypatch):
     from jobradar import config
     from jobradar.wizard import key_cards
 
     spec = load_specs(all_sources=True)["adzuna"]
     assert spec.params["countries"] == ["pl"] and spec.secrets == ["ADZUNA_APP_ID", "ADZUNA_APP_KEY"]
-    monkeypatch.setattr(config, "mode", lambda: "lite")
+    monkeypatch.setattr(config, "mode", lambda: "radar")
     assert not selected(spec, {"countries": ["PL"]})
-    assert "adzuna" not in {c["id"] for c in key_cards(["PL"], "lite")}
-    monkeypatch.setattr(config, "mode", lambda: "full")
+    assert "adzuna" not in {c["id"] for c in key_cards(["PL"], "radar")}
+    monkeypatch.setattr(config, "mode", lambda: "apply")
     assert selected(spec, {"countries": ["PL"]}) and not selected(spec, {"countries": ["BG"]})
-    assert "adzuna" in {c["id"] for c in key_cards(["PL"], "full")}
+    assert "adzuna" in {c["id"] for c in key_cards(["PL"], "apply")}
+
+
+def test_jooble_home_country_in_radar_other_countries_in_apply(monkeypatch):
+    from jobradar import config
+    from jobradar.wizard import key_cards
+
+    def profile():
+        return {"location": {"country": "PL"}}
+    profile.cache_clear = lambda: None                               # config's cache reset calls it
+    monkeypatch.setattr(config, "profile", profile)
+    load_specs.cache_clear()
+    specs = load_specs(all_sources=True)
+    load_specs.cache_clear()
+    assert specs["jooble_pl"].modes == [] and specs["jooble_de"].modes == ["apply"]
+    jooble = {c["id"]: c for c in key_cards(["PL", "DE"], "radar")}["jooble"]
+    assert jooble["countries"] == ["PL"]
+    assert sorted({c["id"]: c for c in key_cards(["PL", "DE"], "apply")}["jooble"]["countries"]) == ["DE", "PL"]
 
 
 def test_domain_gate_it_boards_for_tech_packs_rocketjobs_for_business(monkeypatch):

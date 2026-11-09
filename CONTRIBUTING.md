@@ -35,7 +35,7 @@ jr probe arbeitnow  # fetch and match one source without storing anything
 | `src/jobradar/pipeline/` | The overnight jobs: `daily`, `ats`, `weekly`, and the shortlist |
 | `src/jobradar/app/`, `wizard.py` | The local app and the setup wizard (Flask) |
 | `src/jobradar/apply/`, `extension/` | Full mode: form prep, answers, PDFs, the Chrome auto-fill extension |
-| `template/` | The config repository every user gets: the workflow and its schedule |
+| `src/jobradar/defaults/config_repo/` | The files the wizard puts in every user's config repository: the workflow and its schedule |
 | `examples/lisbon-backend/` | A fictional user, used by the tests and as a starting point |
 
 ## Adding a job board

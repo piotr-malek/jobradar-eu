@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).parents[2]
-WORKFLOWS = sorted([*ROOT.glob(".github/workflows/*.yml"), *ROOT.glob("template/.github/workflows/*.yml")])
+WORKFLOWS = sorted([*ROOT.glob(".github/workflows/*.yml"), ROOT / "src/jobradar/defaults/config_repo/jobradar.yml"])
 JOB_ENV_CONTEXTS = {"github", "needs", "strategy", "matrix", "vars", "secrets", "inputs", "env"}
 
 
@@ -24,7 +24,7 @@ def test_job_env_uses_only_allowed_contexts(path):
 
 
 def test_template_hands_every_secret_to_the_run():
-    wf = yaml.safe_load((ROOT / "template/.github/workflows/jobradar.yml").read_text(encoding="utf-8"))
+    wf = yaml.safe_load((ROOT / "src/jobradar/defaults/config_repo/jobradar.yml").read_text(encoding="utf-8"))
     env = wf["jobs"]["run"]["env"]
     assert env["JR_SECRETS_JSON"].replace(" ", "") == "${{toJSON(secrets)}}"
     assert not [k for k in env if k.endswith(("_API_KEY", "_PASSWORD"))], "secrets go through JR_SECRETS_JSON"

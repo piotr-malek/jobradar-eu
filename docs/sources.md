@@ -47,7 +47,7 @@ and others) are not listed here: Full mode polls the boards in `defaults/ats_reg
 | Remote Rocketship (`remoterocketship`) | EU | Remote Rocketship (remoterocketship.com) — remote-only jobs from the SSR `__NEXT_DATA__` of its listing pages. | 2d | github |  |  |
 | Remotive (`remotive`) | EU | Remotive public API, one call per category or search term. | 1d | github |  |  |
 | RevPath (RevOps / GTM jobs) (`revpath`) | EU | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github | packs: gtm-revops | revpath.dealhub.io (DealHub): RevOps/GTM-only board, ~8.8k jobs, US-heavy with UK/EU; 3 job sitemaps without lastmod, numeric ids grow with recency; JobPosting JSON-LD; apply links go to the company |
-| TheirStack (`theirstack`) | EU | TheirStack job API (key; one credit per job returned): recent jobs in eligible countries whose titles match the active packs. | 7d | github | key: `THEIR_STACK_API_KEY` |  |
+| TheirStack (`theirstack`) | EU | TheirStack job API (key; one credit per job returned): recent jobs in eligible countries whose titles match the active packs. | 7d | github | key: `THEIR_STACK_API_KEY`; Apply mode only |  |
 | The Muse (`themuse`) | EU | The Muse public API (no key: 500 req/h). | 2d | github |  |  |
 | We Work Remotely (`weworkremotely`) | EU | Remote-job boards with free public JSON/RSS feeds. | 1d | github | **off by default** |  |
 | Workable job search (`workable_search`) | EU | jobs.workable.com, the cross-company search over every Workable career page. | 2d | github |  | jobs.workable.com cross-company search: full descriptions; Europe + EU/EEA country slices, all English |
@@ -58,7 +58,7 @@ and others) are not listed here: Full mode polls the boards in `defaults/ats_reg
 | Source | Covers | How | Every | Runs on | Needs | Notes |
 |---|---|---|---|---|---|---|
 | Jooble (`jooble_<cc>`) | AT, BE, BG, HR, CZ, DK, FI, FR, DE, GR, HU, IE, IT, NL, PL, PT, RO, SK, ES, SE, NO, CH | Jooble REST API (free key on request). | 1d | github | key: `JOOBLE_{CC}_API_KEY` | {cc}.jooble.org: republishes national boards we can't fetch (Cloudflare) and company pages |
-| Adzuna (`adzuna`) | AT, BE, DE, ES, FR, IT, NL, PL, CH | Adzuna search API (developer.adzuna.com; free key: ADZUNA_APP_ID + ADZUNA_APP_KEY). | 1d | github | key: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`; Full mode only | free key (developer.adzuna.com); job links must be Adzuna's redirect_url (their terms); ~500-character snippets |
+| Adzuna (`adzuna`) | AT, BE, DE, ES, FR, IT, NL, PL, CH | Adzuna search API (developer.adzuna.com; free key: ADZUNA_APP_ID + ADZUNA_APP_KEY). | 1d | github | key: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`; Apply mode only | free key (developer.adzuna.com); job links must be Adzuna's redirect_url (their terms); ~500-character snippets |
 | karriere.at (`karriere_at`) | AT | karriere.at (Austria) — the site's own JSON search endpoint + schema.org JobPosting on detail pages. | 3d | github |  |  |
 | Engineering.jobs Belgium (`engineeringjobs_be`) | BE | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | IT roles only | be.engineering.jobs: IT + engineering, English; apply needs a board login |
 | ICTjob.be (`ictjob_be`) | BE | ICTjob.be — Belgian IT job board (server-rendered HTML with schema.org microdata). | 3d | github | IT roles only |  |
@@ -96,7 +96,7 @@ and others) are not listed here: Full mode polls the boards in `defaults/ats_reg
 | Rocket Jobs (business roles) (`rocketjobs`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | business roles only |  |
 | Sii Poland (`sii_pl`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 2d | github | opt-in: polish_only; IT roles only | Sii Polska (agency flag via matching.yaml); robots disallow only /oferty-pracy/all/all/* and /*/feed/ |
 | Solid.Jobs (`solidjobs`) | PL | Generic robots-friendly board adapter: XML sitemap → URL pre-filter → detail pages → schema.org JobPosting. | 1d | github | IT roles only |  |
-| ITJobs.pt (`itjobs_pt`) | PT | Sources that need the user's API keys: TheirStack, Apify (LinkedIn), ITJobs.pt. | 2d | github | key: `ITJOBS_PT_API_KEY`; IT roles only |  |
+| ITJobs.pt (`itjobs_pt`) | PT | Sources that need the user's API keys: TheirStack, Apify (LinkedIn), ITJobs.pt. | 2d | github | key: `ITJOBS_PT_API_KEY`; Apply mode only; IT roles only |  |
 | Teamlyzer (`teamlyzer`) | PT | Teamlyzer (Portugal, IT-only) — list pages + schema.org JobPosting detail pages. | 2d | github | IT roles only |  |
 | Arbetsförmedlingen (JobTech) (`jobtech_se`) | SE | Arbetsförmedlingen / JobTech JobSearch (open, no key): GET /search?q=&limit<=100&offset=. | 3d | github |  |  |
 

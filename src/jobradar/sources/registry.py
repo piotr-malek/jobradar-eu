@@ -195,6 +195,8 @@ def per_country(entry: dict[str, Any]) -> list[dict[str, Any]]:
         e = sub({k: v for k, v in entry.items() if k != "each_country"})
         e.update(id=f"{entry['id']}_{cc.lower()}", countries=[cc], default_country=cc,
                  langs=list(COUNTRY_LANGS.get(cc, [])))
+        if entry.get("home_tier") and cc != home:      # e.g. Jooble: the home country's key is Radar, others Apply
+            e["modes"] = [entry["home_tier"]]
         out.append(e)
     return out
 

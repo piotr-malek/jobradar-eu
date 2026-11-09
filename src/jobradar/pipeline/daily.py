@@ -1,6 +1,6 @@
 """`jr daily`: what the overnight workflow runs.
 
-1. import the user's decisions from the `picks` branch (picks.jsonl), so skipped jobs never come back
+1. import the user's decisions from Notion (the Status of each page), so skipped jobs never come back
 2. fetch the sources due tonight, within the run's time budget (the rest stay due and run next time)
 3. re-match recent postings when the rules changed (new rule_version)
 4. build the shortlist (route, screen when switched on) into state.db
@@ -27,7 +27,7 @@ from jobradar.sources.base import parse_date
 from jobradar.sources.registry import load_specs
 
 log = logging.getLogger(__name__)
-DEFAULT_MINUTES = {"lite": 15, "full": 25}
+DEFAULT_MINUTES = {"radar": 20, "apply": 25}
 RUN_MINUTES = 30           # the workflow stops the job at 35 minutes; install and the state push take the rest
 NOTION_RESERVE_MINUTES = 4 # the screen stops this early so the night's pages still go out
 
@@ -69,21 +69,6 @@ def ensure_rule_version(store: Any, engine: MatchEngine | None = None, *, days: 
     return len(matches)
 
 
-def read_picks(path: Path) -> list[dict[str, Any]]:
-    """picks.jsonl from the `picks` branch: one decision per line (bad lines are skipped)."""
-    if not path or not Path(path).is_file():
-        return []
-    out = []
-    for line in Path(path).read_text(encoding="utf-8").splitlines():
-        try:
-            d = json.loads(line)
-        except ValueError:
-            continue
-        if isinstance(d, dict) and d.get("job_id") and d.get("status"):
-            out.append(d)
-    return out
-
-
 def budget_minutes(kind: str = "daily") -> float:
     us = config.user_settings()
     env = os.environ.get("JR_BUDGET_MINUTES")
@@ -95,7 +80,7 @@ def budget_minutes(kind: str = "daily") -> float:
     return float(budgets.get("daily_minutes", DEFAULT_MINUTES.get(config.mode(), 15)))
 
 
-def run_daily(store: Any, *, picks: Path | None = None, dry_run: bool = False, force: bool = False,
+def run_daily(store: Any, *, dry_run: bool = False, force: bool = False,
               only: list[str] | None = None, skip_fetch: bool = False, notify: bool | None = None,
               runner: str | None = None, llm: Any = None, minutes: float | None = None) -> dict[str, Any]:
     from jobradar.pipeline.run import plan_sources, run_sources
@@ -107,8 +92,6 @@ def run_daily(store: Any, *, picks: Path | None = None, dry_run: bool = False, f
     # leave room for the shortlist, screen and the state push after fetching
     fetch_deadline = started + max(1.0, minutes * 0.7) * 60
     out: dict[str, Any] = {"mode": config.mode(), "budget_minutes": minutes}
-    if picks and not dry_run:
-        out["decisions_imported"] = store.import_decisions(read_picks(picks))
     if not dry_run and notion_sync.configured():
         try:
             out["notion_pull"] = notion_sync.run_pull(store)

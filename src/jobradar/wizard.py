@@ -28,7 +28,6 @@ import yaml
 from jobradar import config
 from jobradar.settings import PACKAGE_DIR, local_dir, reset_caches, user_dir
 
-TEMPLATE_REPO = os.environ.get("JR_TEMPLATE_REPO", "piotr-malek/jobradar-eu-config-template")
 WORKFLOW = ".github/workflows/jobradar.yml"
 USER_FILES = ("settings.yaml", "profile.yaml", "roles.yaml", "sources.yaml", "llm.yaml", "matching.yaml",
               "companies.yaml")
@@ -37,6 +36,9 @@ WORK_SETUPS = ("remote_eu", "remote_country", "hybrid", "onsite")
 LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2", "native")
 LEVEL_LABELS = {"A1": "A1 · beginner", "A2": "A2 · basic", "B1": "B1 · intermediate", "B2": "B2 · good working level",
                 "C1": "C1 · fluent", "C2": "C2 · near native", "native": "Native"}
+
+
+BOTH = ("radar", "apply")
 
 
 @dataclass(frozen=True)
@@ -48,22 +50,23 @@ class Step:
 
 
 STEPS = [
-    Step("welcome", "Welcome", ("lite", "full")),
-    Step("github", "GitHub", ("lite", "full")),
-    Step("basics", "Where and how you work", ("lite", "full")),
-    Step("roles", "Roles", ("lite", "full")),
-    Step("countries_sources", "Countries and job boards", ("lite", "full")),
-    Step("llm", "AI model", ("lite", "full"), optional_in=("lite",)),
-    Step("experience", "Your experience", ("lite", "full"), optional_in=("lite",)),
-    Step("answer_bank", "Answer bank", ("full",)),
-    Step("optional_keys", "Free extras", ("lite", "full"), optional_in=("lite", "full")),
-    Step("config_repo", "Your private repo", ("lite", "full")),
-    Step("extension", "Chrome extension", ("full",), optional_in=("full",)),
-    Step("first_run", "First run", ("lite", "full")),
-    Step("summary", "All set", ("lite", "full")),
+    Step("welcome", "Welcome", BOTH),
+    Step("github", "GitHub", BOTH),
+    Step("basics", "Where and how you work", BOTH),
+    Step("roles", "Roles", BOTH),
+    Step("countries_sources", "Countries and job boards", BOTH),
+    Step("llm", "AI review", BOTH),
+    Step("notion", "Notion", BOTH),
+    Step("experience", "Your experience", BOTH, optional_in=("radar",)),
+    Step("answer_bank", "Answer bank", ("apply",)),
+    Step("optional_keys", "Job alerts and extras", BOTH, optional_in=BOTH),
+    Step("config_repo", "Your private repo", BOTH),
+    Step("extension", "Chrome extension", ("apply",), optional_in=("apply",)),
+    Step("first_run", "First run", BOTH),
+    Step("summary", "All set", BOTH),
 ]
 STEP_IDS = [s.id for s in STEPS]
-FULL_ONLY = ("answer_bank", "extension")
+APPLY_ONLY = ("answer_bank", "extension")
 
 
 # ------------------------------------------------------------------ state
@@ -76,7 +79,7 @@ def load_state() -> dict[str, Any]:
         st = json.loads(state_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         st = {}
-    st.setdefault("mode", config.user_settings().get("mode") or "lite")
+    st["mode"] = config.MODE_ALIASES.get(st.get("mode") or "", st.get("mode") or config.mode())
     st.setdefault("done", {})
     st.setdefault("skipped", [])
     return st
@@ -175,7 +178,8 @@ def set_env(updates: dict[str, str | None]) -> Path:
 
 # ------------------------------------------------------------------ steps: save
 def save_welcome(data: dict[str, Any]) -> dict[str, Any]:
-    mode = data.get("mode") if data.get("mode") in ("lite", "full") else "lite"
+    mode = config.MODE_ALIASES.get(data.get("mode") or "", data.get("mode"))
+    mode = mode if mode in ("radar", "apply") else "radar"
     st = load_state()
     st["mode"] = mode
     save_state(st)
@@ -474,9 +478,43 @@ def save_llm(data: dict[str, Any]) -> dict[str, Any]:
         out.setdefault("steps", {})["draft"] = {"provider": data["draft_provider"],
                                                 **({"model": data["draft_model"]} if data.get("draft_model") else {})}
     write_user_yaml("llm.yaml", out, merge=False)
-    if config.mode() == "full" and not preset["actions"]:
-        return {**out, "warning": "Full mode screens jobs overnight on GitHub: that needs an API provider"}
+    if not preset["actions"]:
+        return {**out, "warning": "The overnight review runs on GitHub: it needs an online AI service"}
     return out
+
+
+# ------------------------------------------------------------------ notion
+def notion_client(token: str) -> Any:
+    from jobradar.notion.client import NotionClient
+
+    return NotionClient(token, jobs_ds="")
+
+
+def save_notion(data: dict[str, Any]) -> dict[str, Any]:
+    """Check the integration token, create the Jobs database under the shared page (once) and keep the ids in .env;
+    the repo step uploads them as secrets."""
+    from jobradar.notion.client import VIEWS_HELP, NotionError, page_id_from
+
+    token = (data.get("token") or os.environ.get("NOTION_TOKEN") or "").strip()
+    page = (data.get("page") or "").strip()
+    if not token or not (page or os.environ.get("NOTION_JOBS_DB")):
+        raise ValueError("paste the integration secret and the link to the page you shared with it")
+    parent = page_id_from(page) if page else os.environ.get("NOTION_PARENT_PAGE")
+    if os.environ.get("NOTION_JOBS_DB") and parent == os.environ.get("NOTION_PARENT_PAGE") \
+            and token == os.environ.get("NOTION_TOKEN"):
+        return {"database": "already connected", "url": os.environ.get("NOTION_JOBS_URL"), "views": VIEWS_HELP}
+    try:
+        with notion_client(token) as client:
+            out = client.init_jobs(parent)
+    except NotionError as exc:
+        if exc.status in (401, 403):
+            raise ValueError("Notion refused the secret: copy the Internal Integration Secret again") from exc
+        if exc.status == 404:
+            raise ValueError("Notion can't see that page: open it, ••• → Connections → add your integration") from exc
+        raise ValueError(str(exc)) from exc
+    set_env({"NOTION_TOKEN": token, "NOTION_JOBS_DB": out["data_source"], "NOTION_PARENT_PAGE": parent,
+             "NOTION_JOBS_URL": out.get("url") or None})
+    return {"database": out["database"], "url": out.get("url"), "views": VIEWS_HELP}
 
 
 # ------------------------------------------------------------------ experience (CV import)
@@ -582,7 +620,7 @@ def save_experience(data: dict[str, Any]) -> dict[str, Any]:
     if data.get("cv_yaml"):
         yaml.safe_load(data["cv_yaml"])                     # must parse
         (local / "cv.yaml").write_text(data["cv_yaml"], encoding="utf-8")
-    return {"profile_fields": sorted(prof), "starters": ensure_local_files() if config.mode() == "full" else []}
+    return {"profile_fields": sorted(prof), "starters": ensure_local_files() if config.mode() == "apply" else []}
 
 
 CV_STARTER = """# Your CV source (stays on this computer). `jr cv` renders one PDF per variant into ~/.job-radar/out/cv.
@@ -685,18 +723,18 @@ KEY_CARDS = [
     {"id": "jooble", "label": "Jooble", "signup": "https://jooble.org/api/about", "per_country": True,
      "env": "JOOBLE_{CC}_API_KEY",
      "what": "A big job search engine. One free key per country site: ask for it on their API page."},
-    {"id": "adzuna", "label": "Adzuna", "signup": "https://developer.adzuna.com/signup", "modes": ["full"],
+    {"id": "adzuna", "label": "Adzuna", "signup": "https://developer.adzuna.com/signup", "modes": ["apply"],
      "env": ["ADZUNA_APP_ID", "ADZUNA_APP_KEY"], "countries": ["AT", "BE", "DE", "ES", "FR", "IT", "NL", "PL", "CH"],
      "what": "A job search engine that collects jobs from many boards. Free key: sign up, then copy the app ID and key."},
     {"id": "theirstack", "label": "TheirStack (free plan)", "signup": "https://app.theirstack.com/settings/api-key",
-     "env": "THEIR_STACK_API_KEY", "what": "Jobs collected from company career pages; about 40 a week on the free plan."},
+     "env": "THEIR_STACK_API_KEY", "modes": ["apply"], "what": "Jobs collected from company career pages; about 40 a week on the free plan."},
     {"id": "itjobs_pt", "label": "ITJobs.pt", "signup": "https://www.itjobs.pt/api", "env": "ITJOBS_PT_API_KEY",
-     "countries": ["PT"], "what": "The main IT job board in Portugal."},
+     "countries": ["PT"], "modes": ["apply"], "what": "The main IT job board in Portugal."},
     {"id": "imap", "label": "Job-alert e-mails (for example LinkedIn alerts)",
      "signup": "https://myaccount.google.com/apppasswords", "env": ["JR_IMAP_USER", "JR_IMAP_PASSWORD"],
      "what": "Reads the job alerts that LinkedIn and job boards e-mail you, so their jobs show up here too."},
     {"id": "smtp", "label": "A morning e-mail", "signup": "https://myaccount.google.com/apppasswords",
-     "env": ["SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"], "what": "A short “12 new jobs are ready” e-mail each morning."},
+     "env": ["SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO"], "modes": ["apply"], "what": "A short “12 new jobs are ready” e-mail each morning."},
 ]
 KEY_LABELS = {"JR_IMAP_USER": "Your e-mail address", "JR_IMAP_PASSWORD": "App password (not your normal password)",
               "SMTP_USER": "Gmail address that sends it", "SMTP_PASSWORD": "App password (not your normal password)",
@@ -704,8 +742,8 @@ KEY_LABELS = {"JR_IMAP_USER": "Your e-mail address", "JR_IMAP_PASSWORD": "App pa
 
 
 def key_cards(countries: list[str], mode: str | None = None) -> list[dict[str, Any]]:
-    """The Free extras cards that apply to these countries and this setup mode (Jooble only for its country sites
-    the user picked)."""
+    """The extras cards for these countries and this tier. Jooble: one card per country site the user picked; in
+    Radar only the home country's (the rest of the keys are Radar + Apply)."""
     from jobradar.sources.registry import load_specs
 
     mode = mode or config.mode()
@@ -719,6 +757,9 @@ def key_cards(countries: list[str], mode: str | None = None) -> list[dict[str, A
             continue
         if c.get("per_country"):
             cc = [x for x in sites[c["id"]] if x in want]
+            if mode != "apply":
+                home = ((config.profile().get("location") or {}).get("country") or "").upper()
+                cc = [x for x in cc if x == home]
             if cc:
                 out.append({**c, "countries": cc})
         elif not c.get("countries") or want & set(c["countries"]):
@@ -947,10 +988,23 @@ def flush_pending() -> list[str]:
     return pushed
 
 
+CONFIG_REPO_FILES = {"README.md": "README.md", "user/README.md": "user_README.md", WORKFLOW: "jobradar.yml"}
+
+
+def workflow_text() -> str:
+    """The overnight workflow for this user: the package's copy with their run time and the installed version."""
+    from jobradar.settings import PACKAGE_DIR
+
+    us = config.user_settings()
+    wf = (PACKAGE_DIR / "config_repo" / "jobradar.yml").read_text(encoding="utf-8")
+    return workflow_with_package(workflow_with_crons(wf, us.get("run_at") or "02:00", us.get("timezone") or "UTC"))
+
+
 def create_config_repo(data: dict[str, Any]) -> dict[str, Any]:
-    """Create the private config repo from the template, push user/, set the secrets and the crons, enable the
-    workflow. Safe to run again (an existing repo is reused)."""
-    from jobradar.local.sync import ensure_picks_branch
+    """Create the private config repo (or reuse it), write the workflow and READMEs from the installed package,
+    push user/, set the secrets and enable the workflow. Run again after an upgrade, it brings the workflow up to
+    date."""
+    from jobradar.settings import PACKAGE_DIR
 
     name = (data.get("name") or "job-radar-config").strip()
     if not re.fullmatch(r"[A-Za-z0-9._-]+", name):
@@ -962,32 +1016,28 @@ def create_config_repo(data: dict[str, Any]) -> dict[str, Any]:
     log: list[str] = []
     exists = subprocess.run([_gh_exe(), "repo", "view", repo], capture_output=True).returncode == 0
     if not exists:
-        gh(["repo", "create", repo, "--template", data.get("template") or TEMPLATE_REPO, "--private"])
-        log.append(f"created {repo} (private) from {data.get('template') or TEMPLATE_REPO}")
-        for _ in range(10):                         # the template copy takes a moment
-            if subprocess.run([_gh_exe(), "api", f"repos/{repo}/contents/{WORKFLOW}"], capture_output=True).returncode == 0:
-                break
-            import time
-
-            time.sleep(2)
+        gh(["repo", "create", repo, "--private", "--description", "My Job Radar: settings and the nightly run"])
+        log.append(f"created {repo} (private)")
     st = load_state()
     st["repo"] = repo
     save_state(st)
     write_user_yaml("settings.yaml", {"config_repo": repo})
+    for path, src in CONFIG_REPO_FILES.items():
+        if path == WORKFLOW:
+            body = workflow_text().encode()
+        elif exists:
+            continue                                  # READMEs are written once; the user may have edited them
+        else:
+            body = (PACKAGE_DIR / "config_repo" / src).read_bytes()
+        _put_file(repo, path, body, "Set up Job Radar" if not exists else "Update the Job Radar workflow")
+    log.append("wrote the nightly workflow")
     pushed = push_user_files(repo)
     log.append(f"pushed {len(pushed)} file(s)")
-    us = config.user_settings()
-    wf = gh(["api", "-H", "Accept: application/vnd.github.raw", f"repos/{repo}/contents/{WORKFLOW}"])
-    new_wf = workflow_with_package(workflow_with_crons(wf, us.get("run_at") or "02:00", us.get("timezone") or "UTC"))
-    if new_wf != wf:
-        _put_file(repo, WORKFLOW, new_wf.encode(), "Set the overnight run time and the Job Radar version")
-        log.append("set the overnight run time")
     secrets = secrets_to_set()
     for k, v in secrets.items():
         gh(["secret", "set", k, "-R", repo, "--body", v])
     log.append(f"set {len(secrets)} secret(s)")
     gh(["workflow", "enable", "jobradar.yml", "-R", repo], check=False)
-    ensure_picks_branch(repo)
     st = load_state()
     st["pending_push"] = []
     save_state(st)
@@ -1054,13 +1104,17 @@ def install_extension() -> Path:
     return dst
 
 
-def upgrade_to_full() -> dict[str, Any]:
-    """Lite → Full in the same config repo: modules on, Full-only steps reopened. Jobs and picks are kept."""
-    write_user_yaml("settings.yaml", {"mode": "full", "modules": {"ats": True, "screen": True, "bank": True}})
+def upgrade_to_apply() -> dict[str, Any]:
+    """Radar → Radar + Apply in the same config repo: the app's modules on, its steps reopened. Jobs, decisions
+    and the Notion database are kept."""
+    write_user_yaml("settings.yaml", {"mode": "apply", "modules": {"bank": True, "app": True}})
     st = load_state()
-    st["mode"] = "full"
-    for sid in (*FULL_ONLY, "llm", "experience", "summary"):
+    st["mode"] = "apply"
+    for sid in (*APPLY_ONLY, "experience", "optional_keys", "summary"):
         st["done"].pop(sid, None)
         st["skipped"] = [s for s in st["skipped"] if s != sid]
     save_state(st)
-    return {"mode": "full", "next": next_step(st)}
+    return {"mode": "apply", "next": next_step(st)}
+
+
+upgrade_to_full = upgrade_to_apply

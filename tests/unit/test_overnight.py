@@ -289,7 +289,7 @@ def _posting(i, title="Analytics Engineer"):
                    posted_at=NOW - timedelta(days=1))
 
 
-def test_daily_reads_picks_and_never_shows_skipped_jobs(tmp_path, monkeypatch):
+def test_daily_never_shows_skipped_jobs(tmp_path, monkeypatch):
     from jobradar.pipeline import daily
     from jobradar.pipeline.run import RunSummary, process_postings
     from jobradar.sources.base import SourceSpec
@@ -303,11 +303,10 @@ def test_daily_reads_picks_and_never_shows_skipped_jobs(tmp_path, monkeypatch):
         store.append(t, rows)
     preview = daily.run_daily(store, dry_run=True, skip_fetch=True)["shortlist"]["preview"]
     skipped = next(p for p in preview if p["company"] == "Acme 1")["job_id"]
-    picks = tmp_path / "picks.jsonl"
-    picks.write_text(json.dumps({"job_id": skipped, "status": "skipped", "at": NOW.isoformat()}) + "\nnot json\n", encoding="utf-8")
+    store.import_decisions([{"job_id": skipped, "status": "skipped", "at": NOW.isoformat()}])   # from Notion
     monkeypatch.setattr("jobradar.pipeline.run.run_sources", lambda ids, f, **kw: [RunSummary(i, "success", "r") for i in ids])
-    out = daily.run_daily(store, picks=picks, minutes=1)
-    assert out["decisions_imported"] == 1 and out["shortlist"]["shortlisted"] == 1
+    out = daily.run_daily(store, minutes=1)
+    assert out["shortlist"]["shortlisted"] == 1
     assert [r["company"] for r in store.read("shortlist")] == ["Acme 2"]
     assert "upkeep" in out and out["sources"]["queued"] == 0
 
@@ -375,23 +374,15 @@ class FakeGitHubContents:
         raise AssertionError(args)
 
 
-def test_push_picks_appends_once_and_retries_a_conflict(tmp_path, monkeypatch):
+def test_app_decisions_wait_until_notion_is_connected(tmp_path, monkeypatch):
     from jobradar.local import sync
     from jobradar.local.db import LocalDB
 
+    monkeypatch.delenv("NOTION_TOKEN", raising=False)
     db = LocalDB(tmp_path / "local.db")
-    db.record("JR-1", "picked", title="AE", company="Acme", dedup_keys=["fz:acme|ae"])
-    db.record("JR-2", "skipped")
-    fake = FakeGitHubContents(conflict_once=True)
-    monkeypatch.setattr(sync, "gh", fake)
-    monkeypatch.setattr(sync.time, "sleep", lambda s: None)
-    assert sync.push_picks(db, "me/cfg")["pushed"] == 2
-    lines = [json.loads(x) for x in fake.text.splitlines()]
-    assert [x["job_id"] for x in lines] == ["JR-OTHER", "JR-1", "JR-2"]          # the other computer's line kept
-    assert lines[1]["dedup_keys"] == ["fz:acme|ae"] and not db.unpushed()
-    assert sync.push_picks(db, "me/cfg") == {"pushed": 0}                       # nothing new: no commit
-    db2 = LocalDB(tmp_path / "other.db")
-    assert sync.pull_picks(db2, "me/cfg")["imported"] == 3 and db2.status("JR-1") == "picked"
+    db.record("JR-1", "picked", title="AE", company="Acme")
+    assert sync.push_picks(db)["pushed"] == 0 and len(db.unpushed()) == 1      # kept for when Notion is set up
+    assert sync.pull_picks(db)["imported"] == 0
 
 
 def test_pull_state_writes_a_sqlite_file(tmp_path, monkeypatch):

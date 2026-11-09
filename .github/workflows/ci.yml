@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
-          ./actionlint -color .github/workflows/*.yml template/.github/workflows/*.yml
+          ./actionlint -color .github/workflows/*.yml src/jobradar/defaults/config_repo/jobradar.yml
 
   tests:
     strategy:

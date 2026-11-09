@@ -18,6 +18,7 @@ SAVERS = {
     "roles": wizard.save_roles,
     "countries_sources": wizard.save_countries_sources,
     "llm": wizard.save_llm,
+    "notion": wizard.save_notion,
     "experience": wizard.save_experience,
     "answer_bank": wizard.save_bank,
     "optional_keys": wizard.save_keys,
@@ -55,8 +56,13 @@ def _context(step_id: str) -> dict[str, Any]:
         ctx["presets"] = wizard.LLM_PRESETS
         ctx["llm"] = config.llm_config()
         cur = ctx["llm"].get("default") or {}
-        ctx["llm_choice"] = cur.get("preset") or cur.get("provider") or ("gemini" if st["mode"] == "full" else "off")
+        ctx["llm_choice"] = cur.get("preset") or cur.get("provider") or "gemini"
         ctx["estimate"] = estimate_night()
+    elif step_id == "notion":
+        import os
+
+        ctx["notion_connected"] = bool(os.environ.get("NOTION_TOKEN") and os.environ.get("NOTION_JOBS_DB"))
+        ctx["notion_url"] = os.environ.get("NOTION_JOBS_URL") or ""
     elif step_id == "answer_bank":
         from jobradar.local.db import open_local
 
@@ -84,7 +90,7 @@ def _context(step_id: str) -> dict[str, Any]:
 @bp.get("/")
 def index() -> Any:
     if request.args.get("upgrade"):
-        wizard.upgrade_to_full()
+        wizard.upgrade_to_apply()
     return redirect(url_for("setup.step", step_id=wizard.next_step()))
 
 

@@ -2,21 +2,18 @@
 
 * `state` branch: written only by the overnight workflow. Holds `state.db.gz` (one force-pushed commit per run).
   `pull_state()` downloads it to ~/.job-radar/state.db (the app opens it read-only).
-* `picks` branch: written only by the app. Holds `picks.jsonl`, one decision per line, append-only.
-  `push_picks()` appends the local events not pushed yet (retried when another push got in first);
-  `pull_picks()` imports decisions made on another computer.
-The workflow reads `picks.jsonl` at the start of each run, so a skipped job never comes back.
+Decisions (pick, skip, applied...) live in the user's Notion Jobs database: `push_picks()` sets the Status of the
+jobs decided in the app, `pull_picks()` brings back statuses changed in Notion. The overnight run reads them too, so
+a skipped job never comes back.
 """
 
 from __future__ import annotations
 
-import base64
 import gzip
 import json
 import os
 import shutil
 import subprocess
-import time
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +21,7 @@ from jobradar import config
 from jobradar.settings import get_settings
 
 STATE_BRANCH = "state"
-PICKS_BRANCH = "picks"
 STATE_FILE = "state.db.gz"
-PICKS_FILE = "picks.jsonl"
-EVENT_FIELDS = ("job_id", "status", "at", "title", "company", "family", "source", "route", "dedup_keys", "note")
 
 
 class SyncError(RuntimeError):
@@ -80,47 +74,6 @@ def pull_state(dest: Path | None = None, repo: str | None = None) -> dict[str, A
     tmp.write_bytes(data)
     tmp.replace(dest)
     return {"bytes": len(data), "path": str(dest)}
-
-
-def _get_picks(repo: str) -> tuple[str, str | None]:
-    """(file text, blob sha) of picks.jsonl; ("", None) when the file or branch doesn't exist yet."""
-    try:
-        out = gh(["api", f"repos/{repo}/contents/{PICKS_FILE}?ref={PICKS_BRANCH}"])
-    except SyncError as exc:
-        if "404" in str(exc) or "Not Found" in str(exc):
-            return "", None
-        raise
-    meta = json.loads(out or b"{}")
-    content = base64.b64decode(meta.get("content") or "").decode("utf-8") if meta.get("content") else ""
-    if not content and meta.get("size"):       # > 1 MB: the JSON has no content, read it raw
-        content = gh(["api", "-H", "Accept: application/vnd.github.raw",
-                      f"repos/{repo}/contents/{PICKS_FILE}?ref={PICKS_BRANCH}"]).decode("utf-8")
-    return content, meta.get("sha")
-
-
-def ensure_picks_branch(repo: str | None = None) -> bool:
-    """Create the `picks` branch (an orphan commit with an empty picks.jsonl) when it is missing."""
-    repo = repo or config_repo()
-    try:
-        gh(["api", f"repos/{repo}/branches/{PICKS_BRANCH}"])
-        return False
-    except SyncError as exc:
-        if "404" not in str(exc) and "Not Found" not in str(exc):
-            raise
-    blob = json.loads(gh(["api", f"repos/{repo}/git/blobs", "-f", "content=", "-f", "encoding=utf-8"]))
-    tree = json.loads(gh(["api", f"repos/{repo}/git/trees", "--input", "-"], input=json.dumps(
-        {"tree": [{"path": PICKS_FILE, "mode": "100644", "type": "blob", "sha": blob["sha"]}]}).encode()))
-    commit = json.loads(gh(["api", f"repos/{repo}/git/commits", "--input", "-"], input=json.dumps(
-        {"message": "Start the picks branch", "tree": tree["sha"], "parents": []}).encode()))
-    gh(["api", f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{PICKS_BRANCH}", "-f", f"sha={commit['sha']}"])
-    return True
-
-
-def event_line(e: dict[str, Any]) -> str:
-    d = {k: e.get(k) for k in EVENT_FIELDS}
-    if isinstance(d.get("dedup_keys"), str):
-        d["dedup_keys"] = json.loads(d["dedup_keys"] or "[]")
-    return json.dumps({k: v for k, v in d.items() if v not in (None, "", [])}, ensure_ascii=False)
 
 
 def push_notion(db: Any, client: Any = None) -> dict[str, Any]:
@@ -176,53 +129,18 @@ def pull_notion(db: Any, client: Any = None, *, days: int = 30) -> dict[str, Any
     return {"imported": db.import_events(rows), "pages": len(pages), "from": "notion"}
 
 
-def push_picks(db: Any, repo: str | None = None, *, retries: int = 4) -> dict[str, Any]:
-    """Append unpushed decisions to picks.jsonl (one commit). On a conflict (another computer pushed first) the
-    file is read again and the append retried. With Notion set up, the decisions go to Notion instead."""
+def push_picks(db: Any, repo: str | None = None) -> dict[str, Any]:
+    """The app's unpushed decisions → Notion (nothing to do until Notion is connected)."""
     from jobradar.pipeline.notion_sync import configured
 
-    if configured():
-        return push_notion(db)
-    events = db.unpushed()
-    if not events:
-        return {"pushed": 0}
-    repo = repo or config_repo()
-    lines = "".join(event_line(e) + "\n" for e in events)
-    for attempt in range(retries):
-        text, sha = _get_picks(repo)
-        if sha is None:
-            ensure_picks_branch(repo)
-            text, sha = _get_picks(repo)
-        body = {"message": f"{len(events)} decision{'s' if len(events) != 1 else ''}", "branch": PICKS_BRANCH,
-                "content": base64.b64encode((text + lines).encode("utf-8")).decode()}
-        if sha:
-            body["sha"] = sha
-        try:
-            gh(["api", "-X", "PUT", f"repos/{repo}/contents/{PICKS_FILE}", "--input", "-"],
-               input=json.dumps(body).encode())
-            db.mark_pushed([e["id"] for e in events])
-            return {"pushed": len(events), "attempts": attempt + 1}
-        except SyncError as exc:
-            if attempt == retries - 1 or not any(s in str(exc) for s in ("409", "sha", "conflict", "422")):
-                raise
-            time.sleep(1.5 * (attempt + 1))
-    return {"pushed": 0}
+    return push_notion(db) if configured() else {"pushed": 0, "off": "Notion is not connected"}
 
 
 def pull_picks(db: Any, repo: str | None = None) -> dict[str, Any]:
-    """Import decisions made elsewhere (another computer, or Notion when it is set up) into local.db."""
+    """Statuses changed in Notion (the phone, another computer) → local.db."""
     from jobradar.pipeline.notion_sync import configured
 
-    if configured():
-        return pull_notion(db)
-    text, _ = _get_picks(repo or config_repo())
-    rows = []
-    for line in text.splitlines():
-        try:
-            rows.append(json.loads(line))
-        except ValueError:
-            continue
-    return {"imported": db.import_events(rows), "lines": len(rows)}
+    return pull_notion(db) if configured() else {"imported": 0, "off": "Notion is not connected"}
 
 
 def workflow_runs(repo: str | None = None, limit: int = 5) -> list[dict[str, Any]]:

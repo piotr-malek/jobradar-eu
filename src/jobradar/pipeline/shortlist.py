@@ -260,7 +260,7 @@ def build_shortlist(store: Any, *, kind: str = "daily", dry_run: bool = False, f
                              "route": routes[it.job_id].vendor} for it in todo[:50]]}
 
     unknown = [jid for jid, r in routes.items() if r.vendor == "unknown" and r.url.startswith("http")]
-    resolve_cap = int(os.environ.get("JR_RESOLVE_CAP") or (60 if config.mode() == "full" else 0))
+    resolve_cap = int(os.environ.get("JR_RESOLVE_CAP") or 60)
     if unknown and resolve_cap:
         from jobradar.http.client import PoliteClient
 

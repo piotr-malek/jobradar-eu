@@ -1,5 +1,5 @@
 """`jr weekly`: applications per week and reply rates by source, family and route, from the user's decisions
-(Notion statuses or the `picks` branch, imported into state.db). Also compacts state.db (VACUUM). Written as a page
+(Notion statuses, imported into state.db). Also compacts state.db (VACUUM). Written as a page
 next to the Notion Jobs database; shown in the app; optionally e-mailed.
 """
 

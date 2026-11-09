@@ -88,6 +88,7 @@ sources:
   # ------------------------------------------------------------ keyed sources (free tiers, budgets)
   - id: theirstack
     adapter: theirstack
+    modes: [apply]
     label: TheirStack
     countries: [EU]
     kind: aggregator
@@ -110,6 +111,7 @@ sources:
     politeness: {max_requests: 2, rps: 0.2}
   - id: itjobs_pt
     adapter: itjobs_pt
+    modes: [apply]
     domains: [it]
     label: ITJobs.pt
     countries: [PT]
@@ -355,6 +357,7 @@ sources:
     every_days: 1
     rank: 60
     secrets: ['JOOBLE_{CC}_API_KEY']
+    home_tier: apply                         # other countries' sites need Radar + Apply
     notes: "{cc}.jooble.org: republishes national boards we can't fetch (Cloudflare) and company pages"
     params: {host: '{cc}.jooble.org', locations: ['', '{city}'], published_within_days: 3, max_pages: 1, max_calls: 20,
              keywords: '$terms:10'}          # '' = the whole country site; 50/page, 3 days → page 2 rarely needed
@@ -363,7 +366,7 @@ sources:
     adapter: adzuna
     label: Adzuna
     countries: [AT, BE, DE, ES, FR, IT, NL, PL, CH]
-    modes: [full]
+    modes: [apply]
     kind: aggregator
     every_days: 1
     rank: 58

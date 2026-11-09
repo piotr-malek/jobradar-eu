@@ -2,7 +2,7 @@
 
 Setup and daily use:   jr setup · jr app · jr doctor
 Overnight (Actions):   jr daily · jr ats · jr weekly
-Sync:                  jr state pull · jr picks push|pull
+Sync:                  jr state pull · jr notion init|views
 Debugging:             jr sources · jr run · jr probe · jr explain · jr trace · jr sql · jr rematch · jr screen
 Apply (Full):          jr prep · jr answer · jr cv · jr pack draft
 """
@@ -45,8 +45,14 @@ def cmd_setup(a) -> int:
 
 
 def cmd_app(a) -> int:
+    from jobradar import config
     from jobradar.app.server import serve
 
+    if not config.module_on("app"):
+        url = os.environ.get("NOTION_JOBS_URL") or "your Notion Jobs database"
+        print(f"Your reviewed jobs are in Notion: {url}\n"
+              "The app (answer bank, prepared forms, auto-fill, drafts) is part of Radar + Apply: jr setup --upgrade")
+        return 0
     serve(a.port, open_path="/", open_browser=not a.no_browser, pull=not a.no_pull)
     return 0
 
@@ -97,7 +103,7 @@ def cmd_daily(a) -> int:
     from jobradar.pipeline.daily import run_daily
 
     store = make_store(a.db)
-    res = run_daily(store, picks=Path(a.picks) if a.picks else None, dry_run=a.dry_run, force=a.force,
+    res = run_daily(store, dry_run=a.dry_run, force=a.force,
                     only=a.sources or None, skip_fetch=a.skip_fetch, minutes=a.minutes)
     if not a.verbose:
         res.get("shortlist", {}).pop("preview", None)
@@ -119,10 +125,6 @@ def cmd_weekly(a) -> int:
     from jobradar.pipeline.weekly import run_weekly, weekly_text
 
     store = make_store(a.db)
-    if a.picks:
-        from jobradar.pipeline.daily import read_picks
-
-        store.import_decisions(read_picks(Path(a.picks)))
     stats = run_weekly(store, dry_run=a.dry_run, email=a.email or None)
     print(weekly_text(stats))
     store.close()
@@ -144,15 +146,6 @@ def cmd_state(a) -> int:
     return 0
 
 
-def cmd_picks(a) -> int:
-    from jobradar.local.db import open_local
-    from jobradar.local.sync import pull_picks, push_picks
-
-    db = open_local()
-    _print(push_picks(db) if a.action == "push" else pull_picks(db))
-    return 0
-
-
 def cmd_notion(a) -> int:
     from jobradar.notion.client import VIEWS_HELP, NotionClient, page_id_from
     from jobradar.wizard import set_env
@@ -165,7 +158,8 @@ def cmd_notion(a) -> int:
         return 2
     with NotionClient(jobs_ds="") as client:
         out = client.init_jobs(a.page)
-    set_env({"NOTION_JOBS_DB": out["data_source"], "NOTION_PARENT_PAGE": page_id_from(a.page)})
+    set_env({"NOTION_JOBS_DB": out["data_source"], "NOTION_PARENT_PAGE": page_id_from(a.page),
+             "NOTION_JOBS_URL": out.get("url") or None})
     _print({**out, "next": "the setup wizard's repo step uploads NOTION_TOKEN and NOTION_JOBS_DB as secrets"})
     print(VIEWS_HELP)
     return 0
@@ -399,9 +393,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--markdown", action="store_true", help="print the shipped source list as Markdown (docs/sources.md)")
     sp.set_defaults(fn=cmd_sources)
 
-    sp = sub.add_parser("daily", help="overnight: picks → fetch → shortlist (what the workflow runs)")
+    sp = sub.add_parser("daily", help="overnight: Notion statuses → fetch → shortlist → review → Notion (what the "
+                                      "workflow runs)")
     db_arg(sp)
-    sp.add_argument("--picks", help="picks.jsonl from the picks branch")
     sp.add_argument("--dry-run", action="store_true")
     sp.add_argument("--force", action="store_true", help="build a shortlist even if tonight's exists")
     sp.add_argument("--skip-fetch", action="store_true", help="only rebuild the shortlist")
@@ -417,7 +411,6 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(fn=cmd_ats)
     sp = sub.add_parser("weekly", help="weekly stats (+ VACUUM)")
     db_arg(sp)
-    sp.add_argument("--picks")
     sp.add_argument("--dry-run", action="store_true")
     sp.add_argument("--email", action="store_true")
     sp.set_defaults(fn=cmd_weekly)
@@ -430,9 +423,6 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("state", help="state pull: download the newest state.db from the config repo")
     sp.add_argument("action", choices=["pull"])
     sp.set_defaults(fn=cmd_state)
-    sp = sub.add_parser("picks", help="picks push|pull: sync your decisions with the config repo")
-    sp.add_argument("action", choices=["push", "pull"])
-    sp.set_defaults(fn=cmd_picks)
 
     sp = sub.add_parser("notion", help="notion init <page link>: create the Jobs database; notion views: how to "
                                        "set up its views")

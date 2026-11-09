@@ -16,7 +16,7 @@ pytest.importorskip("flask")
 from conftest import use_profile  # noqa: E402
 
 H = {"X-JR": "1"}
-TEMPLATE_WF = (Path(__file__).parents[2] / "template" / ".github" / "workflows" / "jobradar.yml").read_text(encoding="utf-8")
+TEMPLATE_WF = (Path(__file__).parents[2] / "src/jobradar/defaults/config_repo/jobradar.yml").read_text(encoding="utf-8")
 
 FAKE_GH = r'''#!/usr/bin/env python3
 import json, os, sys
@@ -75,6 +75,8 @@ def wiz(tmp_path, monkeypatch):
     monkeypatch.setenv("FAKE_GH_WF", str(wf))
     for k in ("MISTRAL_API_KEY", "JR_CONFIG_REPO"):
         monkeypatch.delenv(k, raising=False)
+    for k in ("GEMINI_API_KEY", "NOTION_TOKEN", "NOTION_JOBS_DB", "NOTION_PARENT_PAGE", "NOTION_JOBS_URL"):
+        monkeypatch.setenv(k, "")              # the wizard sets these in os.environ: blanked, then restored after
     from jobradar.app.server import create_app
     from jobradar.local.db import open_local
 
@@ -109,13 +111,39 @@ def _night():
     store.close()
 
 
-def test_lite_walkthrough_ends_green(wiz):
+class FakeNotionClient:
+    def __init__(self, *a, **k):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return None
+
+    def init_jobs(self, parent):
+        return {"database": "db1", "data_source": "ds1", "url": "https://www.notion.so/db1"}
+
+
+NOTION = {"token": "ntn_test", "page": "https://www.notion.so/Job-search-0123456789abcdef0123456789abcdef"}
+
+
+def _llm_ok(monkeypatch):
+    from jobradar import wizard
+
+    monkeypatch.setattr(wizard, "test_llm", lambda data: {"ok": True, "model": "gemini-3.5-flash-lite",
+                                                          "provider": "openai_compatible", "seconds": 0.1})
+    monkeypatch.setattr(wizard, "notion_client", FakeNotionClient)
+
+
+def test_radar_walkthrough_ends_green(wiz, monkeypatch):
     from jobradar import wizard
 
     client, tmp = wiz
+    _llm_ok(monkeypatch)
     assert client.get("/setup/").headers["Location"].endswith("/setup/welcome")
-    assert "Lite" in client.get("/setup/welcome").data.decode()
-    step(client, "welcome", mode="lite")
+    assert "Radar + Apply" in client.get("/setup/welcome").data.decode()
+    step(client, "welcome", mode="radar")
     assert "Connected" in client.get("/setup/github").data.decode() and "ana-demo" in client.get("/setup/github").data.decode()
     step(client, "github")
     r = client.post("/setup/basics", headers=H, json={**BASICS, "city": ""})
@@ -135,18 +163,29 @@ def test_lite_walkthrough_ends_green(wiz):
     html = client.get("/setup/countries_sources").data.decode()
     assert "Countries and job boards" in html
     step(client, "countries_sources", countries=["PT", "ES"], opt_in=[], disable=[])
-    for s in ("llm", "experience", "optional_keys"):                                  # optional in Lite
+    assert client.post("/setup/llm", headers=H, json={"skip": True}).status_code == 400          # required now
+    step(client, "llm", provider="gemini", key="AIza-test", model="")
+    assert config.llm_config()["default"] == {"provider": "gemini"}                               # model picked at run time
+    assert client.post("/setup/notion", headers=H, json={"token": "", "page": ""}).status_code == 400
+    step(client, "notion", **NOTION)
+    env = wizard.read_env()
+    assert env["NOTION_JOBS_DB"] == "ds1" and env["NOTION_PARENT_PAGE"] == "0123456789abcdef0123456789abcdef"
+    for s in ("experience", "optional_keys"):                                         # optional in Radar
         assert step(client, s, skip=True)["next"]
-    assert client.post("/setup/answer_bank", headers=H, json={"skip": True}).status_code == 400 or True
     res = step(client, "config_repo", name="job-radar-config")["result"]
     assert res["repo"] == "ana-demo/job-radar-config" and "user/profile.yaml" in res["pushed"]
+    assert set(res["secrets"]) == {"GEMINI_API_KEY", "NOTION_TOKEN", "NOTION_JOBS_DB", "NOTION_PARENT_PAGE",
+                                   "NOTION_JOBS_URL"}
     calls = gh_calls(tmp)
-    assert ["repo", "create", "ana-demo/job-radar-config", "--template", wizard.TEMPLATE_REPO,
-            "--private"] in calls
-    puts = [c for c in calls if c[:3] == ["api", "-X", "PUT"]]
-    assert any("contents/.github/workflows/jobradar.yml" in c[3] for c in puts)       # cron rewritten
-    assert not any(c[:2] == ["secret", "set"] for c in calls)                           # no keys in Lite here
+    create = next(c for c in calls if c[:2] == ["repo", "create"])
+    assert create[:4] == ["repo", "create", "ana-demo/job-radar-config", "--private"] and "--template" not in create
+    puts = [c[3] for c in calls if c[:3] == ["api", "-X", "PUT"]]
+    assert any(p.endswith("contents/.github/workflows/jobradar.yml") for p in puts)   # the package's workflow
+    assert any(p.endswith("contents/README.md") for p in puts)
+    assert not any("picks" in " ".join(c) for c in calls)                             # no picks branch any more
     assert config.user_settings()["config_repo"] == "ana-demo/job-radar-config"
+    assert config.mode() == "radar" and config.module_on("ats") and config.module_on("screen")
+    assert not config.module_on("bank") and not config.module_on("app")
     # changing a step later pushes that file again
     step(client, "roles", packs=["backend", "fullstack"], min="junior", max="senior", never=[], must_have=[],
          extra_titles=[])
@@ -157,11 +196,12 @@ def test_lite_walkthrough_ends_green(wiz):
     assert "All set" in html, html
 
 
-def test_full_walkthrough_ends_green(wiz, monkeypatch):
+def test_apply_walkthrough_ends_green(wiz, monkeypatch):
     from jobradar import wizard
 
     client, tmp = wiz
-    step(client, "welcome", mode="full")
+    _llm_ok(monkeypatch)
+    step(client, "welcome", mode="full")                                   # the old name still works
     step(client, "github")
     step(client, "basics", **BASICS)
     step(client, "roles", packs=["backend", "devops-sre-platform"], min="junior", max="senior", never=[],
@@ -171,6 +211,7 @@ def test_full_walkthrough_ends_green(wiz, monkeypatch):
                                                           "provider": "openai_compatible", "seconds": 0.1})
     step(client, "llm", provider="mistral", key="sk-test", model="")
     assert wizard.read_env()["MISTRAL_API_KEY"] == "sk-test"
+    step(client, "notion", **NOTION)
     r = client.post("/setup/experience", headers=H, json={"summary": "Backend engineer, ana@example.com"})
     assert r.status_code == 400 and "contact details" in r.get_json()["error"]
     step(client, "experience", summary="Backend engineer in Python and Go.", level="Mid-level",
@@ -190,7 +231,7 @@ def test_full_walkthrough_ends_green(wiz, monkeypatch):
 
     assert config.user_sources()["alert_senders"] == ["jobalerts-noreply@linkedin.com", "alerts@example.com"]
     res = step(client, "config_repo", name="cfg")["result"]
-    assert set(res["secrets"]) == {"MISTRAL_API_KEY", "JOOBLE_PT_API_KEY"}
+    assert {"MISTRAL_API_KEY", "JOOBLE_PT_API_KEY", "NOTION_TOKEN", "NOTION_JOBS_DB"} <= set(res["secrets"])
     assert client.post("/setup/extension", headers=H, json={}).status_code == 400     # no ping yet
     assert Path(json.loads(json.dumps(str(wizard.install_extension())))).joinpath("manifest.json").is_file()
     client.post("/ext/seen", headers=H)
@@ -203,17 +244,18 @@ def test_full_walkthrough_ends_green(wiz, monkeypatch):
     assert "All set" in html, html
 
 
-def test_upgrade_reopens_the_full_only_steps(wiz):
+def test_upgrade_reopens_the_apply_steps(wiz):
     from jobradar import config, wizard
 
     client, _ = wiz
-    step(client, "welcome", mode="lite")
+    step(client, "welcome", mode="radar")
     for s in ("github", "basics", "roles"):
         wizard.mark(s)
     r = client.get("/setup/?upgrade=1")
-    assert config.mode() == "full" and config.module_on("ats") and config.module_on("bank")
+    assert config.mode() == "apply" and config.module_on("bank") and config.module_on("app")
     assert r.headers["Location"].endswith("/setup/countries_sources")
-    assert "answer_bank" in [s.id for s in wizard.steps_for("full")]
+    assert "answer_bank" in [s.id for s in wizard.steps_for("apply")]
+    assert "answer_bank" not in [s.id for s in wizard.steps_for("radar")]
 
 
 def test_cron_follows_the_time_zone():
