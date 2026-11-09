@@ -34,7 +34,8 @@ jr probe arbeitnow  # fetch and match one source without storing anything
 | `src/jobradar/match/`, `normalize/`, `dedup/` | Matching, text and location normalising, duplicate clustering |
 | `src/jobradar/pipeline/` | The overnight jobs: `daily`, `ats`, `weekly`, and the shortlist |
 | `src/jobradar/app/`, `wizard.py` | The local app and the setup wizard (Flask) |
-| `src/jobradar/apply/`, `extension/` | Full mode: form prep, answers, PDFs, the Chrome auto-fill extension |
+| `src/jobradar/apply/`, `extension/` | Radar + Apply: form prep, answers, PDFs, the Chrome auto-fill extension; `apply/screen.py` is the AI review both tiers use |
+| `src/jobradar/notion/`, `pipeline/notion_sync.py`, `pipeline/suggest.py` | The Notion Jobs database, statuses read back, filter suggestions |
 | `src/jobradar/defaults/config_repo/` | The files the wizard puts in every user's config repository: the workflow and its schedule |
 | `examples/lisbon-backend/` | A fictional user, used by the tests and as a starting point |
 
@@ -56,8 +57,11 @@ jr probe arbeitnow  # fetch and match one source without storing anything
    - The first sentence of the adapter's docstring appears in `docs/sources.md`, so make it say what the board is
      and how it's read.
 3. **Add an entry** to `src/jobradar/defaults/sources.yaml` with `id`, `adapter`, `label`, `countries`, `every_days`,
-   a `politeness` budget (`max_requests`, `rps`, `robots`) and `notes`. Gate it with `packs:` if it only lists one
-   kind of role, and set `runner: local` if it blocks GitHub's IP addresses.
+   a `politeness` budget (`max_requests`, `rps`, `robots`) and `notes`. Gate it with `domains: [it]` or
+   `domains: [business]` if it only lists tech or only business roles, with `packs:` if only one kind of role, and
+   with `modes: [apply]` if it needs a key beyond the quick Radar setup. Set `runner: local` if it blocks GitHub's IP
+   addresses. A big board that blocks automated visits belongs in `defaults/alert_boards.yaml` instead (its alert
+   page and sender), so the wizard lists it for alert e-mails.
 4. **Probe and record:** `jr probe <id>` prints what a run would fetch and match. `jr probe <id> --record` saves the
    responses to `tests/fixtures/<id>/`. Keep the fixture small (a few pages) and check it holds no personal data.
 5. **Test:** add `tests/unit/test_src_<id>.py` that replays the fixture (see `test_src_themuse.py`).
@@ -70,14 +74,17 @@ same steps.
 
 A pack is one YAML file in `src/jobradar/defaults/packs/`:
 
+- `domain`: `it` or `business`. It groups the pack in the wizard and switches on the boards gated with `domains:`.
 - `families`: title rules (regular expressions over the normalised, accent-free title), with `tier`, `priority` and
   `label`. `manager_ok` lets a family keep manager titles.
 - `family_exclude` / `family_exclude_ok`: words that drop a title, and the exceptions.
 - `allow_disciplines`: entries of `title.exclude.discipline_hard` in `matching.yaml` (roles skipped as "not IT",
   e.g. customer success) that this pack takes back while it is selected. See `sales-cs.yaml`.
 - `search_terms`: words the boards are searched with, per language; English first.
-- `stack`: technology words and weights used to rank jobs; `prefer`: URL slug patterns tried first.
-- `boards`: category ids on boards that have them (`$board:<board>.<key>` in sources.yaml).
+- `stack`: skill and tool words and weights used to rank jobs; `prefer`: URL slug patterns tried first.
+- `boards`: category ids on boards that have them (`$board:<board>.<key>` in sources.yaml, or read by the adapter:
+  Jobicy `industries`, We Work Remotely `feeds`, Berlin Startup Jobs `categories`, The Muse and Remotive
+  `categories`). Check category ids against the live site.
 - `golden.keep` / `golden.drop`: real titles the pack must keep or drop. `tests/unit/test_packs_golden.py` checks
   every one, so add a title to `golden` with each rule change.
 
